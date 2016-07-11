@@ -41,16 +41,16 @@ if ( MONTH == 'March' ):
     LON_S = 267.6066184  # sub-solar longitude
     LAT_O = 1.6808370  # sub-observer latitude
     LON_O = 210.1242232 # sub-observer longitude
-    cldfile_optd = 'obsdata/clddpth_EPOXI_March_6.dat'
-    cldfile_frac = 'obsdata/cldfrac_EPOXI_March_6.dat'
+    cldfile_optd = 'data/clddpth_EPOXI_March_6.dat'
+    cldfile_frac = 'data/cldfrac_EPOXI_March_6.dat'
 
 elif ( MONTH == 'June' ):
     LON_O = 165.4663412
     LAT_O = -0.3521857
     LON_S = 239.1424068
     LAT_S = 21.6159766
-    cldfile_optd = 'obsdata/clddpth_EPOXI_June_6.dat'
-    cldfile_frac = 'obsdata/cldfrac_EPOXI_June_6.dat'
+    cldfile_optd = 'data/clddpth_EPOXI_June_6.dat'
+    cldfile_frac = 'data/cldfrac_EPOXI_June_6.dat'
 
 else :
     print 'ERROR: Invalid MONTH'
@@ -67,16 +67,16 @@ lat, lon, cld_optd = np.loadtxt( cldfile_optd ).T
 lon[ np.where( lon < 0. )] = 360. + lon[ np.where( lon < 0. )]
 
 theta_data = ( 90. - lat ) * np.pi / 180.
-phi_data = ( lon ) * np.pi / 180. 
+phi_data = ( lon ) * np.pi / 180.
 pixel_data = hp.pixelfunc.ang2pix( N_SIDE, theta_data, phi_data )
 
 #cldoptd_data = cld_optd
-#cldfrac_data = 
+#cldfrac_data =
 
 cld_frac_data = np.zeros( N_pixel )
 cld_optd_data = np.zeros( N_pixel )
 for ipix in xrange( N_pixel ):
-    
+
     # cloud optical thickness
     cld_optd_tmp = cld_optd[np.where( pixel_data == ipix )]
     histo_data = np.histogram( cld_optd_tmp, bins=np.logspace(-1,2,31) )[0]
@@ -108,7 +108,7 @@ lon[ np.where( lon < 0. )] = 360. + lon[ np.where( lon < 0. )]
 lon_mesh, lat_mesh = np.meshgrid( lon, lat )
 
 theta_data = ( 90. - lat_mesh.flatten() ) * np.pi / 180.
-phi_data = ( lon_mesh.flatten() ) * np.pi / 180. 
+phi_data = ( lon_mesh.flatten() ) * np.pi / 180.
 
 surface_data = surface_type.flatten()
 pixel_data = hp.pixelfunc.ang2pix( N_SIDE, theta_data, phi_data )
@@ -131,7 +131,7 @@ print '# time\tarea fraction\tarea fraction with less cloud\tarea fraction of mo
 while time < TIME_END :
 
     weight_array = geometry.weight( time, N_SIDE, param_geometry )
-    norm = np.sum( weight_array ) 
+    norm = np.sum( weight_array )
     indx_of_interest = np.in1d( type_data, target_indx )
     indx_of_nointerest = map( operator.not_, indx_of_interest )
     weight_array[np.where( indx_of_nointerest )] = 0.
@@ -143,4 +143,3 @@ while time < TIME_END :
     print time, areafrac, areafrac_with_less_clouds, areafrac_with_more_clouds
 
     time = time + TSTEP
-
