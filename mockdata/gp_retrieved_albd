@@ -1,0 +1,13 @@
+set term postscript eps enhanced color 28
+set output 'mock_simple_1_scattered0.01_data_with_noise_retrieved_albd.eps'
+
+set xrange [-0.5:2.5]
+set xlabel '# of band'
+set yrange [0:1]
+set ylabel 'albedo'
+
+plot \
+'mock_simple_1_scattered0.01_data_with_noise_retrieved' us 0:1:2:3 w yerrorbars ti 'type 1', \
+'mock_simple_1_scattered0.01_data_with_noise_retrieved' us 0:4:5:6 w yerrorbars ti 'type 2'
+
+

@@ -1,0 +1,12 @@
+set term postscript eps enhanced color 28
+set output 'mock_simple_1_scattered0.01_data_with_noise_retrieved_area.eps'
+
+set xrange [-0.5:3.5]
+set xlabel '# of slices'
+set yrange [0:1]
+set ylabel 'area fraction'
+
+plot \
+'mock_simple_1_scattered0.01_data_with_noise_retrieved' us 0:1:2:3 w yerrorbars ti 'type 1', \
+'mock_simple_1_scattered0.01_data_with_noise_retrieved' us 0:4:5:6 w yerrorbars ti 'type 2'
+

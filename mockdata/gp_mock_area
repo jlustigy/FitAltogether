@@ -1,0 +1,13 @@
+set ylabel 'area fraction'
+set yrange [0:1]
+set ytics 0.2
+
+set xlabel 'longitude [deg]'
+set xrange [0:360]
+set xtics 90
+
+plot 'mock7_albd_area' index 1 us ($0/4*360.0):1 w lp pt 6 lw 2 lc 7 ti 'component 1', 'mock7_albd_area' index 1 us ($0/4*360.0):2 w lp pt 4 lw 2 lc 3 ti 'component 2'
+
+set term postscript eps enhanced color 28
+set output 'mock7_area.eps'
+replot
