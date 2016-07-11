@@ -6,6 +6,7 @@ from scipy.optimize import minimize
 import sys
 import corner
 import datetime
+import multiprocessing
 
 
 # March 2008
@@ -17,8 +18,10 @@ import datetime
 #NUM_MCMC = 2
 #NUM_MCMC_BURNIN = 1
 
-NUM_MCMC = 2
+NUM_MCMC = 1
 NUM_MCMC_BURNIN = 10
+
+NCPU = multiprocessing.cpu_count()
 
 SIGMA_Y  = 3.0
 NOISELEVEL = 0.01
@@ -32,7 +35,8 @@ N_TYPE  = 4
 deg2rad = np.pi/180.
 
 N_SIDE   = 32
-INFILE = "/Users/yuka/data/EPOXI/Earth/raddata_12_norm"
+#INFILE = "data/raddata_12_norm"
+INFILE = "data/raddata_2_norm"
 #INFILE = "mockdata/mock_simple_1_data"
 # INFILE = 'mockdata/mock_simple_1_scattered0.01_data_with_noise'
 
@@ -102,7 +106,7 @@ def sigma(sigma, kappa, dim, periodic=False):
 #    print np.dot(Sigma_ll, inv_Sigma_ll)
 #    Sigma2_ll = sigma**2*(Sigma_ll + np.identity(n_slice))
     Sigma2_ll = sigma**2*Sigma_ll
-    return Sigma2_ll 
+    return Sigma2_ll
 
 
 
@@ -119,7 +123,7 @@ def get_ln_prior_albd( y_albd_kj ):
             else:
                 print "ERROR! ln_prior_albd is NaN"
                 print "  y, prior   ", yy, prior
-                ln_prior = ln_prior + 0.0                
+                ln_prior = ln_prior + 0.0
 
     return ln_prior
 
@@ -220,7 +224,7 @@ def lnprob(Y_array, *args):
         addterm_k     = np.diag(np.dot(np.dot(X_albd_kj, inv_Sigma_jj), X_albd_kj.T))
         r_albd_1 = np.sum(addterm_k)
         r_albd_2 = np.log(np.linalg.det(Sigma_jj))
-    else: 
+    else:
         r_albd_1  = 0.
         r_albd_2  = 0.
 
@@ -253,7 +257,9 @@ def transform_Y2X(Y_array, n_band):
 
 #---------------------------------------------------
 def transform_X2Y(X_albd_kj, X_area_lk, n_slice):
-
+    """
+    Re-parameterization for convenience -- now Y can take on any value.
+    """
 
 #    print "X_area_lk", X_area_lk
     Y_albd_kj = np.log(X_albd_kj) - np.log(1.-X_albd_kj)
@@ -278,7 +284,7 @@ if __name__ == "__main__":
     # input data
     Obs_ij = np.loadtxt(INFILE)
     n_slice = len(Obs_ij)
-   
+
     n_band = len(Obs_ij[0])
     Time_i = np.arange( n_slice )
 
@@ -299,8 +305,8 @@ if __name__ == "__main__":
 #    X0_albd_kj = np.array( [[1.000000000000000056e-01, 9.000000000000000222e-01],
 #                            [2.999999999999999889e-01, 5.000000000000000000e-01],
 #                            [3.499999999999999778e-01, 5.999999999999999778e-01]]).T
-#    
-#    
+#
+#
 ## area fraction ( longitude slice x suface type )
 #    X0_area_lk = np.array([[2.000000000000000111e-01, 8.000000000000000444e-01],
 #                           [5.500000000000000444e-01, 4.499999999999999556e-01],
@@ -366,7 +372,7 @@ if __name__ == "__main__":
     n_dim = len(Y0_array)
     n_walkers = 2*n_dim**2
     data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, False, False)
-    sampler = emcee.EnsembleSampler(n_walkers, n_dim, lnprob, args=data)
+    sampler = emcee.EnsembleSampler(n_walkers, n_dim, lnprob, args=data, threads=NCPU)
 #    pos = 0.01*np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + output["x"]
     p0 = 0.01*np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + output["x"]
     pos, prob, state = sampler.run_mcmc( p0, NUM_MCMC_BURNIN )
@@ -397,7 +403,7 @@ if __name__ == "__main__":
 
         X_albd_kj_stack = np.dstack([ X_albd_kj_stack, X_albd_kj ])
         X_area_lk_stack = np.dstack([ X_area_lk_stack, X_area_lk ])
-    
+
 
 
 
@@ -405,7 +411,7 @@ if __name__ == "__main__":
 
     X_albd_error = np.percentile( X_albd_kj_stack, [16, 50, 84], axis=2)
 
-#    X_albd_error = map(lambda v: np.array([v[1], v[2]-v[1], v[1]-v[0]]), 
+#    X_albd_error = map(lambda v: np.array([v[1], v[2]-v[1], v[1]-v[0]]),
 #                       zip(*np.percentile( X_albd_kj_stack, [16, 50, 84], axis=2)))
 
     print X_albd_error
@@ -413,35 +419,35 @@ if __name__ == "__main__":
 
     for jj in  xrange( n_band ):
         for kk in  xrange( N_TYPE ):
-            print X_albd_error[1][kk][jj], X_albd_error[2][kk][jj], X_albd_error[0][kk][jj], 
+            print X_albd_error[1][kk][jj], X_albd_error[2][kk][jj], X_albd_error[0][kk][jj],
         print ''
 
     print ''
     print ''
 
     X_area_error = np.percentile( X_area_lk_stack, [16, 50, 84], axis=2)
-#    X_area_error = map(lambda v: np.array([v[1], v[2]-v[1], v[1]-v[0]]), 
+#    X_area_error = map(lambda v: np.array([v[1], v[2]-v[1], v[1]-v[0]]),
 #                       zip(*np.percentile( X_area_lk_stack, [16, 50, 84], axis=2)))
 
     for ll in xrange( n_slice ):
         for kk in  xrange( N_TYPE ):
-            print X_area_error[1][ll][kk], X_area_error[2][ll][kk], X_area_error[0][ll][kk], 
-        print '' 
+            print X_area_error[1][ll][kk], X_area_error[2][ll][kk], X_area_error[0][ll][kk],
+        print ''
 
 
 #    for jj in xrange( n_band ):
 #        print jj
 #        for kk in xrange( N_TYPE ):
-#            print np.average( X_albd_kj_stack[kk][jj] ), np.sqrt( np.var(X_albd_kj_stack[kk][jj]) ), 
+#            print np.average( X_albd_kj_stack[kk][jj] ), np.sqrt( np.var(X_albd_kj_stack[kk][jj]) ),
 #        print ''
 #
 #    print ''
 #    print ''
 #
 #    for ll in xrange( n_slice ):
-#        print ll, 
+#        print ll,
 #        for kk in xrange( N_TYPE ):
-#            print np.average( X_area_lk_stack[ll][kk] ), np.sqrt( np.var( X_area_lk_stack[ll][kk] ) ), 
+#            print np.average( X_area_lk_stack[ll][kk] ), np.sqrt( np.var( X_area_lk_stack[ll][kk] ) ),
 #        print ''
 
     sys.exit()
@@ -491,6 +497,6 @@ if __name__ == "__main__":
     print 'range(n_slice)', range(n_slice)
     fig = corner.corner( X_array[:,N_TYPE*n_band+2*n_slice:], labels=range(n_slice), truths=bestfit[N_TYPE*n_band+2*n_slice:], range=myrange, bins=100 )
     fig.savefig(INFILE+"_corner_area3.png")
-     
+
     now = datetime.datetime.now()
     print now.strftime("%Y-%m-%d %H:%M:%S")
