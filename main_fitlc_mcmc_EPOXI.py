@@ -20,8 +20,9 @@ import pdb
 #NUM_MCMC = 2
 #NUM_MCMC_BURNIN = 1
 
-NUM_MCMC = 1000
+NUM_MCMC = 10000
 NUM_MCMC_BURNIN = 1
+SEED_AMP = 0.5
 
 # Set the number of CPUs on current machine for the MCMC
 NCPU = multiprocessing.cpu_count()
@@ -39,8 +40,8 @@ deg2rad = np.pi/180.
 
 N_SIDE   = 32
 #INFILE = "data/raddata_12_norm"
-INFILE = "data/raddata_2_norm"
-#INFILE = "mockdata/mock_simple_1_data"
+#INFILE = "data/raddata_2_norm"
+INFILE = "mockdata/mock_simple_1_data"
 # INFILE = 'mockdata/mock_simple_1_scattered0.01_data_with_noise'
 
 
@@ -397,8 +398,9 @@ if __name__ == "__main__":
     # Set starting guesses as gaussian noise ontop of intial optimized solution
     # note: consider using emcee.utils.sample_ball(p0, std) (std: axis-aligned standard deviation.)
     #       to produce a ball of walkers around an initial parameter value.
-    p0 = 0.01*np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + output["x"]
+    p0 = SEED_AMP*np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + output["x"]
 
+    """
     # Run MCMC
     pos, prob, state = sampler.run_mcmc( p0, NUM_MCMC_BURNIN )
 
@@ -416,8 +418,10 @@ if __name__ == "__main__":
 
     # Reset sampler for production run
     sampler.reset()
+    """
+
     # Run MCMC
-    sampler.run_mcmc( pos, NUM_MCMC )
+    sampler.run_mcmc( p0, NUM_MCMC )
 
     original_samples = sampler.chain
 
@@ -426,6 +430,7 @@ if __name__ == "__main__":
 
     sys.exit()
 
+    # We don't want to flatten the chains until we've removed the burnin
     samples = sampler.chain[:, :, :].reshape((-1, n_dim)) # trial x n_dim
 
     X_array = np.zeros( [ len( samples ), N_TYPE*n_band + n_slice*N_TYPE ] )
