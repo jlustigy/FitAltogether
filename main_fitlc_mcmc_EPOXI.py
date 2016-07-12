@@ -7,6 +7,8 @@ import sys
 import corner
 import datetime
 import multiprocessing
+import os
+import pdb
 
 
 # March 2008
@@ -18,9 +20,10 @@ import multiprocessing
 #NUM_MCMC = 2
 #NUM_MCMC_BURNIN = 1
 
-NUM_MCMC = 1
-NUM_MCMC_BURNIN = 10
+NUM_MCMC = 1000
+NUM_MCMC_BURNIN = 1
 
+# Set the number of CPUs on current machine for the MCMC
 NCPU = multiprocessing.cpu_count()
 
 SIGMA_Y  = 3.0
@@ -30,7 +33,7 @@ FLAG_REG_AREA = False
 FLAG_REG_ALBD = False
 
 #n_slice = 4
-N_TYPE  = 4
+N_TYPE  = 2
 
 deg2rad = np.pi/180.
 
@@ -112,19 +115,8 @@ def sigma(sigma, kappa, dim, periodic=False):
 
 #---------------------------------------------------
 def get_ln_prior_albd( y_albd_kj ):
-
-    ln_prior = 0.
-    for k in xrange( len(y_albd_kj) ):
-        for j in xrange( len(y_albd_kj.T) ):
-            yy = y_albd_kj[k,j]
-            prior = np.exp( yy ) / ( 1 + np.exp( yy ) )**2
-            if ( prior > 0. ):
-                ln_prior = ln_prior + np.log( prior )
-            else:
-                print "ERROR! ln_prior_albd is NaN"
-                print "  y, prior   ", yy, prior
-                ln_prior = ln_prior + 0.0
-
+    prior_kj = np.exp( y_albd_kj ) / ( 1 + np.exp( y_albd_kj ) )**2
+    ln_prior = np.sum( np.log( prior_kj ) )
     return ln_prior
 
 
@@ -278,8 +270,15 @@ def transform_X2Y(X_albd_kj, X_area_lk, n_slice):
 #===================================================
 if __name__ == "__main__":
 
+    # print start time
     now = datetime.datetime.now()
     print now.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Create directory for this run
+    startstr = now.strftime("%Y-%m-%d--%H-%M")
+    run_dir = "mcmc_output/" + startstr + "/"
+    os.mkdir(run_dir)
+    print "Created directory:", run_dir
 
     # input data
     Obs_ij = np.loadtxt(INFILE)
@@ -348,40 +347,87 @@ if __name__ == "__main__":
 #    print "X_area_lk", X_area_lk
 #    print "X_albd_kj", X_albd_kj
 
+    ########## use optimization for mcmc initial guesses ##########
+
     # minimize
     print "finding best-fit values..."
     data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, False)
     output = minimize(lnprob, Y0_array, args=data, method="Nelder-Mead")
 
-
-    print "best-fit", output["x"]
+    best_fit = output["x"]
+    print "best-fit", best_fit
 
     data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, False)
     lnprob_bestfit = lnprob( output['x'], *data )
     BIC = 2.0 * lnprob_bestfit + len( output['x'] ) * np.log( len(Obs_ij.flatten()) )
     print 'BIC: ', BIC
 
+    # Transform back to physical params
     X_albd_kj, X_area_lk =  transform_Y2X(output["x"], n_band)
-    np.savetxt("X_area_lk", X_area_lk)
-    np.savetxt("X_albd_kj_T", X_albd_kj.T)
+    X_albd_kj_T = X_albd_kj.T
+    #np.savetxt("X_area_lk", X_area_lk)
+    #np.savetxt("X_albd_kj_T", X_albd_kj.T)
     bestfit = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
 
-    print "residuals", Obs_ij - np.dot( X_area_lk, X_albd_kj )
+    # Calculate residuals
+    residuals = Obs_ij - np.dot( X_area_lk, X_albd_kj )
+    print "residuals", residuals
+
+    # Save initialization run as npz
+    print "Saving:", run_dir+"initial_minimize.npz"
+    np.savez(run_dir+"initial_minimize.npz", data=data, best_fity=best_fit, \
+        lnprob_bestfit=lnprob_bestfit, BIC=BIC, X_area_lk=X_area_lk, \
+        X_albd_kj_T=X_albd_kj_T, residuals=residuals, best_fitx = bestfit)
+
+    ########## Run MCMC ##########
 
     print "MCMC until burn-in..."
+
+    # Number of dimensions is number of free parameters
     n_dim = len(Y0_array)
+    # Number of walkers
     n_walkers = 2*n_dim**2
+
+    # Data tuple to pass to emcee
     data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, False, False)
+
+    # Initialize emcee EnsembleSampler object
     sampler = emcee.EnsembleSampler(n_walkers, n_dim, lnprob, args=data, threads=NCPU)
-#    pos = 0.01*np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + output["x"]
+
+    # Set starting guesses as gaussian noise ontop of intial optimized solution
+    # note: consider using emcee.utils.sample_ball(p0, std) (std: axis-aligned standard deviation.)
+    #       to produce a ball of walkers around an initial parameter value.
     p0 = 0.01*np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + output["x"]
+
+    # Run MCMC
     pos, prob, state = sampler.run_mcmc( p0, NUM_MCMC_BURNIN )
-    np.savetxt( 'tmp.txt', sampler.chain[0,:,1] )
+
+    # Save initial positions of chain[n_walkers, steps, n_dim]
+    burnin_chain = sampler.chain[:, :, :].reshape((-1, n_dim))
+
+    # Save chain[n_walkers, steps, n_dim] as npz
+    now = datetime.datetime.now()
+    print "Finished Burn-in MCMC:", now.strftime("%Y-%m-%d %H:%M:%S")
+
+    print "Saving:", run_dir+"mcmc_burnin.npz"
+    np.savez(run_dir+"mcmc_burnin.npz", pos=pos, prob=prob, burnin_chain=burnin_chain)
 
     print "MCMC from burn-in..."
+
+    # Reset sampler for production run
     sampler.reset()
+    # Run MCMC
     sampler.run_mcmc( pos, NUM_MCMC )
+
+    original_samples = sampler.chain
+
+    print "Saving:", run_dir+"mcmc_samples.npz"
+    np.savez(run_dir+"mcmc_samples.npz", samples=original_samples)
+
+    sys.exit()
+
     samples = sampler.chain[:, :, :].reshape((-1, n_dim)) # trial x n_dim
+
     X_array = np.zeros( [ len( samples ), N_TYPE*n_band + n_slice*N_TYPE ] )
 
     print 'accumulation...'
@@ -449,6 +495,13 @@ if __name__ == "__main__":
 #        for kk in xrange( N_TYPE ):
 #            print np.average( X_area_lk_stack[ll][kk] ), np.sqrt( np.var( X_area_lk_stack[ll][kk] ) ),
 #        print ''
+
+
+    # Save results
+    print "Saving:", run_dir+"mcmc_results.npz"
+    np.savez(run_dir+"mcmc_results.npz", samples=samples, original_samples=original_samples, \
+        X_albd_kj_stack=X_albd_kj_stack, X_area_lk_stack=X_area_lk_stack, \
+        X_albd_error=X_albd_error, X_area_error=X_area_error)
 
     sys.exit()
 
