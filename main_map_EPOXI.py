@@ -1,21 +1,28 @@
 import numpy as np
-import healpy as hp
-import emcee
 import matplotlib.pyplot as pl
-from scipy.optimize import minimize
 import sys
-import corner
 import datetime
 import multiprocessing
+from scipy.optimize import minimize
+
+import healpy as hp
+import emcee
+import corner
+
 import geometry
 import prior
+from reparameterize import *
+
+
+#REGULARIZATION = 'GP'
+REGULARIZATION = 'Tikhonov'
 
 #n_slice = 4
 N_TYPE  = 3
-N_SLICE = 9
+N_SLICE = 37
 
 MONTH = 'June'
-SIGMA_Y  = 3.0
+
 NOISELEVEL = 0.01
 
 NUM_MCMC = 10
@@ -23,13 +30,14 @@ NUM_MCMC_BURNIN = 100
 NCPU = multiprocessing.cpu_count()
 
 FLAG_REG_AREA = False
-FLAG_REG_ALBD = False
 
 N_side_seed = 2
 N_SIDE  = 2*2**N_side_seed
 
 Pspin = 24.0
 OMEGA = ( 2. * np.pi / Pspin )
+
+LAMBDA = 10.
 
 #--------------------------------------------------------------------
 # set-up
@@ -65,10 +73,13 @@ else :
     print 'ERROR: Invalid MONTH'
     sys.exit()
 
-
-#===================================================
- # basic functions
-#=============================================== ====
+N_REGPARAM = 0
+if REGULARIZATION == 'Tikhonov' :
+    N_REGPARAM = 1
+elif REGULARIZATION == 'GP' :
+    N_REGPARAM = 3
+else :
+    N_REGPARAM = 0
 
 #---------------------------------------------------
 def lnprob(Y_array, *args):
@@ -76,14 +87,14 @@ def lnprob(Y_array, *args):
     Misfit-function to be minimized
     """
 
-    Obs_ij, Obsnoise_ij, Kernel_il, n_param, flip, verbose  = args
+    Obs_ij, Obsnoise_ij, Kernel_il, n_regparam, flip, verbose  = args
     n_band = len(Obs_ij[0])
 
     # parameter conversion
-    if (n_param > 0):
-        X_albd_kj, X_area_lk = transform_Y2X(Y_array[:-1*n_param], len(Obs_ij[0]))
+    if ( n_regparam > 0 ):
+        X_albd_kj, X_area_lk = transform_Y2X(Y_array[:-1*n_regparam], N_TYPE, n_band, N_SLICE)
     else:
-        X_albd_kj, X_area_lk = transform_Y2X(Y_array, len(Obs_ij[0]))
+        X_albd_kj, X_area_lk = transform_Y2X(Y_array, N_TYPE, n_band, N_SLICE)
 
     # making matrix...
     Model_ij = np.dot(Kernel_il, np.dot(X_area_lk, X_albd_kj))
@@ -96,76 +107,33 @@ def lnprob(Y_array, *args):
     ln_prior_albd = prior.get_ln_prior_albd( Y_albd_kj )
 
     # flat prior for area fraction
-    Y_area_lk = Y_array[N_TYPE*n_band:].reshape([N_SLICE, N_TYPE-1])
-    ln_prior_area = prior.get_ln_prior_area( Y_area_lk, X_area_lk[:,:-1] )
+    Y_area_lk = Y_array[N_TYPE*n_band:N_TYPE*n_band+N_SLICE*(N_TYPE-1)].reshape([N_SLICE, N_TYPE-1])
+    ln_prior_area = -1.*prior.get_ln_prior_area( Y_area_lk, X_area_lk[:,:-1] )
 
+    # regularization
+    ## Tikhonov Regularization
+    if ( REGULARIZATION == 'Tikhonov' ):
+        regparam = Y_array[-1*N_REGPARAM]
+        regterm_area = prior.regularize_area_tikhonov( X_area_lk, regparam ) 
+    ## Gaussian Process
+    elif ( REGULARIZATION == 'GP' ):
+        regparam = ( Y_array[-1*N_REGPARAM], Y_array[-1*N_REGPARAM+1], Y_array[-1*N_REGPARAM+2] )
+        regterm_area = prior.regularize_area_GP( X_area_lk, regparam ) 
+    ## Others
+    else :
+        regterm_area = 0.
+
+    # verbose
     if verbose :
         print 'chi2', chi2 - ln_prior_albd - ln_prior_area, chi2, ln_prior_albd, ln_prior_area
         print 'chi2/d.o.f.', chi2 / (len(Y_array)*1.-1.), len(Y_array)
 
-    # regularization term for area fraction
-    if FLAG_REG_AREA :
-        if FLAG_REG_ALBD :
-            origin = -4
-        else:
-            origin = -2
-        regterm_area = prior.regularize_area( x_area_lk, Y_array[origin], Y_array[origin+1], periodic=True)
 
-    else:
-        regterm_area = 0.
-
-    # refularization term for albedo
-    if FLAG_REG_ALBD :
-        Sigma_jj      = sigma(Y_array[-2], Y_array[-1], n_band)
-    #    print "Sigma_jj", Sigma_jj
-        inv_Sigma_jj  = np.linalg.inv(Sigma_jj)
-        addterm_k     = np.diag(np.dot(np.dot(X_albd_kj, inv_Sigma_jj), X_albd_kj.T))
-        regterm_albd = np.sum(addterm_k) + np.log(np.linalg.det(Sigma_jj))
-    else:
-        regterm_albd = 0.
-
-    r_y  = 1.0/SIGMA_Y**2*np.dot(Y_array-0.5, Y_array-0.5)
-
-    answer = - chi2 + ln_prior_albd + ln_prior_area + regterm_area + regterm_albd
+    answer = - chi2 + ln_prior_albd + ln_prior_area + regterm_area
     if flip :
         return -1. * answer
     else :
-        return answer
-
-
-#---------------------------------------------------
-def transform_Y2X(Y_array, n_band):
-
-    Y_array = np.maximum(Y_array, -10)
-    Y_array = np.minimum(Y_array, 10)
-
-    Y_albd_kj = Y_array[0:N_TYPE*n_band].reshape([N_TYPE, n_band])
-    X_albd_kj = np.exp( Y_albd_kj )/( 1 + np.exp( Y_albd_kj ) )
-    Y_area_lk = Y_array[N_TYPE*n_band:].reshape([N_SLICE, N_TYPE-1])
-    X_area_lk = np.zeros([len(Y_area_lk), len(Y_area_lk[0]) + 1 ])
-    for kk in xrange( len(Y_area_lk[0]) ):
-        X_area_lk[:,kk] = ( 1. - np.sum( X_area_lk[:,:kk], axis=1 ) ) * np.exp(Y_area_lk[:,kk]) / ( 1 + np.exp(Y_area_lk[:,kk]) )
-    X_area_lk[:,-1] = 1. - np.sum( X_area_lk[:,:-1], axis=1 )
-    return X_albd_kj, X_area_lk
-
-
-#---------------------------------------------------
-def transform_X2Y(X_albd_kj, X_area_lk):
-    """
-    Re-parameterization for convenience -- now Y can take on any value.
-    """
-
-#    print "X_area_lk", X_area_lk
-    Y_albd_kj = np.log(X_albd_kj) - np.log(1.-X_albd_kj)
-#    print "Y_albd_kj", Y_albd_kj
-    Y_area_lk = np.zeros([N_SLICE, N_TYPE-1])
-    print 'X_area_lk', X_area_lk.shape
-    print 'Y_area_lk', Y_area_lk.shape
-    for kk in xrange(N_TYPE-1):
-#        print np.sum(X_area_lk[:,:kk+1],axis=1)
-        Y_area_lk[:,kk] = np.log(X_area_lk[:,kk]) - np.log(1.-np.sum(X_area_lk[:,:kk+1], axis=1))
-#    print "Y_area_lk", Y_area_lk
-    return np.concatenate([Y_albd_kj.flatten(), Y_area_lk.flatten()])
+         return answer
 
 
 
@@ -185,25 +153,22 @@ if __name__ == "__main__":
     # set kernel
     param_geometry = ( LAT_O, LON_O, LAT_S, LON_S, OMEGA )
     Kernel_il = geometry.kernel( Time_i, N_SLICE, N_SIDE, param_geometry )
-    for ii in xrange( len( Kernel_il ) ):
-        for ll in xrange( len( Kernel_il[0] ) ):
-            print Kernel_il[ii][ll],
-        print '' 
+#    for ii in xrange( len( Kernel_il ) ):
+#        for ll in xrange( len( Kernel_il[0] ) ):
+#            print Kernel_il[ii][ll],
+#        print '' 
 
     X0_albd_kj = 0.3+np.zeros([N_TYPE, n_band])
-    X0_area_lk = 0.1+np.zeros([N_SLICE, N_TYPE-1])
+    X0_area_lk = 0.2+np.zeros([N_SLICE, N_TYPE])
 
     Y0_array = transform_X2Y(X0_albd_kj, X0_area_lk)
-    n_dim = len(Y0_array)
-    print '# of parameters', n_dim
 
-    n_param = 0
-    if FLAG_REG_AREA:
-        Y0_array = np.append(Y0_array, [1.0, 1.0])
-        n_param += 2
-    if FLAG_REG_ALBD:
-        Y0_array = np.append(Y0_array, [1.0, 1.0])
-        n_param += 2
+    if ( N_REGPARAM > 0 ) :
+        Y0_array = np.append(Y0_array, [1.0]*N_REGPARAM )
+
+    n_dim = len(Y0_array)
+    print 'Y0_array', Y0_array
+    print '# of parameters', n_dim
 
 #    Y0_albd_kj = np.zeros([N_TYPE,  len(Obs_ij[0])])
 #    Y0_area_lk = np.zeros([n_slice, N_TYPE-1])
@@ -211,37 +176,55 @@ if __name__ == "__main__":
 #    Y0_1<list = [Y0_albd_kj, Y0_area_lk]
 #    print "Y0_array", Y0_array
 
-    if (n_param > 0):
-        X_albd_kj, X_area_lk =  transform_Y2X(Y0_array[:-1*n_param], n_band)
+    print 'N_REGPARAM', N_REGPARAM
+    print 'LAMBDA in globals():?', ( 'LAMBDA' in globals() )
+    if (N_REGPARAM > 0):
+        X_albd_kj, X_area_lk =  transform_Y2X(Y0_array[:-1*N_REGPARAM], N_TYPE, n_band, N_SLICE)
     else:
-        X_albd_kj, X_area_lk =  transform_Y2X(Y0_array, n_band)
+        X_albd_kj, X_area_lk =  transform_Y2X(Y0_array, N_TYPE, n_band, N_SLICE)
 
 #    print "X_area_lk", X_area_lk
 #    print "X_albd_kj", X_albd_kj
 
     # minimize
     print "finding best-fit values..."
-    data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, False)
+    data = (Obs_ij, Obsnoise_ij, Kernel_il, N_REGPARAM, True, False)
     output = minimize(lnprob, Y0_array, args=data, method="Nelder-Mead")
 
     print "best-fit", output["x"]
 
-    data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, False)
+    data = (Obs_ij, Obsnoise_ij, Kernel_il, N_REGPARAM, True, False)
     lnprob_bestfit = lnprob( output['x'], *data )
 
 #    BIC = 2.0 * lnprob_bestfit + len( output['x'] ) * np.log( len(Obs_ij.flatten()) )
 #    print 'BIC: ', BIC
 
-    X_albd_kj, X_area_lk =  transform_Y2X(output["x"], n_band)
+    best_fit = output["x"]
+    if N_REGPARAM > 0:
+        X_albd_kj, X_area_lk =  transform_Y2X(output["x"][:-1*N_REGPARAM], N_TYPE, n_band, N_SLICE)
+    else :
+        X_albd_kj, X_area_lk =  transform_Y2X(output["x"], N_TYPE, n_band, N_SLICE)
     np.savetxt("X_area_lk", X_area_lk)
     np.savetxt("X_albd_kj_T", X_albd_kj.T)
+
+
+    if REGULARIZATION == 'Tikhonov' :
+        print 'sigma', best_fit[-1]
+    elif REGULARIZATION == 'GP' :
+        print 'overall_amp', best_fit[-3]
+        print 'wn_rel_amp', np.exp( best_fit[-2] ) / ( 1. + np.exp( best_fit[-2] ) )
+        print 'lambda _angular', best_fit[-1]**2 * ( 180. / np.pi )
+
+
     bestfit = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
+
+    sys.exit()
 
 
     print "MCMC until burn-in..."
     n_dim = len(Y0_array)
     n_walkers = 2*n_dim**2
-    data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, False, False)
+    data = (Obs_ij, Obsnoise_ij, Kernel_il, N_REGPARAM, False, False)
     sampler = emcee.EnsembleSampler(n_walkers, n_dim, lnprob, args=data, threads=NCPU)
 #    pos = 0.01*np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + output["x"]
     p0 = 0.1*np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + output["x"]
@@ -258,7 +241,7 @@ if __name__ == "__main__":
     print len( samples )
 
 
-    X_albd_kj, X_area_lk =  transform_Y2X( samples[0], n_band)
+    X_albd_kj, X_area_lk =  transform_Y2X( samples[0], N_TYPE, n_band, N_SLICE)
     X_array[0] = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
 
     X_albd_kj_stack = X_albd_kj
@@ -268,7 +251,7 @@ if __name__ == "__main__":
         if ii % 1000 == 0 :
             print ii
 
-        X_albd_kj, X_area_lk =  transform_Y2X( samples[ii], n_band)
+        X_albd_kj, X_area_lk =  transform_Y2X( samples[ii], N_TYPE, n_band, N_SLICE)
         X_array[ii] = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
 
         X_albd_kj_stack = np.dstack([ X_albd_kj_stack, X_albd_kj ])
@@ -310,7 +293,7 @@ if __name__ == "__main__":
 #
 #    print ''
 #    print ''
-#
+ #
 #    for ll in xrange( n_slice ):
 #        print ll,
 #        for kk in xrange( N_TYPE ):

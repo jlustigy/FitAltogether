@@ -5,6 +5,11 @@ import matplotlib.pyplot as pl
 from scipy.optimize import minimize
 import sys
 import corner
+import datetime
+import multiprocessing
+import os
+import pdb
+
 
 # March 2008
 #LAT_S = -0.5857506  # sub-solar latitude
@@ -12,28 +17,37 @@ import corner
 #LAT_O = 1.6808370  # sub-observer longitude
 #LON_O = 210.1242232 # sub-observer longitude
 
-NUM_MCMC = 100
-NUM_MCMC_BURNIN = 100
+#NUM_MCMC = 2
+#NUM_MCMC_BURNIN = 1
+
+NUM_MCMC = 10000
+NUM_MCMC_BURNIN = 1
+SEED_AMP = 0.5
+
+# Set the number of CPUs on current machine for the MCMC
+NCPU = multiprocessing.cpu_count()
 
 SIGMA_Y  = 3.0
-NOISELEVEL = 0.1
+NOISELEVEL = 0.01
 
 FLAG_REG_AREA = False
 FLAG_REG_ALBD = False
 
-N_SLICE = 4
+#n_slice = 4
 N_TYPE  = 2
 
 deg2rad = np.pi/180.
 
 N_SIDE   = 32
-# INFILE = "/Users/yuka/data/EPOXI/Earth/raddata_2_norm"
-#INFILE = "mockdata/mock_simple_1_data"
-INFILE = 'mockdata/mock_simple_1_scattered0.01_data_with_noise'
+#INFILE = "data/raddata_12_norm"
+#INFILE = "data/raddata_2_norm"
+INFILE = "mockdata/mock_simple_1_data"
+# INFILE = 'mockdata/mock_simple_1_scattered0.01_data_with_noise'
+
 
 #===================================================
 # basic functions
-#===================================================
+#=============================================== ====
 
 #---------------------------------------------------
 def latlon2cart(lat, lon):
@@ -94,32 +108,54 @@ def sigma(sigma, kappa, dim, periodic=False):
 
 #    print "Sigma_ll", Sigma_ll
 #    print np.dot(Sigma_ll, inv_Sigma_ll)
-#    Sigma2_ll = sigma**2*(Sigma_ll + np.identity(N_SLICE))
+#    Sigma2_ll = sigma**2*(Sigma_ll + np.identity(n_slice))
     Sigma2_ll = sigma**2*Sigma_ll
-    return Sigma2_ll 
+    return Sigma2_ll
 
 
 
 #---------------------------------------------------
 def get_ln_prior_albd( y_albd_kj ):
-
-    ln_prior = 0.
-    for k in xrange( len(y_albd_kj) ):
-        for j in xrange( len(y_albd_kj.T) ):
-            yy = y_albd_kj[k,j]
-            prior = np.exp( yy ) / ( 1 + np.exp( yy ) )**2
-            if ( prior > 0. ):
-                ln_prior = ln_prior + np.log( prior )
-            else:
-                print "ERROR! ln_prior_albd is NaN"
-                print "  y, prior   ", yy, prior
-                ln_prior = ln_prior + 0.0                
-
+    prior_kj = np.exp( y_albd_kj ) / ( 1 + np.exp( y_albd_kj ) )**2
+    ln_prior = np.sum( np.log( prior_kj ) )
     return ln_prior
 
 
+
 #---------------------------------------------------
-def get_ln_prior_area( y_area_lj, x_area_lj ):
+def get_ln_prior_area( y_area_lk, x_area_lk ):
+
+    l_dim = len( y_area_lk )
+    k_dim = len( y_area_lk.T )
+    kk_dim = len( y_area_lk.T )
+
+    sumF = np.cumsum( x_area_lk, axis=1 )
+
+    # when kk < k
+    l_indx, k_indx, kk_indx = np.meshgrid( np.arange( l_dim ), np.arange( k_dim ), np.arange( kk_dim ), indexing='ij' )
+    dgdF = np.zeros( [ l_dim, k_dim, kk_dim  ] )
+    dgdF[ l_indx, k_indx, kk_indx ] = x_area_lk[ l_indx, kk_indx ] / x_area_lk[ l_indx, k_indx ] / ( 1 - sumF[ l_indx, k_indx ] )
+
+    # when kk > k
+    k_tmp, kk_tmp   = np.triu_indices(k_dim)
+    l_indx, k_indx  = np.meshgrid( np.arange( l_dim ), k_tmp,  indexing='ij' )
+    l_indx, kk_indx = np.meshgrid( np.arange( l_dim ), kk_tmp, indexing='ij' )
+    dgdF[ l_indx, k_indx, kk_indx ] = 0.
+
+    # when kk = k
+    k_tmp, kk_tmp = np.diag_indices(k_dim)
+    l_indx, k_indx  = np.meshgrid( np.arange( l_dim ), k_tmp,  indexing='ij' )
+    l_indx, kk_indx = np.meshgrid( np.arange( l_dim ), kk_tmp, indexing='ij' )
+    dgdF[ l_indx, k_indx, kk_indx ] = 1./x_area_lk[l_indx,k_indx]*(1. - sumF[l_indx, k_indx-1]) / ( 1 - sumF[ l_indx, k_indx ] )
+
+    dgdF_factor = np.linalg.det( dgdF )
+    ln_prior = np.sum( np.log( dgdF_factor ) )
+
+    return ln_prior
+ 
+
+#---------------------------------------------------
+def get_ln_prior_area_old( y_area_lj, x_area_lj ):
 
     dydx_det = 1.
     for ll in xrange( len( y_area_lj ) ):
@@ -162,7 +198,9 @@ def lnprob(Y_array, *args):
     """
 
     Obs_ij, Obsnoise_ij, Kernel_il, n_param, flip, verbose  = args
+    n_slice = len(Obs_ij)
     n_band = len(Obs_ij[0])
+
 
     # parameter conversion
     if (n_param > 0):
@@ -181,11 +219,12 @@ def lnprob(Y_array, *args):
     ln_prior_albd = get_ln_prior_albd( Y_albd_kj )
 
     # flat prior for area fraction
-    Y_area_lk = Y_array[N_TYPE*n_band:].reshape([N_SLICE, N_TYPE-1])
+    Y_area_lk = Y_array[N_TYPE*n_band:].reshape([n_slice, N_TYPE-1])
     ln_prior_area = get_ln_prior_area( Y_area_lk, X_area_lk[:,:-1] )
 
     if verbose :
         print 'chi2', chi2 - ln_prior_albd - ln_prior_area, chi2, ln_prior_albd, ln_prior_area
+        print 'chi2/d.o.f.', chi2 / (len(Y_array)*1.-1.), len(Y_array)
 
     # regularization term for area fraction
     if FLAG_REG_AREA :
@@ -193,7 +232,7 @@ def lnprob(Y_array, *args):
             origin = -4
         else:
             origin = -2
-        Sigma_ll      = sigma(Y_array[origin], Y_array[origin+1], N_SLICE, periodic=True)
+        Sigma_ll      = sigma(Y_array[origin], Y_array[origin+1], n_slice, periodic=True)
         inv_Sigma_ll  = np.linalg.inv(Sigma_ll)
         addterm_k     = np.diag(np.dot(np.dot(X_area_lk.T, inv_Sigma_ll), X_area_lk))
         r_areafrac_1  = np.sum(addterm_k)
@@ -211,7 +250,7 @@ def lnprob(Y_array, *args):
         addterm_k     = np.diag(np.dot(np.dot(X_albd_kj, inv_Sigma_jj), X_albd_kj.T))
         r_albd_1 = np.sum(addterm_k)
         r_albd_2 = np.log(np.linalg.det(Sigma_jj))
-    else: 
+    else:
         r_albd_1  = 0.
         r_albd_2  = 0.
 
@@ -234,7 +273,7 @@ def transform_Y2X(Y_array, n_band):
 
     Y_albd_kj = Y_array[0:N_TYPE*n_band].reshape([N_TYPE, n_band])
     X_albd_kj = np.exp( Y_albd_kj )/( 1 + np.exp( Y_albd_kj ) )
-    Y_area_lk = Y_array[N_TYPE*n_band:].reshape([N_SLICE, N_TYPE-1])
+    Y_area_lk = Y_array[N_TYPE*n_band:].reshape([n_slice, N_TYPE-1])
     X_area_lk = np.zeros([len(Y_area_lk), len(Y_area_lk[0]) + 1 ])
     for kk in xrange( len(Y_area_lk[0]) ):
         X_area_lk[:,kk] = ( 1. - np.sum( X_area_lk[:,:kk], axis=1 ) ) * np.exp(Y_area_lk[:,kk]) / ( 1 + np.exp(Y_area_lk[:,kk]) )
@@ -243,14 +282,17 @@ def transform_Y2X(Y_array, n_band):
 
 
 #---------------------------------------------------
-def transform_X2Y(X_albd_kj, X_area_lk):
-
+def transform_X2Y(X_albd_kj, X_area_lk, n_slice):
+    """
+    Re-parameterization for convenience -- now Y can take on any value.
+    """
 
 #    print "X_area_lk", X_area_lk
     Y_albd_kj = np.log(X_albd_kj) - np.log(1.-X_albd_kj)
 #    print "Y_albd_kj", Y_albd_kj
-    Y_area_lk = np.zeros([N_SLICE, N_TYPE-1])
-
+    Y_area_lk = np.zeros([n_slice, N_TYPE-1])
+    print 'X_area_lk', X_area_lk.shape
+    print 'Y_area_lk', Y_area_lk.shape
     for kk in xrange(N_TYPE-1):
 #        print np.sum(X_area_lk[:,:kk+1],axis=1)
         Y_area_lk[:,kk] = np.log(X_area_lk[:,kk]) - np.log(1.-np.sum(X_area_lk[:,:kk+1], axis=1))
@@ -262,28 +304,49 @@ def transform_X2Y(X_albd_kj, X_area_lk):
 #===================================================
 if __name__ == "__main__":
 
+    # print start time
+    now = datetime.datetime.now()
+    print now.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Create directory for this run
+    startstr = now.strftime("%Y-%m-%d--%H-%M")
+    run_dir = "mcmc_output/" + startstr + "/"
+    os.mkdir(run_dir)
+    print "Created directory:", run_dir
+
     # input data
     Obs_ij = np.loadtxt(INFILE)
-    n_time = len(Obs_ij)    
+    n_slice = len(Obs_ij)
+
     n_band = len(Obs_ij[0])
-    Time_i = np.arange( n_time )
+    Time_i = np.arange( n_slice )
 
     Obsnoise_ij = ( NOISELEVEL * Obs_ij )
-    n_time = len(Obs_ij)    
-    n_band = len(Obs_ij[0])
 
     # set kernel
-#    Kernel_il = kernel(Time_i, N_SLICE)
-    Kernel_il = np.identity( N_SLICE )
-#    Sigma_ll = np.identity(N_SLICE)
+#    Kernel_il = kernel(Time_i, n_slice)
+    Kernel_il = np.identity( n_slice )
+#    Sigma_ll = np.identity(n_slice)
 
 #    print 1/0
 #    set initial condition
-#    Y0_array = np.ones(N_TYPE*n_band+N_SLICE*(N_TYPE-1))
+#    Y0_array = np.ones(N_TYPE*n_band+n_slice*(N_TYPE-1))
     X0_albd_kj = 0.3+np.zeros([N_TYPE, n_band])
-    X0_area_lk = 0.1+np.zeros([N_SLICE, N_TYPE-1])
+    X0_area_lk = 0.1+np.zeros([n_slice, N_TYPE-1])
 
-    X0_array = np.r_[ X0_albd_kj.flatten(), X0_area_lk.T.flatten() ]
+## albedo ( band x surface type )
+#    X0_albd_kj = np.array( [[1.000000000000000056e-01, 9.000000000000000222e-01],
+#                            [2.999999999999999889e-01, 5.000000000000000000e-01],
+#                            [3.499999999999999778e-01, 5.999999999999999778e-01]]).T
+#
+#
+## area fraction ( longitude slice x suface type )
+#    X0_area_lk = np.array([[2.000000000000000111e-01, 8.000000000000000444e-01],
+#                           [5.500000000000000444e-01, 4.499999999999999556e-01],
+#                           [5.999999999999999778e-01, 4.000000000000000222e-01],
+#                           [9.000000000000000222e-01, 9.999999999999997780e-02]])
+
+#    X0_array = np.r_[ X0_albd_kj.flatten(), X0_area_lk.T[0].flatten() ]
 
 #    X0_albd_kj[0,0:7] = np.array([0.35, 0.28, 0.28, 0.32, 0.40, 0.47, 0.35])
 #    X0_albd_kj[1,0:7] = np.array([0.37, 0.28, 0.28, 0.30, 0.40, 0.48, 0.37])
@@ -292,7 +355,9 @@ if __name__ == "__main__":
 #    X0_albd_kj[1,0:7] = np.array([0.37, 0.28, 0.28, 0.30, 0.40, 0.48])
 #    X0_albd_kj[2,0:7] = np.array([0.67, 0.52, 0.40, 0.35, 0.33, 0.33])
 #    X0_area_lk[0,0] = np.array([0.3])
-    Y0_array = transform_X2Y(X0_albd_kj, X0_area_lk)
+    Y0_array = transform_X2Y(X0_albd_kj, X0_area_lk, n_slice)
+    n_dim = len(Y0_array)
+    print '# of parameters', n_dim
 
     n_param = 0
     if FLAG_REG_AREA:
@@ -303,7 +368,7 @@ if __name__ == "__main__":
         n_param += 2
 
 #    Y0_albd_kj = np.zeros([N_TYPE,  len(Obs_ij[0])])
-#    Y0_area_lk = np.zeros([N_SLICE, N_TYPE-1])
+#    Y0_area_lk = np.zeros([n_slice, N_TYPE-1])
 #    Y0_area_lk[:,0] = 1.
 #    Y0_list = [Y0_albd_kj, Y0_area_lk]
 #    print "Y0_array", Y0_array
@@ -316,60 +381,116 @@ if __name__ == "__main__":
 #    print "X_area_lk", X_area_lk
 #    print "X_albd_kj", X_albd_kj
 
+    ########## use optimization for mcmc initial guesses ##########
+
     # minimize
     print "finding best-fit values..."
-    data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, True)
+    data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, False)
     output = minimize(lnprob, Y0_array, args=data, method="Nelder-Mead")
 
-    print "best-fit", output["x"]
+    best_fit = output["x"]
+    print "best-fit", best_fit
 
     data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, False)
     lnprob_bestfit = lnprob( output['x'], *data )
     BIC = 2.0 * lnprob_bestfit + len( output['x'] ) * np.log( len(Obs_ij.flatten()) )
     print 'BIC: ', BIC
-#    sys.exit()
 
+    # Transform back to physical params
     X_albd_kj, X_area_lk =  transform_Y2X(output["x"], n_band)
-    np.savetxt("X_area_lk", X_area_lk)
-    np.savetxt("X_albd_kj_T", X_albd_kj.T)
+    X_albd_kj_T = X_albd_kj.T
+    #np.savetxt("X_area_lk", X_area_lk)
+    #np.savetxt("X_albd_kj_T", X_albd_kj.T)
     bestfit = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
 
-    print "residuals", Obs_ij - np.dot( X_area_lk, X_albd_kj )
+    # Calculate residuals
+    residuals = Obs_ij - np.dot( X_area_lk, X_albd_kj )
+    print "residuals", residuals
 
-    print "MCMC..."
+    # Save initialization run as npz
+    print "Saving:", run_dir+"initial_minimize.npz"
+    np.savez(run_dir+"initial_minimize.npz", data=data, best_fity=best_fit, \
+        lnprob_bestfit=lnprob_bestfit, BIC=BIC, X_area_lk=X_area_lk, \
+        X_albd_kj_T=X_albd_kj_T, residuals=residuals, best_fitx = bestfit)
 
+    ########## Run MCMC ##########
+
+    print "MCMC until burn-in..."
+
+    # Number of dimensions is number of free parameters
     n_dim = len(Y0_array)
+    # Number of walkers
     n_walkers = 2*n_dim**2
+
+    # Data tuple to pass to emcee
     data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, False, False)
-    sampler = emcee.EnsembleSampler(n_walkers, n_dim, lnprob, args=data)
-#    pos = 0.01*np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + output["x"]
-    p0 = 0.01*np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + output["x"]
+
+    # Initialize emcee EnsembleSampler object
+    sampler = emcee.EnsembleSampler(n_walkers, n_dim, lnprob, args=data, threads=NCPU)
+
+    # Set starting guesses as gaussian noise ontop of intial optimized solution
+    # note: consider using emcee.utils.sample_ball(p0, std) (std: axis-aligned standard deviation.)
+    #       to produce a ball of walkers around an initial parameter value.
+    p0 = SEED_AMP*np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + output["x"]
+
+    """
+    # Run MCMC
     pos, prob, state = sampler.run_mcmc( p0, NUM_MCMC_BURNIN )
-    np.savetxt( 'tmp.txt', sampler.chain[0,:,1] )
-
+    # Save initial positions of chain[n_walkers, steps, n_dim]
+    burnin_chain = sampler.chain[:, :, :].reshape((-1, n_dim))
+    # Save chain[n_walkers, steps, n_dim] as npz
+    now = datetime.datetime.now()
+    print "Finished Burn-in MCMC:", now.strftime("%Y-%m-%d %H:%M:%S")
+    print "Saving:", run_dir+"mcmc_burnin.npz"
+    np.savez(run_dir+"mcmc_burnin.npz", pos=pos, prob=prob, burnin_chain=burnin_chain)
+    print "MCMC from burn-in..."
+    # Reset sampler for production run
     sampler.reset()
-    sampler.run_mcmc( pos, NUM_MCMC )
+    """
+
+    # Run MCMC
+    sampler.run_mcmc( p0, NUM_MCMC )
+
+    original_samples = sampler.chain
+
+    print "Saving:", run_dir+"mcmc_samples.npz"
+    np.savez(run_dir+"mcmc_samples.npz", samples=original_samples)
+
+    sys.exit()
+
+    # We don't want to flatten the chains until we've removed the burnin
     samples = sampler.chain[:, :, :].reshape((-1, n_dim)) # trial x n_dim
-    X_array = np.zeros( [ len( samples ), N_TYPE*n_band + N_SLICE*N_TYPE ] )
+
+    X_array = np.zeros( [ len( samples ), N_TYPE*n_band + n_slice*N_TYPE ] )
+
+    print 'accumulation...'
+    print len( samples )
 
 
-    X_albd_kj, X_area_lk =  transform_Y2X( samples[0], n_band )
+    X_albd_kj, X_area_lk =  transform_Y2X( samples[0], n_band)
     X_array[0] = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
 
     X_albd_kj_stack = X_albd_kj
     X_area_lk_stack = X_area_lk
 
-    for ii in xrange( len( samples ) ):
+    for ii in xrange( 1, len( samples ) ):
+        if ii % 1000 == 0 :
+            print ii
+
         X_albd_kj, X_area_lk =  transform_Y2X( samples[ii], n_band)
         X_array[ii] = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
 
         X_albd_kj_stack = np.dstack([ X_albd_kj_stack, X_albd_kj ])
         X_area_lk_stack = np.dstack([ X_area_lk_stack, X_area_lk ])
-    
+
+
+
+
+    print 'evaluation...'
 
     X_albd_error = np.percentile( X_albd_kj_stack, [16, 50, 84], axis=2)
 
-#    X_albd_error = map(lambda v: np.array([v[1], v[2]-v[1], v[1]-v[0]]), 
+#    X_albd_error = map(lambda v: np.array([v[1], v[2]-v[1], v[1]-v[0]]),
 #                       zip(*np.percentile( X_albd_kj_stack, [16, 50, 84], axis=2)))
 
     print X_albd_error
@@ -377,56 +498,91 @@ if __name__ == "__main__":
 
     for jj in  xrange( n_band ):
         for kk in  xrange( N_TYPE ):
-            print X_albd_error[1][kk][jj], X_albd_error[2][kk][jj], X_albd_error[0][kk][jj], 
+            print X_albd_error[1][kk][jj], X_albd_error[2][kk][jj], X_albd_error[0][kk][jj],
         print ''
 
     print ''
     print ''
 
     X_area_error = np.percentile( X_area_lk_stack, [16, 50, 84], axis=2)
-#    X_area_error = map(lambda v: np.array([v[1], v[2]-v[1], v[1]-v[0]]), 
+#    X_area_error = map(lambda v: np.array([v[1], v[2]-v[1], v[1]-v[0]]),
 #                       zip(*np.percentile( X_area_lk_stack, [16, 50, 84], axis=2)))
 
-    for ll in xrange( N_SLICE ):
+    for ll in xrange( n_slice ):
         for kk in  xrange( N_TYPE ):
-            print X_area_error[1][ll][kk], X_area_error[2][ll][kk], X_area_error[0][ll][kk], 
-        print '' 
+            print X_area_error[1][ll][kk], X_area_error[2][ll][kk], X_area_error[0][ll][kk],
+        print ''
+
+
+#    for jj in xrange( n_band ):
+#        print jj
+#        for kk in xrange( N_TYPE ):
+#            print np.average( X_albd_kj_stack[kk][jj] ), np.sqrt( np.var(X_albd_kj_stack[kk][jj]) ),
+#        print ''
+#
+#    print ''
+#    print ''
+#
+#    for ll in xrange( n_slice ):
+#        print ll,
+#        for kk in xrange( N_TYPE ):
+#            print np.average( X_area_lk_stack[ll][kk] ), np.sqrt( np.var( X_area_lk_stack[ll][kk] ) ),
+#        print ''
+
+
+    # Save results
+    print "Saving:", run_dir+"mcmc_results.npz"
+    np.savez(run_dir+"mcmc_results.npz", samples=samples, original_samples=original_samples, \
+        X_albd_kj_stack=X_albd_kj_stack, X_area_lk_stack=X_area_lk_stack, \
+        X_albd_error=X_albd_error, X_area_error=X_area_error)
 
     sys.exit()
 
-    myrange = np.tile( [0., 1.,], ( 10., 1.) )
-    mylabel = [ '$a_{11}$', '$a_{12}$', '$a_{13}$', '$a_{21}$', '$a_{22}$', '$a_{23}$', '$f_{11}$', '$f_{12}$', '$f_{13}$', '$f_{14}$' ]
-    fig = corner.corner( X_array, labels=mylabel, truths=X0_array, range=myrange, bins=100 )
-    fig.savefig(INFILE+"_corner.png")
+    print ''
+    now = datetime.datetime.now()
+    print now.strftime("%Y-%m-%d %H:%M:%S")
+    print 'PLOTTING ALBEDO PROBABILITY MAP...'
+    myrange = np.tile( [0., 1.,], ( N_TYPE*n_band, 1 ) )
+    fig = corner.corner( X_array[:,:N_TYPE*n_band], labels=range(N_TYPE*n_band), truths=bestfit[:N_TYPE*n_band], range=myrange, bins=100 )
+    fig.savefig(INFILE+"_corner_albd.png")
 
-#
-#
-#    np.savetxt( 'tmp.txt', sampler.chain[0,:,1] )
-#    sampler.reset()
-#
-#    sampler.run_mcmc(pos, NUM_MCMC )
-#    np.savetxt("tmp1.txt", sampler.flatchain[:,1])
-#    np.savetxt("tmp5.txt", sampler.flatchain[:,5])
-#
-##    X_albd_kj_list = []
-##    X_area_lk_list = []
-#    histo1 = []
-#    histo2 = []
-#    for nn in xrange(50,len(sampler.flatchain)):
-#        if (n_param > 0):
-#            X_albd_kj, X_area_lk = transform_Y2X(sampler.flatchain[nn,:-1*n_param], n_band)
-#        else:
-#            X_albd_kj, X_area_lk = transform_Y2X(sampler.flatchain[nn], n_band)
-#        histo1.append(X_albd_kj[0][0])
-#        histo2.append(X_area_lk[0][0])
-##       X_albd_kj_list.append(X_albd_kj)
-##       X_area_lk_list.append(X_albd_kj)
-#
-#    pl.figure()
-#    pl.hist(histo1, 100, color="k", histtype="step", range=(0,1))
-#    pl.show()
-#
-#    pl.hist(histo2, 100, color="k", histtype="step", range=(0,1))
-##    pl.title("Dimension {0:d}".format(i))
-#    pl.show()
+    now = datetime.datetime.now()
+    print now.strftime("%Y-%m-%d %H:%M:%S")
 
+    print ''
+    now = datetime.datetime.now()
+    print now.strftime("%Y-%m-%d %H:%M:%S")
+    print 'PLOTTING AREA FRACTION PROBABILITY MAP...'
+    myrange = np.tile( [0., 1.,], ( n_slice, 1 ) )
+    fig = corner.corner( X_array[:,N_TYPE*n_band:N_TYPE*n_band+n_slice], labels=range(n_slice), truths=bestfit[N_TYPE*n_band:N_TYPE*n_band+n_slice], range=myrange, bins=100 )
+    fig.savefig(INFILE+"_corner_area1.png")
+
+    now = datetime.datetime.now()
+    print now.strftime("%Y-%m-%d %H:%M:%S")
+
+    print ''
+    now = datetime.datetime.now()
+    print now.strftime("%Y-%m-%d %H:%M:%S")
+    print 'PLOTTING AREA FRACTION PROBABILITY MAP...'
+    myrange = np.tile( [0., 1.,], ( n_slice, 1 ) )
+    fig = corner.corner( X_array[:,N_TYPE*n_band+n_slice:N_TYPE*n_band+2*n_slice], labels=range(n_slice), truths=bestfit[N_TYPE*n_band+n_slice:N_TYPE*n_band+2*n_slice], range=myrange, bins=100 )
+    fig.savefig(INFILE+"_corner_area2.png")
+
+    print 'X_array.shape', X_array[:,N_TYPE*n_band+2*n_slice:].shape
+    print X_array[:,N_TYPE*n_band+2*n_slice:]
+
+    now = datetime.datetime.now()
+    print now.strftime("%Y-%m-%d %H:%M:%S")
+
+    print ''
+    now = datetime.datetime.now()
+    print now.strftime("%Y-%m-%d %H:%M:%S")
+    print 'PLOTTING AREA FRACTION PROBABILITY MAP...'
+    myrange = np.tile( [0., 1.,], ( n_slice, 1 ) )
+    print 'myrange', myrange
+    print 'range(n_slice)', range(n_slice)
+    fig = corner.corner( X_array[:,N_TYPE*n_band+2*n_slice:], labels=range(n_slice), truths=bestfit[N_TYPE*n_band+2*n_slice:], range=myrange, bins=100 )
+    fig.savefig(INFILE+"_corner_area3.png")
+
+    now = datetime.datetime.now()
+    print now.strftime("%Y-%m-%d %H:%M:%S")

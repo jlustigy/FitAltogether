@@ -4,13 +4,57 @@ import numpy as np
 def get_ln_prior_albd( y_albd_kj ):
 
     prior_kj = np.exp( y_albd_kj ) / ( 1 + np.exp( y_albd_kj ) )**2
-    ln_prior = np.sum( np.log( prior_kj ) )
+    ln_prior = np.log( np.prod( prior_kj ) )
+#    ln_prior = np.sum( np.log( prior_kj ) )
     return ln_prior
-
 
 
 #---------------------------------------------------
 def get_ln_prior_area( y_area_lk, x_area_lk ):
+
+    l_dim = len( y_area_lk )
+    k_dim = len( y_area_lk.T )
+    kk_dim = len( y_area_lk.T )
+
+    expY_area_lk = np.exp( y_area_lk )
+    expYY_area_lk = 1./( 1 + expY_area_lk )
+    cumprodY_area_lk = np.cumprod( expYY_area_lk, axis=1 )
+
+    # when kk < k
+    dFdg = np.zeros( [ l_dim, k_dim, kk_dim  ] )
+    l_indx, k_indx, kk_indx = np.meshgrid( np.arange( l_dim ), np.arange( k_dim ), np.arange( kk_dim ), indexing='ij' )
+#    print ''
+#    print l_indx, k_indx, kk_indx
+#    print ''
+    dFdg[ l_indx, k_indx, kk_indx ] = -1. * x_area_lk[ l_indx, kk_indx ] * expY_area_lk[ l_indx, k_indx ] * cumprodY_area_lk[ l_indx, k_indx ]
+
+    # when kk > k
+    k_tmp, kk_tmp   = np.triu_indices(k_dim)
+    l_indx, k_indx  = np.meshgrid( np.arange( l_dim ), k_tmp,  indexing='ij' )
+    l_indx, kk_indx = np.meshgrid( np.arange( l_dim ), kk_tmp, indexing='ij' )
+    dFdg[ l_indx, k_indx, kk_indx ] = 0.
+
+    # when kk = k
+    k_tmp, kk_tmp = np.diag_indices(k_dim)
+    l_indx, k_indx  = np.meshgrid( np.arange( l_dim ), k_tmp,  indexing='ij' )
+    l_indx, kk_indx = np.meshgrid( np.arange( l_dim ), kk_tmp, indexing='ij' )
+    dFdg[ l_indx, k_indx, kk_indx ] = x_area_lk[ l_indx, k_indx ] * cumprodY_area_lk[ l_indx, kk_indx ]
+
+    ln_prior = np.sum( np.log( np.linalg.det( dFdg ) ) )
+
+    return ln_prior
+
+
+##---------------------------------------------------
+#def get_ln_prior_albd_new( y_albd_kj ):
+#
+#    dAdb = 1. / ( 1 + np.exp( y_albd_kj ) )**2
+#    ln_prior = np.log( np.prod( dAdb ) )
+#    return ln_prior
+#
+
+#---------------------------------------------------
+def get_ln_prior_area_old( y_area_lk, x_area_lk ):
 
     l_dim = len( y_area_lk )
     k_dim = len( y_area_lk.T )
@@ -35,46 +79,69 @@ def get_ln_prior_area( y_area_lk, x_area_lk ):
     l_indx, kk_indx = np.meshgrid( np.arange( l_dim ), kk_tmp, indexing='ij' )
     dgdF[ l_indx, k_indx, kk_indx ] = 1./x_area_lk[l_indx,k_indx]*(1. - sumF[l_indx, k_indx-1]) / ( 1 - sumF[ l_indx, k_indx ] )
 
-    dgdF_factor = np.linalg.det( dgdF )
-    ln_prior = np.sum( np.log( dgdF_factor ) )
+    det_dgdF = np.linalg.det( dgdF )
+    ln_prior = np.log( np.prod( 1./det_dgdF ) )
 
     return ln_prior
 
 
-#---------------------------------------------------
-def regularize_area( x_area_lk, wn_rel_amp, lambda_angular ):
 
+
+#---------------------------------------------------
+def regularize_area_GP( x_area_lk, regparam ):
+
+    sigma, wn_rel_amp_seed, lambda_angular = regparam
+
+    wn_rel_amp = np.exp( wn_rel_amp_seed ) / ( 1. + np.exp( wn_rel_amp_seed ) )
+#    print 'wn_rel_amp', wn_rel_amp
+#    print 'lambda_angular', lambda_angular
     l_dim = len( x_area_lk )
-    cov = get_cov( wn_rel_amp, lamnda_angular, l_dim )
+    cov = get_cov( sigma, wn_rel_amp, lambda_angular, l_dim )
+
+#    print 'cov', cov
     inv_cov = np.linalg.inv( cov )
     det_cov = np.linalg.det( cov )
 
-    x_area_ave = 1./3
+#    print 'inv_cov', inv_cov
+    x_area_ave = 1./3.
     dx_area_lk = x_area_lk - x_area_ave
-    term1 = -0.5 * np.dot( dx_area_lk, np.dot( inv_cov, dx_area_lk ) )
+    term1_all = np.dot( dx_area_lk.T, np.dot( inv_cov, dx_area_lk ) )
+    term1 = -0.5 * np.sum( term1_all.diagonal() )
     term2 = -0.5 * np.log( det_cov )
+#    print 'term1, term2', term1, term2
     return term1 + term2
 
 #---------------------------------------------------
-def get_cov( wn_rel_amp, lambda_angular, l_dim, periodic=True):
+def get_cov( sigma, wn_rel_amp, lambda_angular, l_dim, periodic=True):
 
 #    kappa0 = np.log(output["x"][-1]) - np.log(360.0 - output["x"][-1])
     Sigma_ll = np.zeros([l_dim, l_dim])
     lon_l = 2.0 * np.pi * np.arange( l_dim ) / ( l_dim * 1. )
     dif_lon_ll = lon_l[:,np.newaxis] - lon_l[np.newaxis,:]
     if periodic :
-        dif_lon_ll = np.minimum( abs(lon_ll), abs( 2. * np.pi - lon_ll ) )
+        dif_lon_ll = np.minimum( abs( dif_lon_ll ), abs( 2. * np.pi - dif_lon_ll ) )
     else :
-        dif_lon_ll = abs( lon_ll )
+        dif_lon_ll = abs( dif_lon_ll )
 
-    Sigma_ll = np.exp( - 0.5 * dif_lon_ll**2 / ( lambda_angular**2 ) )
+#    Sigma_ll = np.exp( - 0.5 * dif_lon_ll**2 / ( lambda_angular**2 ) )
+    Sigma_ll = np.exp( - dif_lon_ll / ( lambda_angular**2 ) )
 
-    cov_ll = Sigma_ll * ( 1 - wn_rel_amp )
+    cov = Sigma_ll * ( 1 - wn_rel_amp )
     cov[np.diag_indices(l_dim)] += wn_rel_amp
     cov /= (1.0 +  wn_rel_amp)
+    cov = cov * sigma
 
     return cov
 
+
+#---------------------------------------------------
+def regularize_area_tikhonov( x_area_lk, regparam ):
+
+    lmd = regparam
+    x_area_ave = 1./len(x_area_lk.T)
+    dx_area_lk = x_area_lk[:,:-1] - x_area_ave
+    term = np.sum( dx_area_lk**2. )
+    return -1. * ( 1. / lmd )**2 * term
 
 
 ##---------------------------------------------------
@@ -84,7 +151,7 @@ def get_cov( wn_rel_amp, lambda_angular, l_dim, periodic=True):
 #    for k in xrange( len(y_albd_kj) ):
 #        for j in xrange( len(y_albd_kj.T) ):
 #            yy = y_albd_kj[k,j]
-#            prior = np.exp( yy ) / ( 1 + np.exp( yy ) )**2
+#             prior = np.exp( yy ) / ( 1 + np.exp( yy ) )**2
 #            if ( prior > 0. ):
 #                ln_prior = ln_prior + np.log( prior )
 #            else:
@@ -95,7 +162,7 @@ def get_cov( wn_rel_amp, lambda_angular, l_dim, periodic=True):
 #    return ln_prior
 
 
-
+ 
 #---------------------------------------------------
 #def get_ln_prior_area_old( y_area_lj, x_area_lj ):
 #

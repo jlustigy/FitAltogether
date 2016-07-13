@@ -12,10 +12,22 @@ import operator
 
 #-----------------------------------------------------------------------------
 
-#MONTH = 'March'
+# MONTH = 'March'
 MONTH = 'June'
 
-target_indx = [7,11,13,16]
+# soil
+# target_indx = [7,11,13,16]
+
+# ocean
+#target_indx = [17]
+
+# vegetation
+# target_indx = [1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 14]
+
+# all
+target_indx = range(1,18)
+
+
 cldoptd_crit = 5.
 
 TIME_END = 24.0
@@ -37,7 +49,7 @@ print '# N_pixel', N_pixel
 #--------------------------------------------------------------------
 
 if ( MONTH == 'March' ):
-# from spectroscopic data
+# based on spectroscopic data
 #         Sub-Sun Lon/Lat =      97.091       -0.581 /     W longitude, degrees 
 #         Sub-SC  Lon/Lat =     154.577        1.678 /     W longitude, degrees
     LAT_S = -0.581  # sub-solar latitude
@@ -49,7 +61,7 @@ if ( MONTH == 'March' ):
     cldfile_frac = "data/cldfrac_EPOXI_March_6.dat"
     cldfile_optd = "data/clddpth_EPOXI_March_6.dat"
 elif ( MONTH == 'June' ):
-# from spectroscopic data
+# based on spectroscopic data
 #         Sub-Sun Lon/Lat =      79.023       22.531 /     W longitude, degrees
 #         Sub-SC  Lon/Lat =     154.535        0.264 /     W longitude, degrees
     LON_S = 280.977

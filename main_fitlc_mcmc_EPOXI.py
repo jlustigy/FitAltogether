@@ -9,6 +9,7 @@ import datetime
 import multiprocessing
 import geometry
 import prior
+from reparameterize import *
 
 # March 2008
 #LAT_S = -0.5857506  # sub-solar latitude
@@ -31,19 +32,18 @@ FLAG_REG_AREA = False
 FLAG_REG_ALBD = False
 
 #n_slice = 4
-N_TYPE  = 3
+N_TYPE  = 2
 
 deg2rad = np.pi/180.
 
 N_SIDE   = 32
 #INFILE = "data/raddata_12_norm"
-INFILE = "data/raddata_1_norm"
-#INFILE = "mockdata/mock_simple_1_data"
-# INFILE = 'mockdata/mock_simple_1_scattered0.01_data_with_noise'
-
+#INFILE = "data/raddata_1_norm"
+#INFILE = 'mockdata/mock_simple_1_scattered0.01_data_with_noise'
+INFILE = "mockdata/mock_simple_1_data"
 
 #===================================================
-# basic functions
+ # basic functions
 #=============================================== ====
 
 #---------------------------------------------------
@@ -59,9 +59,9 @@ def lnprob(Y_array, *args):
 
     # parameter conversion
     if (n_param > 0):
-        X_albd_kj, X_area_lk = transform_Y2X(Y_array[:-1*n_param], len(Obs_ij[0]))
+        X_albd_kj, X_area_lk = transform_Y2X( Y_array[:-1*n_param], N_TYPE, n_band, n_slice, flatten=False )
     else:
-        X_albd_kj, X_area_lk = transform_Y2X(Y_array, len(Obs_ij[0]))
+        X_albd_kj, X_area_lk = transform_Y2X( Y_array, N_TYPE, n_band, n_slice, flatten=False )
 
     # making matrix...
     Model_ij = np.dot(Kernel_il, np.dot(X_area_lk, X_albd_kj))
@@ -78,8 +78,10 @@ def lnprob(Y_array, *args):
     ln_prior_area = prior.get_ln_prior_area( Y_area_lk, X_area_lk[:,:-1] )
 
     if verbose :
-        print 'chi2', chi2 - ln_prior_albd - ln_prior_area, chi2, ln_prior_albd, ln_prior_area
+        print ''
+        print 'chi2', chi2 - ln_prior_albd - ln_prior_area, chi2, -1*ln_prior_albd, -1*ln_prior_area
         print 'chi2/d.o.f.', chi2 / (len(Y_array)*1.-1.), len(Y_array)
+        print ''
 
     # regularization term for area fraction
     if FLAG_REG_AREA :
@@ -120,40 +122,6 @@ def lnprob(Y_array, *args):
     else :
         return - chi2 + ln_prior_albd + ln_prior_area
 
-#---------------------------------------------------
-def transform_Y2X(Y_array, n_band):
-
-    Y_array = np.maximum(Y_array, -10)
-    Y_array = np.minimum(Y_array, 10)
-
-    Y_albd_kj = Y_array[0:N_TYPE*n_band].reshape([N_TYPE, n_band])
-    X_albd_kj = np.exp( Y_albd_kj )/( 1 + np.exp( Y_albd_kj ) )
-    Y_area_lk = Y_array[N_TYPE*n_band:].reshape([n_slice, N_TYPE-1])
-    X_area_lk = np.zeros([len(Y_area_lk), len(Y_area_lk[0]) + 1 ])
-    for kk in xrange( len(Y_area_lk[0]) ):
-        X_area_lk[:,kk] = ( 1. - np.sum( X_area_lk[:,:kk], axis=1 ) ) * np.exp(Y_area_lk[:,kk]) / ( 1 + np.exp(Y_area_lk[:,kk]) )
-    X_area_lk[:,-1] = 1. - np.sum( X_area_lk[:,:-1], axis=1 )
-    return X_albd_kj, X_area_lk
-
-
-#---------------------------------------------------
-def transform_X2Y(X_albd_kj, X_area_lk, n_slice):
-    """
-    Re-parameterization for convenience -- now Y can take on any value.
-    """
-
-#    print "X_area_lk", X_area_lk
-    Y_albd_kj = np.log(X_albd_kj) - np.log(1.-X_albd_kj)
-#    print "Y_albd_kj", Y_albd_kj
-    Y_area_lk = np.zeros([n_slice, N_TYPE-1])
-    print 'X_area_lk', X_area_lk.shape
-    print 'Y_area_lk', Y_area_lk.shape
-    for kk in xrange(N_TYPE-1):
-#        print np.sum(X_area_lk[:,:kk+1],axis=1)
-        Y_area_lk[:,kk] = np.log(X_area_lk[:,kk]) - np.log(1.-np.sum(X_area_lk[:,:kk+1], axis=1))
-#    print "Y_area_lk", Y_area_lk
-    return np.concatenate([Y_albd_kj.flatten(), Y_area_lk.flatten()])
-
 
 
 #===================================================
@@ -180,7 +148,7 @@ if __name__ == "__main__":
 #    set initial condition
 #    Y0_array = np.ones(N_TYPE*n_band+n_slice*(N_TYPE-1))
     X0_albd_kj = 0.3+np.zeros([N_TYPE, n_band])
-    X0_area_lk = 0.1+np.zeros([n_slice, N_TYPE-1])
+    X0_area_lk = 0.1+np.zeros([n_slice, N_TYPE])
 
 ## albedo ( band x surface type )
 #    X0_albd_kj = np.array( [[1.000000000000000056e-01, 9.000000000000000222e-01],
@@ -203,7 +171,7 @@ if __name__ == "__main__":
 #    X0_albd_kj[1,0:7] = np.array([0.37, 0.28, 0.28, 0.30, 0.40, 0.48])
 #    X0_albd_kj[2,0:7] = np.array([0.67, 0.52, 0.40, 0.35, 0.33, 0.33])
 #    X0_area_lk[0,0] = np.array([0.3])
-    Y0_array = transform_X2Y(X0_albd_kj, X0_area_lk, n_slice)
+    Y0_array = transform_X2Y(X0_albd_kj, X0_area_lk)
     n_dim = len(Y0_array)
     print '# of parameters', n_dim
 
@@ -222,9 +190,9 @@ if __name__ == "__main__":
 #    print "Y0_array", Y0_array
 
     if (n_param > 0):
-        X_albd_kj, X_area_lk =  transform_Y2X(Y0_array[:-1*n_param], n_band)
+        X_array =  transform_Y2X(Y0_array[:-1*n_param], N_TYPE, n_band, n_slice, flatten=True)
     else:
-        X_albd_kj, X_area_lk =  transform_Y2X(Y0_array, n_band)
+        X_array =  transform_Y2X(Y0_array, N_TYPE, n_band, n_slice, flatten=True)
 
 #    print "X_area_lk", X_area_lk
 #    print "X_albd_kj", X_albd_kj
@@ -237,12 +205,13 @@ if __name__ == "__main__":
 
     print "best-fit", output["x"]
 
-    data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, False)
+    data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, True)
     lnprob_bestfit = lnprob( output['x'], *data )
     BIC = 2.0 * lnprob_bestfit + len( output['x'] ) * np.log( len(Obs_ij.flatten()) )
     print 'BIC: ', BIC
 
-    X_albd_kj, X_area_lk =  transform_Y2X(output["x"], n_band)
+    X_albd_kj, X_area_lk = transform_Y2X(output["x"], N_TYPE, n_band, n_slice, flatten=False)
+#    X_area_lk = transform_Y2X(output["x"], n_band, n_slice)
     np.savetxt("X_area_lk", X_area_lk)
     np.savetxt("X_albd_kj_T", X_albd_kj.T)
     bestfit = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
@@ -269,7 +238,7 @@ if __name__ == "__main__":
     print len( samples )
 
 
-    X_albd_kj, X_area_lk =  transform_Y2X( samples[0], n_band)
+    X_albd_kj, X_area_lk =  transform_Y2X( samples[0], N_TYPE, n_band, n_slice, flatten=False)
     X_array[0] = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
 
     X_albd_kj_stack = X_albd_kj
@@ -279,7 +248,7 @@ if __name__ == "__main__":
         if ii % 1000 == 0 :
             print ii
 
-        X_albd_kj, X_area_lk =  transform_Y2X( samples[ii], n_band)
+        X_albd_kj, X_area_lk =  transform_Y2X( samples[ii], N_TYPE, n_band, n_slice, flatten=False)
         X_array[ii] = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
 
         X_albd_kj_stack = np.dstack([ X_albd_kj_stack, X_albd_kj ])
