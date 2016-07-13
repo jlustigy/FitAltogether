@@ -1,1 +1,3 @@
 *.npz
+*.DS_STORE
+mcmc_output/*/

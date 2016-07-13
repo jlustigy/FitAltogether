@@ -20,9 +20,9 @@ import pdb
 #NUM_MCMC = 2
 #NUM_MCMC_BURNIN = 1
 
-NUM_MCMC = 10000
+NUM_MCMC = 10
 NUM_MCMC_BURNIN = 1
-SEED_AMP = 0.5
+SEED_AMP = 0.1
 
 # Set the number of CPUs on current machine for the MCMC
 NCPU = multiprocessing.cpu_count()
@@ -34,14 +34,14 @@ FLAG_REG_AREA = False
 FLAG_REG_ALBD = False
 
 #n_slice = 4
-N_TYPE  = 2
+N_TYPE  = 3
 
 deg2rad = np.pi/180.
 
 N_SIDE   = 32
 #INFILE = "data/raddata_12_norm"
-#INFILE = "data/raddata_2_norm"
-INFILE = "mockdata/mock_simple_1_data"
+INFILE = "data/raddata_2_norm"
+#INFILE = "mockdata/mock_simple_1_data"
 # INFILE = 'mockdata/mock_simple_1_scattered0.01_data_with_noise'
 
 
@@ -115,53 +115,48 @@ def sigma(sigma, kappa, dim, periodic=False):
 
 
 #---------------------------------------------------
+
 def get_ln_prior_albd( y_albd_kj ):
     prior_kj = np.exp( y_albd_kj ) / ( 1 + np.exp( y_albd_kj ) )**2
     ln_prior = np.sum( np.log( prior_kj ) )
     return ln_prior
 
-
 #---------------------------------------------------
-def get_ln_prior_area( y_area_lj, x_area_lj ):
+def get_ln_prior_area( y_area_lk, x_area_lk ):
 
-    dydx_det = 1.
-    for ll in xrange( len( y_area_lj ) ):
-        dydx = np.zeros( [ len( y_area_lj.T ), len( y_area_lj.T ) ] )
-        for ii in xrange( len( dydx ) ):
-            jj = 0
-            # jj < ii
-            while ( jj < ii ):
-                g_i = y_area_lj[ll,ii]
-                f_i = x_area_lj[ll,ii]
-                f_j = x_area_lj[ll,jj]
-                sum_fi = np.sum( x_area_lj[ll,:ii+1] )
-                dydx[ii][jj] = 1. / ( 1. - sum_fi )
-                jj = jj + 1
-            # jj == ii
-            g_i = y_area_lj[ll,ii]
-            f_i = x_area_lj[ll,ii]
-            f_j = x_area_lj[ll,jj]
-            sum_fi = np.sum( x_area_lj[ll,:ii+1] )
-            dydx[ii][jj] = 1. / f_i * ( 1. - sum_fi + f_i ) / ( 1 - sum_fi )
+    l_dim = len( y_area_lk )
+    k_dim = len( y_area_lk.T )
+    kk_dim = len( y_area_lk.T )
 
-#        print "dydx", dydx
-#        print "det", np.linalg.det( dydx )
-        dydx_det = dydx_det * np.linalg.det( dydx )
-    dxdy_det = 1. / dydx_det
+    sumF = np.cumsum( x_area_lk, axis=1 )
 
-    if ( dxdy_det <= 0. ):
-        print "ERROR! ln_prior_area is NaN"
-        print "     ", dxdy_det
-        sys.exit()
+    # when kk < k
+    l_indx, k_indx, kk_indx = np.meshgrid( np.arange( l_dim ), np.arange( k_dim ), np.arange( kk_dim ), indexing='ij' )
+    dgdF = np.zeros( [ l_dim, k_dim, kk_dim  ] )
+    dgdF[ l_indx, k_indx, kk_indx ] = x_area_lk[ l_indx, kk_indx ] / x_area_lk[ l_indx, k_indx ] / ( 1 - sumF[ l_indx, k_indx ] )
 
-    ln_prior = np.log( dxdy_det )
+    # when kk > k
+    k_tmp, kk_tmp   = np.triu_indices(k_dim)
+    l_indx, k_indx  = np.meshgrid( np.arange( l_dim ), k_tmp,  indexing='ij' )
+    l_indx, kk_indx = np.meshgrid( np.arange( l_dim ), kk_tmp, indexing='ij' )
+    dgdF[ l_indx, k_indx, kk_indx ] = 0.
+
+    # when kk = k
+    k_tmp, kk_tmp = np.diag_indices(k_dim)
+    l_indx, k_indx  = np.meshgrid( np.arange( l_dim ), k_tmp,  indexing='ij' )
+    l_indx, kk_indx = np.meshgrid( np.arange( l_dim ), kk_tmp, indexing='ij' )
+    dgdF[ l_indx, k_indx, kk_indx ] = 1./x_area_lk[l_indx,k_indx]*(1. - sumF[l_indx, k_indx-1]) / ( 1 - sumF[ l_indx, k_indx ] )
+
+    dgdF_factor = np.linalg.det( dgdF )
+    ln_prior = np.sum( np.log( dgdF_factor ) )
+
     return ln_prior
 
 
 #---------------------------------------------------
 def lnprob(Y_array, *args):
     """
-    Misfit-function to be minimized
+    Misfit-function to be ized
     """
 
     Obs_ij, Obsnoise_ij, Kernel_il, n_param, flip, verbose  = args
@@ -251,7 +246,7 @@ def transform_Y2X(Y_array, n_band):
 #---------------------------------------------------
 def transform_X2Y(X_albd_kj, X_area_lk, n_slice):
     """
-    Re-parameterization for convenience -- now Y can take on any value.
+    Re-parameterization to transform ranges from [0,1] -> (-inf, +inf)
     """
 
 #    print "X_area_lk", X_area_lk
@@ -300,6 +295,17 @@ if __name__ == "__main__":
 #    Y0_array = np.ones(N_TYPE*n_band+n_slice*(N_TYPE-1))
     X0_albd_kj = 0.3+np.zeros([N_TYPE, n_band])
     X0_area_lk = 0.1+np.zeros([n_slice, N_TYPE-1])
+
+    # Create list of strings for parameter names
+    atmp = []
+    ftmp = []
+    for i in range(N_TYPE):
+        for j in range(n_band):
+            atmp.append(r"A$_{"+str(i+1)+","+str(j+1)+"}$")
+    for i in range(N_TYPE - 1):
+        for j in range(n_slice):
+            ftmp.append(r"f$_{"+str(i+1)+","+str(j+1)+"}$")
+    X_names = np.concatenate([np.array(atmp), np.array(ftmp)])
 
 ## albedo ( band x surface type )
 #    X0_albd_kj = np.array( [[1.000000000000000056e-01, 9.000000000000000222e-01],
@@ -350,7 +356,7 @@ if __name__ == "__main__":
 
     ########## use optimization for mcmc initial guesses ##########
 
-    # minimize
+    # ize
     print "finding best-fit values..."
     data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, False)
     output = minimize(lnprob, Y0_array, args=data, method="Nelder-Mead")
@@ -399,6 +405,7 @@ if __name__ == "__main__":
     # note: consider using emcee.utils.sample_ball(p0, std) (std: axis-aligned standard deviation.)
     #       to produce a ball of walkers around an initial parameter value.
     p0 = SEED_AMP*np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + output["x"]
+    #p0 = emcee.utils.sample_ball(output["x"], SEED_AMP)
 
     """
     # Run MCMC
@@ -426,7 +433,7 @@ if __name__ == "__main__":
     original_samples = sampler.chain
 
     print "Saving:", run_dir+"mcmc_samples.npz"
-    np.savez(run_dir+"mcmc_samples.npz", samples=original_samples)
+    np.savez(run_dir+"mcmc_samples.npz", data=data, samples=original_samples, X_names=X_names, N_TYPE=N_TYPE, p0=p0)
 
     sys.exit()
 

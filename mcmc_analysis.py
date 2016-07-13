@@ -1,7 +1,13 @@
 import numpy as np
 import healpy as hp
 import emcee
-import matplotlib.pyplot as pl
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from matplotlib import gridspec
+from matplotlib import rc
+import pdb
+mpl.rc('font', family='Times New Roman')
+mpl.rcParams['font.size'] = 25.0
 from scipy.optimize import minimize
 import sys
 import corner
@@ -12,195 +18,104 @@ import pdb
 
 
 # Specify directory of run to analyze
-MCMC_DIR = "mcmc_output/2016-07-11--15-08/"
+MCMC_DIR = "mcmc_output/2016-07-12--16-57/"
 
-def estimate_burnin(samples):
-    # chain[n_walkers, steps, n_dim]
+# Specify burn-in index for corner plot
+BURN_INDEX = 0
+
+def estimate_burnin1(samples):
     # Determine time of burn-in by calculating first time median is crossed
     # Algorithm by Eric Agol 2016
-    #
-    # Parameters
-    # ----------
-    # par_mcmc : Array{Float64,3}
-    #    Array containing history of all walkers for each parameter
-    # nwalkers : Int
-    #    Number of walkers used in MCMC
-    # nparam : Int
-    #    Number of params fit for in MCMC
-    # nsteps : Int
-    #    Number of MCMC steps
-    #
-    # Returns
-    # -------
-    # iburn : Int
-    #    Index corresponding to the step where the burn in approximately ended
+
+    # Calculate the median for each parameter across all walkers and steps
+    med_params = np.array([np.median(samples[:,:,i]) for i in range(nparam)])
+
+    # Subtract off the median
+    diff = samples - med_params
+
+    # Determine where the sign changes occur
+    asign = np.sign(diff)
+    signchange = ((np.roll(asign, 1) - asign) != 0).astype(int)
+
+    # For each walker determine index where the first sign change occurs
+    first_median_crossing = np.argmax(signchange>0, axis=1)
+
+    # Now return the index of the last walker to cross its median
+    return np.amax(first_median_crossing)
+
+def plot_trace(samples, directory="", X_names=None):
+
+    print "Plotting Trace..."
 
     nwalkers = samples.shape[0]
     nsteps = samples.shape[1]
     nparam = samples.shape[2]
 
-    iburn = 0
+    # Flatten chains for histogram
+    samples_flat = samples[:, :, :].reshape((-1, nparam))
 
-    # Calculate median for each parameter
-    med_params = np.array([np.median(samples[:,:,i]) for i in range(nparam)])
-
-    # For each parameter
+    # Loop over all parameters making trace plots
     for i in range(nparam):
-        med_param = np.median(samples[:,:,i])
-        # For each walker
-        for j in range(nwalkers):
-            istep=2
-            while ((samples[j,istep,i] > med_param) == (samples[j,istep-1,i] > med_param)) & (istep < nsteps):
-                istep=istep+1
-            if istep >= iburn:
-                iburn = istep
-
-    return iburn
-
-def plot_trace():
-
-    return
-
-def plot_corner():
+        if X_names is None:
+            pname = ""
+        else:
+            pname = X_names[i]
+        fig = plt.figure(figsize=(13,5))
+        gs = gridspec.GridSpec(1,2, width_ratios=(1,.3))
+        ax0 = plt.subplot(gs[0])
+        ax0.plot(samples[:,:,i].T, lw=0.5)
+        ax0.set_xlabel("Iteration")
+        ax0.set_ylabel(pname+" Value")
+        ax1 = plt.subplot(gs[1], sharey=ax0)
+        bins = np.linspace(np.min(samples_flat[:,i]), np.max(samples_flat[:,i]), 25, endpoint=True)
+        h = ax1.hist(samples_flat[:,i], bins, orientation='horizontal', color="k", alpha=0.5)
+        ax1.set_xticks([])
+        ax1.yaxis.tick_right()
+        ax1.yaxis.set_label_position("right")
+        plt.setp(ax0.get_xticklabels(), fontsize=18, rotation=45)
+        plt.setp(ax0.get_yticklabels(), fontsize=18, rotation=45)
+        plt.setp(ax1.get_xticklabels(), fontsize=18, rotation=45)
+        plt.setp(ax1.get_yticklabels(), fontsize=18, rotation=45)
+        fig.subplots_adjust(wspace=0)
+        fig.savefig(directory+"trace"+str(i)+".pdf")
     return
 
 #===================================================
 if __name__ == "__main__":
 
-    # Load in MCMC save files
-    temp = np.load(MCMC_DIR+"mcmc_results.npz")
-    # Extract info
+    # Load MCMC samples from numpy archive
+    temp = np.load(MCMC_DIR+"mcmc_samples.npz")
+
+    # Extract info from numpy archive
     samples=temp["samples"]
-    original_samples = temp["original_samples"]
-    X_albd_kj_stack=temp["X_albd_kj_stack"]
-    X_area_lk_stack=temp["X_area_lk_stack"]
-    X_albd_error=temp["X_albd_error"]
-    X_area_error=temp["X_area_error"]
+    data = temp["data"]
+    N_TYPE = temp["N_TYPE"]
+    p0 = temp["p0"]
+    X_names = temp["X_names"]
 
-    print estimate_burnin(original_samples)
+    nwalkers = samples.shape[0]
+    nsteps = samples.shape[1]
+    nparam = samples.shape[2]
 
-    pdb.set_trace()
+    # Flatten chains
+    samples_flat = samples[:,BURN_INDEX:,:].reshape((-1, nparam))
 
-    X_array = np.zeros( [ len( samples ), N_TYPE*n_band + n_slice*N_TYPE ] )
+    if "trace" in str(sys.argv):
 
-    print 'accumulation...'
-    print len( samples )
+        # Create directory for trace plots
+        trace_dir = MCMC_DIR+"trace_plots/"
+        try:
+            os.mkdir(trace_dir)
+            print "Created directory:", trace_dir
+        except OSError:
+            print trace_dir, "already exists."
 
+        # Make trace plots
+        plot_trace(samples, X_names=X_names, directory=trace_dir)
 
-    X_albd_kj, X_area_lk =  transform_Y2X( samples[0], n_band)
-    X_array[0] = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
+    if "corner" in str(sys.argv):
+        print "Making Corner Plot..."
 
-    X_albd_kj_stack = X_albd_kj
-    X_area_lk_stack = X_area_lk
-
-    for ii in xrange( 1, len( samples ) ):
-        if ii % 1000 == 0 :
-            print ii
-
-        X_albd_kj, X_area_lk =  transform_Y2X( samples[ii], n_band)
-        X_array[ii] = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
-
-        X_albd_kj_stack = np.dstack([ X_albd_kj_stack, X_albd_kj ])
-        X_area_lk_stack = np.dstack([ X_area_lk_stack, X_area_lk ])
-
-
-
-
-    print 'evaluation...'
-
-    X_albd_error = np.percentile( X_albd_kj_stack, [16, 50, 84], axis=2)
-
-#    X_albd_error = map(lambda v: np.array([v[1], v[2]-v[1], v[1]-v[0]]),
-#                       zip(*np.percentile( X_albd_kj_stack, [16, 50, 84], axis=2)))
-
-    print X_albd_error
-#    print X_albd_error.shape
-
-    for jj in  xrange( n_band ):
-        for kk in  xrange( N_TYPE ):
-            print X_albd_error[1][kk][jj], X_albd_error[2][kk][jj], X_albd_error[0][kk][jj],
-        print ''
-
-    print ''
-    print ''
-
-    X_area_error = np.percentile( X_area_lk_stack, [16, 50, 84], axis=2)
-#    X_area_error = map(lambda v: np.array([v[1], v[2]-v[1], v[1]-v[0]]),
-#                       zip(*np.percentile( X_area_lk_stack, [16, 50, 84], axis=2)))
-
-    for ll in xrange( n_slice ):
-        for kk in  xrange( N_TYPE ):
-            print X_area_error[1][ll][kk], X_area_error[2][ll][kk], X_area_error[0][ll][kk],
-        print ''
-
-
-#    for jj in xrange( n_band ):
-#        print jj
-#        for kk in xrange( N_TYPE ):
-#            print np.average( X_albd_kj_stack[kk][jj] ), np.sqrt( np.var(X_albd_kj_stack[kk][jj]) ),
-#        print ''
-#
-#    print ''
-#    print ''
-#
-#    for ll in xrange( n_slice ):
-#        print ll,
-#        for kk in xrange( N_TYPE ):
-#            print np.average( X_area_lk_stack[ll][kk] ), np.sqrt( np.var( X_area_lk_stack[ll][kk] ) ),
-#        print ''
-
-
-    # Save results
-    print "Saving:", run_dir+"mcmc_results.npz"
-    np.savez(run_dir+"mcmc_results.npz", samples, X_albd_kj_stack, X_area_lk_stack, X_albd_error, X_area_error)
-
-    sys.exit()
-
-    print ''
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
-    print 'PLOTTING ALBEDO PROBABILITY MAP...'
-    myrange = np.tile( [0., 1.,], ( N_TYPE*n_band, 1 ) )
-    fig = corner.corner( X_array[:,:N_TYPE*n_band], labels=range(N_TYPE*n_band), truths=bestfit[:N_TYPE*n_band], range=myrange, bins=100 )
-    fig.savefig(INFILE+"_corner_albd.png")
-
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
-
-    print ''
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
-    print 'PLOTTING AREA FRACTION PROBABILITY MAP...'
-    myrange = np.tile( [0., 1.,], ( n_slice, 1 ) )
-    fig = corner.corner( X_array[:,N_TYPE*n_band:N_TYPE*n_band+n_slice], labels=range(n_slice), truths=bestfit[N_TYPE*n_band:N_TYPE*n_band+n_slice], range=myrange, bins=100 )
-    fig.savefig(INFILE+"_corner_area1.png")
-
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
-
-    print ''
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
-    print 'PLOTTING AREA FRACTION PROBABILITY MAP...'
-    myrange = np.tile( [0., 1.,], ( n_slice, 1 ) )
-    fig = corner.corner( X_array[:,N_TYPE*n_band+n_slice:N_TYPE*n_band+2*n_slice], labels=range(n_slice), truths=bestfit[N_TYPE*n_band+n_slice:N_TYPE*n_band+2*n_slice], range=myrange, bins=100 )
-    fig.savefig(INFILE+"_corner_area2.png")
-
-    print 'X_array.shape', X_array[:,N_TYPE*n_band+2*n_slice:].shape
-    print X_array[:,N_TYPE*n_band+2*n_slice:]
-
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
-
-    print ''
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
-    print 'PLOTTING AREA FRACTION PROBABILITY MAP...'
-    myrange = np.tile( [0., 1.,], ( n_slice, 1 ) )
-    print 'myrange', myrange
-    print 'range(n_slice)', range(n_slice)
-    fig = corner.corner( X_array[:,N_TYPE*n_band+2*n_slice:], labels=range(n_slice), truths=bestfit[N_TYPE*n_band+2*n_slice:], range=myrange, bins=100 )
-    fig.savefig(INFILE+"_corner_area3.png")
-
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
+        # Make corner plot
+        fig = corner.corner(samples_flat, plot_datapoints=True, plot_contours=False, plot_density=False, labels=X_names)
+        fig.savefig(MCMC_DIR+"xcorner.png")
