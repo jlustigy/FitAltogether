@@ -3,7 +3,7 @@ import healpy as hp
 import emcee
 import matplotlib.pyplot as pl
 from scipy.optimize import minimize
-import sys
+import sys, getopt
 import corner
 import datetime
 import multiprocessing
@@ -18,10 +18,12 @@ mpl.rc('font', family='Times New Roman')
 mpl.rcParams['font.size'] = 25.0
 
 # Specify directory of run to analyze
-MCMC_DIR = "mcmc_output/2016-07-12--15-04/"
+MCMC_DIR = "mcmc_output/2016-07-13--11-59/"
+
+DIR = "mcmc_output/"
 
 # Specify burn-in index for corner plot
-BURN_INDEX = 15000
+DEFAULT_BURN_INDEX = 0
 
 #---------------------------------------------------
 #---------------------------------------------------
@@ -48,7 +50,7 @@ def transform_Y2X(Y_array, n_band, n_slice):
 
 def decomposeX(x,n_band,n_slice,n_type):
     alb = x[0:n_band * n_type].reshape((n_type,n_band))
-    area = xmed[n_band * n_type:].reshape((n_slice , n_type))
+    area = x[n_band * n_type:].reshape((n_slice , n_type))
     return alb, area
 
 def plot_median(med_alb, std_alb, med_area, std_area, directory=""):
@@ -76,9 +78,8 @@ def plot_median(med_alb, std_alb, med_area, std_area, directory=""):
         ax1.fill_between(xalb, med_alb[i,:] - std_alb[i,:], med_alb[i,:] + std_alb[i,:], alpha=0.3 ,color=c[i])
 
     ax0.set_ylim([-0.05, 1.05])
-    ax0.set_xlim([-0.05, 3.05])
-
-    ax1.set_xlim([-0.05, 2.05])
+    ax0.set_xlim([np.min(xarea)-0.05, np.max(xarea)+0.05])
+    ax1.set_xlim([np.min(xalb)-0.05, np.max(xalb)+0.05])
 
     leg=ax0.legend(loc=0, fontsize=14)
     leg.get_frame().set_alpha(0.0)
@@ -87,11 +88,80 @@ def plot_median(med_alb, std_alb, med_area, std_area, directory=""):
 
     fig.savefig(directory+"xmed_std.pdf")
 
+def plot_sampling(x, directory=""):
+
+    ALPHA = 0.05
+
+    print "Plotting %i Samples..." %len(x)
+
+    fig = plt.figure(figsize=(16,8))
+    gs = gridspec.GridSpec(1,2)
+    ax0 = plt.subplot(gs[0])
+    ax1 = plt.subplot(gs[1])
+    ax0.set_ylabel("Area Fraction")
+    ax0.set_xlabel("Time")
+    ax1.set_ylabel("Albedo")
+    ax1.set_xlabel("Band")
+
+    c = ["purple", "orange", "green", "lightblue"]
+
+    xarea = np.arange(n_slice)
+    xalb = np.arange(n_band)
+
+    for s in range(len(x)):
+        # Decompose x vector into albedo and area arrays
+        alb, area = decomposeX(x[s], n_band, n_slice, N_TYPE)
+
+        for i in range(N_TYPE):
+            if s == 0:
+                ax0.plot(0, 0, "-", label="Surface %i" %(i+1), color=c[i], alpha=1.0)
+            ax0.plot(xarea, area[:,i], "-", color=c[i], alpha=ALPHA)
+            ax1.plot(xalb, alb[i,:], "-", color=c[i], alpha=ALPHA)
+
+    ax0.set_ylim([-0.05, 1.05])
+    ax0.set_xlim([np.min(xarea)-0.05, np.max(xarea)+0.05])
+    ax1.set_xlim([np.min(xalb)-0.05, np.max(xalb)+0.05])
+
+    leg=ax0.legend(loc=0, fontsize=16)
+    leg.get_frame().set_alpha(0.0)
+
+    fig.tight_layout()
+
+    fig.savefig(directory+"xsamples.pdf")
+
 #===================================================
 if __name__ == "__main__":
 
+    # Read command line args
+    myopts, args = getopt.getopt(sys.argv[1:],"d:b:")
+    run = ""
+    iburn = DEFAULT_BURN_INDEX
+    for o, a in myopts:
+        # o == option
+        # a == argument passed to the o
+        if o == '-d':
+            # Get MCMC directory timestamp name
+            run=a
+        elif o == "-b":
+            # Get burn in index
+            iburn = int(a)
+        else:
+            pass
+
+    if run == "":
+        print("Please specify run directory using -d: \n e.g. >python mcmc_physical.py -d 2016-07-13--11-59")
+        sys.exit()
+
+    print "Burn-in index:", iburn
+
+    MCMC_DIR = DIR + run + "/"
+
     # Load MCMC samples from numpy archive
-    temp = np.load(MCMC_DIR+"mcmc_samples.npz")
+    try:
+        temp = np.load(MCMC_DIR+"mcmc_samples.npz")
+    except IOError:
+        print "Run directory does not exist! Check -d argument."
+        sys.exit()
 
     # Extract info from numpy archive
     samples=temp["samples"]
@@ -99,6 +169,7 @@ if __name__ == "__main__":
     N_TYPE = temp["N_TYPE"]
     p0 = temp["p0"]
     X_names = temp["X_names"]
+    Y_names = temp["Y_names"]
 
     # MCMC dimensions
     nwalkers = samples.shape[0]
@@ -111,24 +182,51 @@ if __name__ == "__main__":
     n_band = len(Obs_ij[0])
 
     # Flatten chains that go beyond burn-in (aka sampling the posterior)
-    samples = samples[:,BURN_INDEX:,:].reshape((-1, nparam))
+    samples = samples[:,iburn:,:].reshape((-1, nparam))
 
-    # Transform all samples to physical units
-    xsam = np.array([transform_Y2X(samples[i], n_band, n_slice) for i in range(len(samples))])
+    try:
+        # load physical samples
+        temp = np.load(MCMC_DIR+"mcmc_physical_samples.npz")
+        xsam = temp["xsam"]
+        print "Physical  xsamples loaded from file!"
+    except IOError:
+        # Transform all samples to physical units
+        print "Converting Y -> X..."
+        xsam = np.array([transform_Y2X(samples[i], n_band, n_slice) for i in range(len(samples))])
+        print "Saving mcmc_physical_samples.npz..."
+        np.savez(MCMC_DIR+"mcmc_physical_samples.npz", xsam=xsam)
 
-    # Find median & standard deviation
-    xmed = np.median(xsam, axis=0)
-    xstd = np.std(xsam, axis=0)
+    if "sample" in str(sys.argv):
+        N_SAMP = 1000
+        rand_sam = xsam[np.random.randint(len(xsam), size=N_SAMP),:]
+        plot_sampling(rand_sam, directory=MCMC_DIR)
 
-    # Decompose into useful 2d arrays
-    med_alb, med_area = decomposeX(xmed, n_band, n_slice, N_TYPE)
-    std_alb, std_area = decomposeX(xstd, n_band, n_slice, N_TYPE)
 
-    print "Median:", xmed
-    print "Std:", xstd
+    if "median" in str(sys.argv):
 
-    # Plot median
-    plot_median(med_alb, std_alb, med_area, std_area, directory=MCMC_DIR)
+        print "Computing Median Parameters..."
+
+        # Find median & standard deviation
+        xmed = np.median(xsam, axis=0)
+        xstd = np.std(xsam, axis=0)
+
+        # Decompose into useful 2d arrays
+        med_alb, med_area = decomposeX(xmed, n_band, n_slice, N_TYPE)
+        std_alb, std_area = decomposeX(xstd, n_band, n_slice, N_TYPE)
+
+        print "Median:", xmed
+        print "Std:", xstd
+
+        # Plot median
+        plot_median(med_alb, std_alb, med_area, std_area, directory=MCMC_DIR)
+
+    if "corner" in str(sys.argv):
+        print "Making Physical Corner Plot..."
+
+        # Make corner plot
+        fig = corner.corner(xsam, plot_datapoints=True, plot_contours=False, plot_density=False, labels=X_names)
+        fig.savefig(MCMC_DIR+"xcorner.png")
+
 
     sys.exit()
 

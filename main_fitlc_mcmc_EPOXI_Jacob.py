@@ -20,7 +20,7 @@ import pdb
 #NUM_MCMC = 2
 #NUM_MCMC_BURNIN = 1
 
-NUM_MCMC = 10000
+NUM_MCMC = 5000
 NUM_MCMC_BURNIN = 1
 SEED_AMP = 0.5
 
@@ -40,8 +40,9 @@ deg2rad = np.pi/180.
 
 N_SIDE   = 32
 #INFILE = "data/raddata_12_norm"
-#INFILE = "data/raddata_2_norm"
-INFILE = "mockdata/mock_simple_1_data"
+INFILE = "data/raddata_2_norm"
+#INFILE = "mockdata/mock_simple_1_data"
+#INFILE = "mockdata/mock_simple_3types_1_data"
 # INFILE = 'mockdata/mock_simple_1_scattered0.01_data_with_noise'
 
 
@@ -120,8 +121,15 @@ def get_ln_prior_albd( y_albd_kj ):
     ln_prior = np.sum( np.log( prior_kj ) )
     return ln_prior
 
+#---------------------------------------------------
+def get_ln_prior_area( y_area_lk, x_area_lk):
+    # x_area_lk is a dummy arg (can be deleted)
+    prior_lk = np.exp( y_area_lk ) / ( 1 + np.exp( y_area_lk ) )**2
+    ln_prior = np.log( np.prod( prior_lk ) )
+    return ln_prior
 
 
+"""
 #---------------------------------------------------
 def get_ln_prior_area( y_area_lk, x_area_lk ):
 
@@ -152,7 +160,8 @@ def get_ln_prior_area( y_area_lk, x_area_lk ):
     ln_prior = np.sum( np.log( dgdF_factor ) )
 
     return ln_prior
- 
+"""
+
 
 #---------------------------------------------------
 def get_ln_prior_area_old( y_area_lj, x_area_lj ):
@@ -300,7 +309,6 @@ def transform_X2Y(X_albd_kj, X_area_lk, n_slice):
     return np.concatenate([Y_albd_kj.flatten(), Y_area_lk.flatten()])
 
 
-
 #===================================================
 if __name__ == "__main__":
 
@@ -333,6 +341,33 @@ if __name__ == "__main__":
 #    Y0_array = np.ones(N_TYPE*n_band+n_slice*(N_TYPE-1))
     X0_albd_kj = 0.3+np.zeros([N_TYPE, n_band])
     X0_area_lk = 0.1+np.zeros([n_slice, N_TYPE-1])
+    """ # Load perfect starting position from file
+    temp = np.load("mockdata/mock_simple_3types_1_albd_area.npz")
+    X0_albd_kj = temp["X0_albd_kj"]
+    X0_area_lk = temp["X0_area_lk"]
+    """
+
+    # Create list of strings for Y parameter names
+    atmp = []
+    ftmp = []
+    for i in range(N_TYPE):
+        for j in range(n_band):
+            atmp.append(r"b$_{"+str(i+1)+","+str(j+1)+"}$")
+    for j in range(N_TYPE - 1):
+        for i in range(n_slice):
+            ftmp.append(r"g$_{"+str(i+1)+","+str(j+1)+"}$")
+    Y_names = np.concatenate([np.array(atmp), np.array(ftmp)])
+
+    # Create list of strings for X parameter names
+    atmp = []
+    ftmp = []
+    for i in range(N_TYPE):
+        for j in range(n_band):
+            atmp.append(r"A$_{"+str(i+1)+","+str(j+1)+"}$")
+    for j in range(N_TYPE):
+        for i in range(n_slice):
+            ftmp.append(r"F$_{"+str(i+1)+","+str(j+1)+"}$")
+    X_names = np.concatenate([np.array(atmp), np.array(ftmp)])
 
 ## albedo ( band x surface type )
 #    X0_albd_kj = np.array( [[1.000000000000000056e-01, 9.000000000000000222e-01],
@@ -454,7 +489,7 @@ if __name__ == "__main__":
     original_samples = sampler.chain
 
     print "Saving:", run_dir+"mcmc_samples.npz"
-    np.savez(run_dir+"mcmc_samples.npz", samples=original_samples)
+    np.savez(run_dir+"mcmc_samples.npz", data=data, samples=original_samples, Y_names=Y_names, X_names=X_names, N_TYPE=N_TYPE, p0=p0)
 
     sys.exit()
 

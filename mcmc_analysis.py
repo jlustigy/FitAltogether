@@ -9,7 +9,7 @@ import pdb
 mpl.rc('font', family='Times New Roman')
 mpl.rcParams['font.size'] = 25.0
 from scipy.optimize import minimize
-import sys
+import sys, getopt
 import corner
 import datetime
 import multiprocessing
@@ -18,10 +18,12 @@ import pdb
 
 
 # Specify directory of run to analyze
-MCMC_DIR = "mcmc_output/2016-07-12--16-57/"
+MCMC_DIR = "mcmc_output/2016-07-13--11-59/"
+
+DIR = "mcmc_output/"
 
 # Specify burn-in index for corner plot
-BURN_INDEX = 0
+DEFAULT_BURN_INDEX = 0
 
 def estimate_burnin1(samples):
     # Determine time of burn-in by calculating first time median is crossed
@@ -56,6 +58,7 @@ def plot_trace(samples, directory="", X_names=None):
 
     # Loop over all parameters making trace plots
     for i in range(nparam):
+        print i
         if X_names is None:
             pname = ""
         else:
@@ -83,8 +86,33 @@ def plot_trace(samples, directory="", X_names=None):
 #===================================================
 if __name__ == "__main__":
 
+    # Read command line args
+    myopts, args = getopt.getopt(sys.argv[1:],"d:b:")
+    run = ""
+    for o, a in myopts:
+        # o == option
+        # a == argument passed to the o
+        # Get MCMC directory timestamp name
+        if o == '-d':
+            run=a
+        else:
+            print("Please specify run directory using -d: \n e.g. >python mcmc_physical.py -d 2016-07-13--11-59")
+            sys.exit()
+        # Get burn in index
+        if o == "-b":
+            iburn = int(b)
+        else:
+            iburn = DEFAULT_BURN_INDEX
+        print "Burn-in index:", iburn
+
+    MCMC_DIR = DIR + run + "/"
+
     # Load MCMC samples from numpy archive
-    temp = np.load(MCMC_DIR+"mcmc_samples.npz")
+    try:
+        temp = np.load(MCMC_DIR+"mcmc_samples.npz")
+    except IOError:
+        print "Run directory does not exist! Check -d argument."
+        sys.exit()
 
     # Extract info from numpy archive
     samples=temp["samples"]
@@ -92,13 +120,14 @@ if __name__ == "__main__":
     N_TYPE = temp["N_TYPE"]
     p0 = temp["p0"]
     X_names = temp["X_names"]
+    Y_names = temp["Y_names"]
 
     nwalkers = samples.shape[0]
     nsteps = samples.shape[1]
     nparam = samples.shape[2]
 
     # Flatten chains
-    samples_flat = samples[:,BURN_INDEX:,:].reshape((-1, nparam))
+    samples_flat = samples[:,iburn:,:].reshape((-1, nparam))
 
     if "trace" in str(sys.argv):
 
@@ -111,11 +140,11 @@ if __name__ == "__main__":
             print trace_dir, "already exists."
 
         # Make trace plots
-        plot_trace(samples, X_names=X_names, directory=trace_dir)
+        plot_trace(samples, X_names=Y_names, directory=trace_dir)
 
     if "corner" in str(sys.argv):
         print "Making Corner Plot..."
 
         # Make corner plot
-        fig = corner.corner(samples_flat, plot_datapoints=True, plot_contours=False, plot_density=False, labels=X_names)
-        fig.savefig(MCMC_DIR+"xcorner.png")
+        fig = corner.corner(samples_flat, plot_datapoints=True, plot_contours=False, plot_density=False, labels=Y_names)
+        fig.savefig(MCMC_DIR+"ycorner.png")
