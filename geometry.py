@@ -26,16 +26,18 @@ def weight(time, n_side, param_geometry):
 
 
 #---------------------------------------------------
-def kernel(Time_i, n_slice):
+def kernel(Time_i, n_slice, n_side, param_geometry):
     """
     Kernel!
     """
     Kernel_il = np.zeros([len(Time_i), n_slice])
-    N_pix = hp.nside2npix(N_SIDE)
+    N_pix = hp.nside2npix( n_side )
+    position_theta, position_phi   = hp.pixelfunc.pix2ang( n_side, np.arange(N_pix))
+    position_phi[ position_phi < np.pi ]  = position_phi[ position_phi < np.pi ] + 2. * np.pi
+    assigned_l_float = np.trunc((position_phi - np.pi)/(2.*np.pi/n_slice))
+    assigned_l = assigned_l_float.astype(np.int64)
     for ii in xrange(len(Time_i)):
-        position_theta, position_phi   = hp.pixelfunc.pix2ang(N_SIDE, np.arange(N_pix))
-        Weight_n = weight(Time_i[ii])
-        assigned_l = np.trunc(position_phi/(2.*np.pi/n_slice))
+        Weight_n = weight(Time_i[ii], n_side, param_geometry)
         Count_l = np.zeros(n_slice)
         for nn in xrange(N_pix):
             Kernel_il[ii][assigned_l[nn]] += Weight_n[nn]

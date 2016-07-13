@@ -12,11 +12,23 @@ import operator
 
 #-----------------------------------------------------------------------------
 
-MONTH = 'March'
-#MONTH = 'June'
+# MONTH = 'March'
+MONTH = 'June'
 
-target_indx = [17]
-cldoptd_crit = 20.
+# soil
+# target_indx = [7,11,13,16]
+
+# ocean
+#target_indx = [17]
+
+# vegetation
+# target_indx = [1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 14]
+
+# all
+target_indx = range(1,18)
+
+
+cldoptd_crit = 5.
 
 TIME_END = 24.0
 TSTEP = 1.0
@@ -37,26 +49,40 @@ print '# N_pixel', N_pixel
 #--------------------------------------------------------------------
 
 if ( MONTH == 'March' ):
-    LAT_S = -0.5857506  # sub-solar latitude
-    LON_S = 267.6066184  # sub-solar longitude
-    LAT_O = 1.6808370  # sub-observer latitude
-    LON_O = 210.1242232 # sub-observer longitude
-    cldfile_optd = 'data/clddpth_EPOXI_March_6.dat'
-    cldfile_frac = 'data/cldfrac_EPOXI_March_6.dat'
-
+# based on spectroscopic data
+#         Sub-Sun Lon/Lat =      97.091       -0.581 /     W longitude, degrees 
+#         Sub-SC  Lon/Lat =     154.577        1.678 /     W longitude, degrees
+    LAT_S = -0.581  # sub-solar latitude
+    LON_S = 262.909  # sub-solar longitude
+    LAT_O = 1.678  # sub-observer latitude
+    LON_O = 205.423 # sub-observer longitude
+    INFILE = "data/raddata_1_norm"
+    Time_i = np.arange(25)*1.
+    cldfile_frac = "data/cldfrac_EPOXI_March_6.dat"
+    cldfile_optd = "data/clddpth_EPOXI_March_6.dat"
 elif ( MONTH == 'June' ):
-    LON_O = 165.4663412
-    LAT_O = -0.3521857
-    LON_S = 239.1424068
-    LAT_S = 21.6159766
-    cldfile_optd = 'data/clddpth_EPOXI_June_6.dat'
-    cldfile_frac = 'data/cldfrac_EPOXI_June_6.dat'
+# based on spectroscopic data
+#         Sub-Sun Lon/Lat =      79.023       22.531 /     W longitude, degrees
+#         Sub-SC  Lon/Lat =     154.535        0.264 /     W longitude, degrees
+    LON_S = 280.977
+    LAT_S = 22.531
+    LON_O = 205.465
+    LAT_O = 0.264
+#    LON_O = 165.4663412
+#    LAT_O = -0.3521857
+#    LON_S = 239.1424068
+#    LAT_S = 21.6159766
+    cldfile_frac = "data/cldfrac_EPOXI_June_6.dat"
+    cldfile_optd = "data/clddpth_EPOXI_June_6.dat"
+    INFILE = "data/raddata_2_norm"
+    Time_i = np.arange(25)*1.
 
 else :
     print 'ERROR: Invalid MONTH'
     sys.exit()
 
-NCFILE =  'SURFACE_TYPE_IGBP_10min.cdf'
+
+NCFILE =  'data/SURFACE_TYPE_IGBP_10min.cdf'
 
 #--------------------------------------------------------------------
 # read cloud file
@@ -105,7 +131,7 @@ lon  = ncfile_r.variables['lon'][:]  # omega
 surface_type = ncfile_r.variables['surface_type'][:,:] # omega
 
 lon[ np.where( lon < 0. )] = 360. + lon[ np.where( lon < 0. )]
-lon_mesh, lat_mesh = np.meshgrid( lon, lat )
+lat_mesh, lon_mesh = np.meshgrid( lat, lon, indexing='ij' )
 
 theta_data = ( 90. - lat_mesh.flatten() ) * np.pi / 180.
 phi_data = ( lon_mesh.flatten() ) * np.pi / 180.
@@ -128,7 +154,7 @@ param_geometry = ( LAT_O, LON_O, LAT_S, LON_S, OMEGA )
 time = 0.
 print '# time\tarea fraction\tarea fraction with less cloud\tarea fraction of more cloud'
 
-while time < TIME_END :
+while time <= TIME_END :
 
     weight_array = geometry.weight( time, N_SIDE, param_geometry )
     norm = np.sum( weight_array )
