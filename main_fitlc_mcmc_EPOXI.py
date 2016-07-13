@@ -7,15 +7,12 @@ import sys
 import corner
 import datetime
 import multiprocessing
-<<<<<<< HEAD
 import os
 import pdb
 
-=======
 import geometry
 import prior
 from reparameterize import *
->>>>>>> upstream/master
 
 # March 2008
 #LAT_S = -0.5857506  # sub-solar latitude
@@ -27,12 +24,8 @@ from reparameterize import *
 #NUM_MCMC_BURNIN = 1
 
 NUM_MCMC = 10
-<<<<<<< HEAD
 NUM_MCMC_BURNIN = 1
 SEED_AMP = 0.1
-=======
-NUM_MCMC_BURNIN = 1000
->>>>>>> upstream/master
 
 # Set the number of CPUs on current machine for the MCMC
 NCPU = multiprocessing.cpu_count()
@@ -44,11 +37,7 @@ FLAG_REG_AREA = False
 FLAG_REG_ALBD = False
 
 #n_slice = 4
-<<<<<<< HEAD
-N_TYPE  = 3
-=======
 N_TYPE  = 2
->>>>>>> upstream/master
 
 deg2rad = np.pi/180.
 
@@ -63,7 +52,6 @@ INFILE = "mockdata/mock_simple_1_data"
 #=============================================== ====
 
 #---------------------------------------------------
-<<<<<<< HEAD
 def latlon2cart(lat, lon):
     x = np.sin((90.-lat)*deg2rad)*np.cos(lon*deg2rad)
     y = np.sin((90.-lat)*deg2rad)*np.sin(lon*deg2rad)
@@ -168,8 +156,6 @@ def get_ln_prior_area( y_area_lk, x_area_lk ):
 
 
 #---------------------------------------------------
-=======
->>>>>>> upstream/master
 def lnprob(Y_array, *args):
     """
     Misfit-function to be ized
@@ -245,7 +231,6 @@ def lnprob(Y_array, *args):
     else :
         return - chi2 + ln_prior_albd + ln_prior_area
 
-<<<<<<< HEAD
 #---------------------------------------------------
 def transform_Y2X(Y_array, n_band):
 
@@ -279,9 +264,6 @@ def transform_X2Y(X_albd_kj, X_area_lk, n_slice):
         Y_area_lk[:,kk] = np.log(X_area_lk[:,kk]) - np.log(1.-np.sum(X_area_lk[:,:kk+1], axis=1))
 #    print "Y_area_lk", Y_area_lk
     return np.concatenate([Y_albd_kj.flatten(), Y_area_lk.flatten()])
-
-=======
->>>>>>> upstream/master
 
 
 #===================================================
@@ -390,18 +372,16 @@ if __name__ == "__main__":
     BIC = 2.0 * lnprob_bestfit + len( output['x'] ) * np.log( len(Obs_ij.flatten()) )
     print 'BIC: ', BIC
 
-<<<<<<< HEAD
     # Transform back to physical params
     X_albd_kj, X_area_lk =  transform_Y2X(output["x"], n_band)
     X_albd_kj_T = X_albd_kj.T
     #np.savetxt("X_area_lk", X_area_lk)
     #np.savetxt("X_albd_kj_T", X_albd_kj.T)
-=======
+
     X_albd_kj, X_area_lk = transform_Y2X(output["x"], N_TYPE, n_band, n_slice, flatten=False)
 #    X_area_lk = transform_Y2X(output["x"], n_band, n_slice)
     np.savetxt("X_area_lk", X_area_lk)
     np.savetxt("X_albd_kj_T", X_albd_kj.T)
->>>>>>> upstream/master
     bestfit = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
 
     # Calculate residuals
