@@ -202,7 +202,7 @@ if __name__ == "__main__":
     # best-fit values for regularizing parameters
     if 'REGULARIZATION' in globals():
         if REGULARIZATION == 'Tikhonov' :
-            print 'sigma', best_fit[-1]
+            print 'sigma', best_fit[-1] 
         elif REGULARIZATION == 'GP' :
             print 'overall_amp', best_fit[-3]
             print 'wn_rel_amp', np.exp( best_fit[-2] ) / ( 1. + np.exp( best_fit[-2] ) )

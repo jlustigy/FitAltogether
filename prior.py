@@ -123,7 +123,7 @@ def regularize_area_GP( x_area_lk, regparam ):
     term2 = -0.5 * np.log( det_cov )
 #    print 'term1, term2', term1, term2
 
-    prior_wn_rel_amp = np.log( wn_rel_amp / ( 1. + np.exp( wn_rel_amp_seed ) ) )
+    prior_wn_rel_amp = np.log( wn_rel_amp / ( 1. + np.exp( wn_rel_amp_seed ) )**2 )
 
     return term1 + term2 + prior_wn_rel_amp
 
