@@ -426,6 +426,12 @@ if __name__ == "__main__":
     os.mkdir(run_dir)
     print "Created directory:", run_dir
 
+    # Save THIS file for reproducibility!
+    thisfile = os.path.basename(__file__)
+    newfile = run_dir + thisfile
+    commandString = "cp " + thisfile + " " + newfile
+    os.system(commandString)
+
     # input data
     Obs_ij = np.loadtxt(INFILE)
     n_slice = len(Obs_ij)
