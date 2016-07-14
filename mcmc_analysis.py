@@ -80,7 +80,7 @@ def plot_trace(samples, directory="", X_names=None):
         plt.setp(ax1.get_xticklabels(), fontsize=18, rotation=45)
         plt.setp(ax1.get_yticklabels(), fontsize=18, rotation=45)
         fig.subplots_adjust(wspace=0)
-        fig.savefig(directory+"trace"+str(i)+".pdf")
+        fig.savefig(directory+"trace"+str(i)+".png")
     return
 
 #===================================================
