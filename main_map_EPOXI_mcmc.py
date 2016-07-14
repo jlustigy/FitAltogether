@@ -20,31 +20,10 @@ from map_utils import generate_tex_names
 # Parameters
 #--------------------------------------------------------------------
 
-REGULARIZATION = 'GP'
-#REGULARIZATION = 'GP2'
-#REGULARIZATION = 'Tikhonov'
-
-#n_slice = 4
-N_TYPE  = 3
-N_SLICE = 13
-
-MONTH = 'June'
-
-NOISELEVEL = 0.01
-
-NUM_MCMC = 1000
-NUM_MCMC_BURNIN = 400
-SEED_AMP = 0.1
+from map_EPOXI_params import N_TYPE, N_SLICE, MONTH, NOISELEVEL, \
+    NUM_MCMC, NUM_MCMC_BURNIN, SEED_AMP, N_SIDE, OMEGA
 
 NCPU = multiprocessing.cpu_count()
-
-N_side_seed = 2
-N_SIDE  = 2*2**N_side_seed
-
-Pspin = 24.0
-OMEGA = ( 2. * np.pi / Pspin )
-
-
 
 #--------------------------------------------------------------------
 # set-up
@@ -169,10 +148,13 @@ if __name__ == "__main__":
 
     # Save THIS file for reproducibility!
     thisfile = os.path.basename(__file__)
+    paramfile = "map_EPOXI_params.py"
     newfile = run_dir + thisfile
-    commandString = "cp " + thisfile + " " + newfile
-    os.system(commandString)
-    print "Saved :", thisfile
+    commandString1 = "cp " + thisfile + " " + newfile
+    commandString2 = "cp "+paramfile+" " + run_dir+paramfile
+    os.system(commandString1)
+    os.system(commandString2)
+    print "Saved :", thisfile, " &", paramfile
 
     # input data
     Obs_ij = np.loadtxt(INFILE)

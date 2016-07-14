@@ -104,7 +104,7 @@ def plot_sampling(x, directory=""):
     ax0 = plt.subplot(gs[0])
     ax1 = plt.subplot(gs[1])
     ax0.set_ylabel("Area Fraction")
-    ax0.set_xlabel("Time")
+    ax0.set_xlabel("Slice #")
     ax1.set_ylabel("Albedo")
     ax1.set_xlabel("Band")
 
@@ -184,7 +184,6 @@ if __name__ == "__main__":
 
     # Data dimensions
     Obs_ij = data[0]
-    n_slice = len(Obs_ij)
     n_band = len(Obs_ij[0])
 
     # Flatten chains that go beyond burn-in (aka sampling the posterior)

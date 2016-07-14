@@ -2,3 +2,4 @@
 *.DS_STORE
 mcmc_output/*/
 *.pyc
+map_EPOXI_params.py
