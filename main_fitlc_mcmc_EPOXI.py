@@ -184,7 +184,7 @@ def lnprob(Y_array, *args):
 
     # flat prior for area fraction
     Y_area_lk = Y_array[N_TYPE*n_band:].reshape([n_slice, N_TYPE-1])
-    ln_prior_area = prior.get_ln_prior_area( Y_area_lk, X_area_lk[:,:-1] )
+    ln_prior_area = prior.get_ln_prior_area_new( Y_area_lk )
 
     if verbose :
         print ''
@@ -220,10 +220,7 @@ def lnprob(Y_array, *args):
         r_albd_1  = 0.
         r_albd_2  = 0.
 
-
-    r_y  = 1.0/SIGMA_Y**2*np.dot(Y_array-0.5, Y_array-0.5)
-
-    # return
+# return
 #    print "chi2", chi2
 #    return chi2 + r_areafrac_1 + r_areafrac_2 + r_albd_1 + r_albd_2 + r_y
     if flip :
@@ -296,7 +293,7 @@ if __name__ == "__main__":
 #    set initial condition
 #    Y0_array = np.ones(N_TYPE*n_band+n_slice*(N_TYPE-1))
     X0_albd_kj = 0.3+np.zeros([N_TYPE, n_band])
-    X0_area_lk = 0.1+np.zeros([n_slice, N_TYPE])
+    X0_area_lk = 0.5+np.zeros([n_slice, N_TYPE])
 
     # Create list of strings for Y parameter names
     atmp = []
@@ -367,15 +364,23 @@ if __name__ == "__main__":
 #    print "X_area_lk", X_area_lk
 #    print "X_albd_kj", X_albd_kj
 
+<<<<<<< HEAD
     ########## use optimization for mcmc initial guesses ##########
 
     # ize
+=======
+    # minimie
+>>>>>>> upstream/master
     print "finding best-fit values..."
     data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, False)
     output = minimize(lnprob, Y0_array, args=data, method="Nelder-Mead")
 
+<<<<<<< HEAD
     best_fit = output["x"]
     print "best-fit", best_fit
+=======
+    print "best-fit", output["x"]
+>>>>>>> upstream/master
 
     data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, True)
     lnprob_bestfit = lnprob( output['x'], *data )
