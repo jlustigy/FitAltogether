@@ -12,15 +12,19 @@ import operator
 
 #-----------------------------------------------------------------------------
 
-N_SLICE = 360
-# soil
-# target_indx = [7,11,13,16]
+N_SLICE = 180
 
 # ocean
-target_indx = [17]
+#target_indx = [17]
 
 # vegetation
 # target_indx = [1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 14]
+ #target_indx = [1, 2, 3, 4, 5, 6, 10, 14]
+
+# soil
+# target_indx = [7,11,13,16]
+target_indx = [7,8,9,11,12,13,16]
+
 
 # all
 #target_indx = range(1,18)
@@ -45,23 +49,23 @@ lon  = ncfile_r.variables['lon'][:]  # omega
 surface_type = ncfile_r.variables['surface_type'][:,:] # omega
 
 lon = lon + 180.
-for ll in xrange( len( lon ) ):
-    print ll, np.trunc( lon[ll] ), np.trunc( lon[ll] ).astype(np.int64), lon[ll]
+#for ll in xrange( len( lon ) ):
+#    print ll, np.trunc( lon[ll] ), np.trunc( lon[ll] ).astype(np.int64), lon[ll]
 
 lat_mesh, lon_mesh = np.meshgrid( lat, lon, indexing='ij' )
 
 theta_d = ( 90. - lat_mesh.flatten() ) * np.pi / 180.
-phi_d = ( lon_mesh.flatten() ) * np.pi / 180.
+phi_d = lon_mesh.flatten()
 type_d = surface_type.flatten()
 
 # assignedL_float_d = np.floor( phi_d/( 2.*np.pi / N_SLICE))
-assignedL_float_d = phi_d/( 2.*np.pi / N_SLICE)
+assignedL_float_d = phi_d/( 360. / N_SLICE)
 assignedL_d = assignedL_float_d.astype(np.int64)
 LN_dl = np.zeros([ len( theta_d ), N_SLICE ]) 
 LN_dl[ np.arange( len( theta_d ) ), assignedL_d ] = 1.
 
-for ll in xrange( len( LN_dl.T ) ):
-    print ll, np.count_nonzero( LN_dl.T[ll] )
+#for ll in xrange( len( LN_dl.T ) ):
+#    print ll, np.count_nonzero( LN_dl.T[ll] )
 
 
 rad_10min = np.pi / 180. * ( 1. / 6. )
