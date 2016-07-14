@@ -33,7 +33,7 @@ MONTH = 'June'
 NOISELEVEL = 0.01
 
 NUM_MCMC = 1000
-NUM_MCMC_BURNIN = 0
+NUM_MCMC_BURNIN = 400
 SEED_AMP = 0.1
 
 NCPU = multiprocessing.cpu_count()
@@ -284,6 +284,6 @@ if __name__ == "__main__":
     # Save chains and other info
     print "Saving:", run_dir+"mcmc_samples.npz"
     np.savez(run_dir+"mcmc_samples.npz", data=data, samples=original_samples,\
-             Y_names=Y_names, X_names=X_names, N_TYPE=N_TYPE, p0=p0)
+             Y_names=Y_names, X_names=X_names, N_TYPE=N_TYPE, N_SLICE=N_SLICE, p0=p0)
 
     sys.exit()

@@ -175,6 +175,7 @@ if __name__ == "__main__":
     p0 = temp["p0"]
     X_names = temp["X_names"]
     Y_names = temp["Y_names"]
+    n_slice = temp["N_SLICE"]
 
     # MCMC dimensions
     nwalkers = samples.shape[0]
