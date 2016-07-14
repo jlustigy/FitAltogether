@@ -146,7 +146,7 @@ if __name__ == "__main__":
     os.mkdir(run_dir)
     print "Created directory:", run_dir
 
-    # Save THIS file for reproducibility!
+    # Save THIS file and the param file for reproducibility!
     thisfile = os.path.basename(__file__)
     paramfile = "map_EPOXI_params.py"
     newfile = run_dir + thisfile

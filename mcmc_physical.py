@@ -82,7 +82,8 @@ def plot_median(med_alb, std_alb, med_area, std_area, directory=""):
         ax1.plot(xalb, med_alb[i,:], "o-", color=c[i])
         ax1.fill_between(xalb, med_alb[i,:] - std_alb[i,:], med_alb[i,:] + std_alb[i,:], alpha=0.3 ,color=c[i])
 
-    ax0.set_ylim([-0.05, 1.05])
+    ax0.set_ylim([-0.02, 1.02])
+    ax1.set_ylim([-0.02, 1.02])
     ax0.set_xlim([np.min(xarea)-0.05, np.max(xarea)+0.05])
     ax1.set_xlim([np.min(xalb)-0.05, np.max(xalb)+0.05])
 
@@ -123,7 +124,8 @@ def plot_sampling(x, directory=""):
             ax0.plot(xarea, area[:,i], "-", color=c[i], alpha=ALPHA)
             ax1.plot(xalb, alb[i,:], "-", color=c[i], alpha=ALPHA)
 
-    ax0.set_ylim([-0.05, 1.05])
+    ax0.set_ylim([-0.02, 1.02])
+    ax1.set_ylim([-0.02, 1.02])
     ax0.set_xlim([np.min(xarea)-0.05, np.max(xarea)+0.05])
     ax1.set_xlim([np.min(xalb)-0.05, np.max(xalb)+0.05])
 
@@ -133,6 +135,18 @@ def plot_sampling(x, directory=""):
     fig.tight_layout()
 
     fig.savefig(directory+"xsamples.pdf")
+
+def convolve_with_eye(wl, spectrum):
+    # Convert um to nm
+    wl = wl * 1000.
+    # Construct 2d array for ColorPy
+    spec = np.vstack([wl, spectrum]).T
+    # Call ColorPy modules to get irgb string
+    rgb_eye = colormodels.irgb_string_from_rgb (
+        colormodels.rgb_from_xyz (ciexyz.xyz_from_spectrum (spec)))
+    return rgb_eye
+
+
 
 #===================================================
 if __name__ == "__main__":
@@ -186,8 +200,8 @@ if __name__ == "__main__":
     Obs_ij = data[0]
     n_band = len(Obs_ij[0])
 
-    # Flatten chains that go beyond burn-in (aka sampling the posterior)
-    samples = samples[:,iburn:,:].reshape((-1, nparam))
+    # Compute slice longitude
+    slice_longitude = np.array([-180. + (360. / n_slice) * (i + 0.5) for i in range(n_slice)])
 
     try:
         # load physical samples
@@ -195,6 +209,9 @@ if __name__ == "__main__":
         xsam = temp["xsam"]
         print "Physical  xsamples loaded from file!"
     except IOError:
+        # Flatten chains that go beyond burn-in (aka sampling the posterior)
+        print "Flattening chains..."
+        samples = samples[:,iburn:,:].reshape((-1, nparam))
         # Transform all samples to physical units
         print "Converting Y -> X..."
         xsam = np.array([transform_Y2X(samples[i], N_TYPE, n_band, n_slice, flatten=True) for i in range(len(samples))])
@@ -230,117 +247,9 @@ if __name__ == "__main__":
         print "Making Physical Corner Plot..."
 
         # Make corner plot
-        fig = corner.corner(xsam, plot_datapoints=True, plot_contours=False, plot_density=False, labels=X_names)
+        fig = corner.corner(xsam, plot_datapoints=True, plot_contours=False, plot_density=False,
+            labels=X_names, show_titles=True)
         fig.savefig(MCMC_DIR+"xcorner.png")
 
 
     sys.exit()
-
-    X_array = np.zeros( [ len( samples ), N_TYPE*n_band + n_slice*N_TYPE ] )
-
-    print 'accumulation...'
-    print len( samples )
-
-
-    X_albd_kj, X_area_lk =  transform_Y2X( samples[0], n_band)
-    X_array[0] = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
-
-    X_albd_kj_stack = X_albd_kj
-    X_area_lk_stack = X_area_lk
-
-    for ii in xrange( 1, len( samples ) ):
-        if ii % 1000 == 0 :
-            print ii
-
-        X_albd_kj, X_area_lk =  transform_Y2X( samples[ii], n_band)
-        X_array[ii] = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
-
-        X_albd_kj_stack = np.dstack([ X_albd_kj_stack, X_albd_kj ])
-        X_area_lk_stack = np.dstack([ X_area_lk_stack, X_area_lk ])
-
-
-
-
-    print 'evaluation...'
-
-    X_albd_error = np.percentile( X_albd_kj_stack, [16, 50, 84], axis=2)
-
-    #    X_albd_error = map(lambda v: np.array([v[1], v[2]-v[1], v[1]-v[0]]),
-    #                       zip(*np.percentile( X_albd_kj_stack, [16, 50, 84], axis=2)))
-
-    print X_albd_error
-    #    print X_albd_error.shape
-
-    for jj in  xrange( n_band ):
-        for kk in  xrange( N_TYPE ):
-            print X_albd_error[1][kk][jj], X_albd_error[2][kk][jj], X_albd_error[0][kk][jj],
-        print ''
-
-    print ''
-    print ''
-
-    X_area_error = np.percentile( X_area_lk_stack, [16, 50, 84], axis=2)
-    #    X_area_error = map(lambda v: np.array([v[1], v[2]-v[1], v[1]-v[0]]),
-    #                       zip(*np.percentile( X_area_lk_stack, [16, 50, 84], axis=2)))
-
-    for ll in xrange( n_slice ):
-        for kk in  xrange( N_TYPE ):
-            print X_area_error[1][ll][kk], X_area_error[2][ll][kk], X_area_error[0][ll][kk],
-        print ''
-
-    # Save results
-    print "Saving:", MCMC_DIR+"mcmc_physical.npz"
-    np.savez(MCMC_DIR+"mcmc_physical.npz", \
-        X_albd_kj_stack=X_albd_kj_stack, X_area_lk_stack=X_area_lk_stack, \
-        X_albd_error=X_albd_error, X_area_error=X_area_error)
-
-    sys.exit()
-
-    print ''
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
-    print 'PLOTTING ALBEDO PROBABILITY MAP...'
-    myrange = np.tile( [0., 1.,], ( N_TYPE*n_band, 1 ) )
-    fig = corner.corner( X_array[:,:N_TYPE*n_band], labels=range(N_TYPE*n_band), truths=bestfit[:N_TYPE*n_band], range=myrange, bins=100 )
-    fig.savefig(INFILE+"_corner_albd.png")
-
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
-
-    print ''
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
-    print 'PLOTTING AREA FRACTION PROBABILITY MAP...'
-    myrange = np.tile( [0., 1.,], ( n_slice, 1 ) )
-    fig = corner.corner( X_array[:,N_TYPE*n_band:N_TYPE*n_band+n_slice], labels=range(n_slice), truths=bestfit[N_TYPE*n_band:N_TYPE*n_band+n_slice], range=myrange, bins=100 )
-    fig.savefig(INFILE+"_corner_area1.png")
-
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
-
-    print ''
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
-    print 'PLOTTING AREA FRACTION PROBABILITY MAP...'
-    myrange = np.tile( [0., 1.,], ( n_slice, 1 ) )
-    fig = corner.corner( X_array[:,N_TYPE*n_band+n_slice:N_TYPE*n_band+2*n_slice], labels=range(n_slice), truths=bestfit[N_TYPE*n_band+n_slice:N_TYPE*n_band+2*n_slice], range=myrange, bins=100 )
-    fig.savefig(INFILE+"_corner_area2.png")
-
-    print 'X_array.shape', X_array[:,N_TYPE*n_band+2*n_slice:].shape
-    print X_array[:,N_TYPE*n_band+2*n_slice:]
-
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
-
-    print ''
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
-    print 'PLOTTING AREA FRACTION PROBABILITY MAP...'
-    myrange = np.tile( [0., 1.,], ( n_slice, 1 ) )
-    print 'myrange', myrange
-    print 'range(n_slice)', range(n_slice)
-    fig = corner.corner( X_array[:,N_TYPE*n_band+2*n_slice:], labels=range(n_slice), truths=bestfit[N_TYPE*n_band+2*n_slice:], range=myrange, bins=100 )
-    fig.savefig(INFILE+"_corner_area3.png")
-
-    now = datetime.datetime.now()
-    print now.strftime("%Y-%m-%d %H:%M:%S")
