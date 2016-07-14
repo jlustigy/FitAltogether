@@ -50,9 +50,21 @@ elif ( MONTH == 'June' ):
     LAT_O = 0.264
 #    LON_O = 165.4663412
 #    LAT_O = -0.3521857
-#    LON_S = 239.1424068
+#    LON_S = 239.1424068 
 #    LAT_S = 21.6159766
     INFILE = "data/raddata_2_norm"
+    Time_i = np.arange(25)*1.
+
+elif ( MONTH == 'test' ):
+# from spectroscopic data
+#         Sub-Sun Lon/Lat =      97.091       -0.581 /     W longitude, degrees
+#         Sub-SC  Lon/Lat =     154.577        1.678 /     W longitude, degrees
+    LON_S = 280.977
+    LAT_S = 22.531
+    LON_O = 205.465
+    LAT_O = 0.264
+#    INFILE = "mockdata/mock_simple_JuneKernel_scattered0.01_data_with_noise"
+    INFILE = "mockdata/mock_simple_3types_JuneKernel_scattered0.01_data_with_noise"
     Time_i = np.arange(25)*1.
 
 else :
