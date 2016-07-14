@@ -1,11 +1,21 @@
 import numpy as np
 
+
 #---------------------------------------------------
 def get_ln_prior_albd( y_albd_kj ):
 
     prior_kj = np.exp( y_albd_kj ) / ( 1 + np.exp( y_albd_kj ) )**2
     ln_prior = np.log( np.prod( prior_kj ) )
 #    ln_prior = np.sum( np.log( prior_kj ) )
+    return ln_prior
+
+
+#---------------------------------------------------
+def get_ln_prior_area_new( y_area_lk, x_area_lk ):
+
+#    x_area_lk is a dummy
+    prior_lk = np.exp( y_area_lk ) / ( 1 + np.exp( y_area_lk ) )**2
+    ln_prior = np.log( np.prod( prior_lk ) )
     return ln_prior
 
 
@@ -43,6 +53,7 @@ def get_ln_prior_area( y_area_lk, x_area_lk ):
     ln_prior = np.sum( np.log( np.linalg.det( dFdg ) ) )
 
     return ln_prior
+
 
 
 ##---------------------------------------------------
@@ -86,7 +97,6 @@ def get_ln_prior_area_old( y_area_lk, x_area_lk ):
 
 
 
-
 #---------------------------------------------------
 def regularize_area_GP( x_area_lk, regparam ):
 
@@ -101,15 +111,22 @@ def regularize_area_GP( x_area_lk, regparam ):
 #    print 'cov', cov
     inv_cov = np.linalg.inv( cov )
     det_cov = np.linalg.det( cov )
+    if ( det_cov == 0. ):
+        print 'det_cov', det_cov
+        print 'cov', cov
 
 #    print 'inv_cov', inv_cov
-    x_area_ave = 1./3.
-    dx_area_lk = x_area_lk - x_area_ave
+    x_area_ave = 1./len(x_area_lk.T)
+    dx_area_lk = x_area_lk[:,:-1] - x_area_ave
     term1_all = np.dot( dx_area_lk.T, np.dot( inv_cov, dx_area_lk ) )
     term1 = -0.5 * np.sum( term1_all.diagonal() )
     term2 = -0.5 * np.log( det_cov )
 #    print 'term1, term2', term1, term2
-    return term1 + term2
+
+    prior_wn_rel_amp = np.log( wn_rel_amp / ( 1. + np.exp( wn_rel_amp_seed ) ) )
+
+    return term1 + term2 + prior_wn_rel_amp
+
 
 #---------------------------------------------------
 def get_cov( sigma, wn_rel_amp, lambda_angular, l_dim, periodic=True):
@@ -135,13 +152,70 @@ def get_cov( sigma, wn_rel_amp, lambda_angular, l_dim, periodic=True):
 
 
 #---------------------------------------------------
+def regularize_area_GP2( x_area_lk, regparam ):
+
+    sigma, lambda_angular = regparam
+
+#    print 'wn_rel_amp', wn_rel_amp
+#    print 'lambda_angular', lambda_angular
+    l_dim = len( x_area_lk )
+    cov = get_cov2( sigma, lambda_angular, l_dim )
+
+#    print 'cov', cov
+    inv_cov = np.linalg.inv( cov )
+    det_cov = np.linalg.det( cov )
+
+    print 'det_cov', det_cov
+    print 'cov', cov
+    if ( det_cov == 0. ):
+        print 'det_cov', det_cov
+        print 'cov', cov
+
+
+#    print 'inv_cov', inv_cov
+    x_area_ave = 1./len(x_area_lk.T)
+    dx_area_lk = x_area_lk[:,:-1] - x_area_ave
+    term1_all = np.dot( dx_area_lk.T, np.dot( inv_cov, dx_area_lk ) )
+    term1 = -0.5 * np.sum( term1_all.diagonal() )
+    term2 = -0.5 * np.log( det_cov )
+
+#    prior_wn_rel_amp = np.log( wn_rel_amp / ( 1. + np.exp( wn_rel_amp_seed ) ) )
+
+    return term1 + term2
+
+
+
+#---------------------------------------------------
+def get_cov2( sigma, lambda_angular, l_dim, periodic=True):
+
+#    kappa0 = np.log(output["x"][-1]) - np.log(360.0 - output["x"][-1])
+    Sigma_ll = np.zeros([l_dim, l_dim])
+    lon_l = 2.0 * np.pi * np.arange( l_dim ) / ( l_dim * 1. )
+    dif_lon_ll = lon_l[:,np.newaxis] - lon_l[np.newaxis,:]
+    if periodic :
+        dif_lon_ll = np.minimum( abs( dif_lon_ll ), abs( 2. * np.pi - dif_lon_ll ) )
+    else :
+        dif_lon_ll = abs( dif_lon_ll )
+
+    Sigma_ll = np.exp( - 0.5 * dif_lon_ll**2 / ( lambda_angular**2 ) )
+#    Sigma_ll = np.exp( - dif_lon_ll / ( lambda_angular**2 ) )
+
+    cov = Sigma_ll * sigma
+#    cov[np.diag_indices(l_dim)] = 0.
+
+    return cov
+
+
+
+#---------------------------------------------------
 def regularize_area_tikhonov( x_area_lk, regparam ):
 
     lmd = regparam
-    x_area_ave = 1./len(x_area_lk.T)
+    x_area_ave = 1./(len( x_area_lk.T ))
     dx_area_lk = x_area_lk[:,:-1] - x_area_ave
-    term = np.sum( dx_area_lk**2. )
-    return -1. * ( 1. / lmd )**2 * term
+    term = -1.*np.sum( dx_area_lk**2. )/lmd**2
+    prior_lmd = -0.5 * np.log( abs(lmd) )
+    return term + prior_lmd
 
 
 ##---------------------------------------------------

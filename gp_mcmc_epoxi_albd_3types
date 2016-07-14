@@ -1,5 +1,5 @@
 set term postscript eps enhanced color 28
-set output 'mcmc_EPOXI15_albd.eps'
+set output 'mcmc_EPOXI1_albd_3types_25times.eps'
 
 set style line 1 lc rgb '#00CC00' lt 1 lw 2
 set style line 2 lc rgb '#FF0000' lt 1 lw 2
@@ -13,12 +13,12 @@ set ylabel 'albedo' offset 1,0
 set ytics 0.2
 
 plot \
-'EPOXI15_ave_var' index 0 us 0:1:2  w yerrorbars ls 1 ti 'type 1', \
-'EPOXI15_ave_var' index 0 us 0:1 w l ls 1 notitle, \
-'EPOXI15_ave_var' index 0 us 0:3:4 w yerrorbars ls 2 ti 'type 2', \
-'EPOXI15_ave_var' index 0 us 0:3 w l ls 2 notitle, \
-'EPOXI15_ave_var' index 0 us 0:5:6 w yerrorbars ls 3 ti 'type 3', \
-'EPOXI15_ave_var' index 0 us 0:5 w l ls 3 notitle
+'EPOXI1_ave_var_3types_25times' index 0 us 0:1:2:3  w yerrorbars ls 1 ti 'type 1', \
+'EPOXI1_ave_var_3types_25times' index 0 us 0:1 w l ls 1 notitle, \
+'EPOXI1_ave_var_3types_25times' index 0 us 0:4:5:6 w yerrorbars ls 2 ti 'type 2', \
+'EPOXI1_ave_var_3types_25times' index 0 us 0:4 w l ls 2 notitle, \
+'EPOXI1_ave_var_3types_25times' index 0 us 0:7:8:9 w yerrorbars ls 3 ti 'type 3', \
+'EPOXI1_ave_var_3types_25times' index 0 us 0:7 w l ls 3 notitle
 
 
 

@@ -75,7 +75,7 @@ def lnprob(Y_array, *args):
 
     # flat prior for area fraction
     Y_area_lk = Y_array[N_TYPE*n_band:].reshape([n_slice, N_TYPE-1])
-    ln_prior_area = prior.get_ln_prior_area_new( Y_area_lk )
+    ln_prior_area = prior.get_ln_prior_area( Y_area_lk, X_area_lk[:,:-1] )
 
     if verbose :
         print ''
@@ -111,7 +111,10 @@ def lnprob(Y_array, *args):
         r_albd_1  = 0.
         r_albd_2  = 0.
 
-# return
+
+    r_y  = 1.0/SIGMA_Y**2*np.dot(Y_array-0.5, Y_array-0.5)
+
+    # return
 #    print "chi2", chi2
 #    return chi2 + r_areafrac_1 + r_areafrac_2 + r_albd_1 + r_albd_2 + r_y
     if flip :
@@ -138,14 +141,14 @@ if __name__ == "__main__":
 
     # set kernel
 #    Kernel_il = kernel(Time_i, n_slice)
-    Kernel_il = np.identity( n_slice )
+#     Kernel_il = np.identity( n_slice )
 #    Sigma_ll = np.identity(n_slice)
 
 #    print 1/0
 #    set initial condition
 #    Y0_array = np.ones(N_TYPE*n_band+n_slice*(N_TYPE-1))
     X0_albd_kj = 0.3+np.zeros([N_TYPE, n_band])
-    X0_area_lk = 0.5+np.zeros([n_slice, N_TYPE])
+    X0_area_lk = 0.1+np.zeros([n_slice, N_TYPE])
 
 ## albedo ( band x surface type )
 #    X0_albd_kj = np.array( [[1.000000000000000056e-01, 9.000000000000000222e-01],
@@ -194,10 +197,11 @@ if __name__ == "__main__":
 #    print "X_area_lk", X_area_lk
 #    print "X_albd_kj", X_albd_kj
 
-    # minimie
+    # minimize
     print "finding best-fit values..."
     data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, False)
     output = minimize(lnprob, Y0_array, args=data, method="Nelder-Mead")
+
 
     print "best-fit", output["x"]
 
