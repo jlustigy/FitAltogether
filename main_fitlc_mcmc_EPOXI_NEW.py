@@ -426,6 +426,12 @@ if __name__ == "__main__":
     os.mkdir(run_dir)
     print "Created directory:", run_dir
 
+    # Save THIS file for reproducibility!
+    thisfile = os.path.basename(__file__)
+    newfile = run_dir + thisfile
+    commandString = "cp " + thisfile + " " + newfile
+    os.system(commandString)
+
     # input data
     Obs_ij = np.loadtxt(INFILE)
     n_slice = len(Obs_ij)
@@ -566,6 +572,7 @@ if __name__ == "__main__":
     original_samples = sampler.chain
 
     print "Saving:", run_dir+"mcmc_samples.npz"
-    np.savez(run_dir+"mcmc_samples.npz", data=data, samples=original_samples, Y_names=Y_names, X_names=X_names, N_TYPE=N_TYPE, p0=p0)
+    np.savez(run_dir+"mcmc_samples.npz", data=data, samples=original_samples, \
+             Y_names=Y_names, X_names=X_names, N_TYPE=N_TYPE, N_SLICE=n_slice, p0=p0)
 
     sys.exit()

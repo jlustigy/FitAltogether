@@ -14,8 +14,12 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from matplotlib import rc
 import pdb
+
+from reparameterize import transform_Y2X
+
 mpl.rc('font', family='Times New Roman')
 mpl.rcParams['font.size'] = 25.0
+
 
 # Specify directory of run to analyze
 MCMC_DIR = "mcmc_output/2016-07-13--11-59/"
@@ -26,7 +30,7 @@ DIR = "mcmc_output/"
 DEFAULT_BURN_INDEX = 0
 
 #---------------------------------------------------
-#---------------------------------------------------
+"""
 def transform_Y2X(Y_array, n_band, n_slice):
 
     Y_array = np.maximum(Y_array, -10)
@@ -47,6 +51,7 @@ def transform_Y2X(Y_array, n_band, n_slice):
 
     X_array = np.r_[ X_albd_kj_flat, X_area_lk_flat ]
     return X_array
+"""
 
 def decomposeX(x,n_band,n_slice,n_type):
     alb = x[0:n_band * n_type].reshape((n_type,n_band))
@@ -170,6 +175,7 @@ if __name__ == "__main__":
     p0 = temp["p0"]
     X_names = temp["X_names"]
     Y_names = temp["Y_names"]
+    n_slice = temp["N_SLICE"]
 
     # MCMC dimensions
     nwalkers = samples.shape[0]
@@ -192,7 +198,8 @@ if __name__ == "__main__":
     except IOError:
         # Transform all samples to physical units
         print "Converting Y -> X..."
-        xsam = np.array([transform_Y2X(samples[i], n_band, n_slice) for i in range(len(samples))])
+        xsam = np.array([transform_Y2X(samples[i], N_TYPE, n_band, n_slice, flatten=True) for i in range(len(samples))])
+        #xsam = np.array([transform_Y2X(samples[i], n_band, n_slice) for i in range(len(samples))])
         print "Saving mcmc_physical_samples.npz..."
         np.savez(MCMC_DIR+"mcmc_physical_samples.npz", xsam=xsam)
 
