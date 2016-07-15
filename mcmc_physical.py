@@ -22,11 +22,9 @@ from reparameterize import transform_Y2X
 mpl.rc('font', family='Times New Roman')
 mpl.rcParams['font.size'] = 25.0
 
-
-# Specify directory of run to analyze
-MCMC_DIR = "mcmc_output/2016-07-13--11-59/"
-
 DIR = "mcmc_output/"
+EYECOLORS = False
+EPOXI = True
 
 # Specify burn-in index for corner plot
 DEFAULT_BURN_INDEX = 0
@@ -48,12 +46,35 @@ def plot_median(med_alb, std_alb, med_area, std_area, directory=""):
     ax0.set_ylabel("Area Fraction")
     ax0.set_xlabel("Slice #")
     ax1.set_ylabel("Albedo")
-    ax1.set_xlabel("Band")
-
-    c = ["purple", "orange", "green", "lightblue"]
 
     xarea = np.arange(n_slice)
     xalb = np.arange(n_band)
+
+    if n_slice == n_times:
+        ax0.set_xlabel("Time [hrs]")
+        ax0.set_xlim([np.min(xarea)-0.05, np.max(xarea)+0.05])
+    else:
+        ax0.set_xlabel("Slice Longitude [deg]")
+        xarea = np.array([-180. + (360. / n_slice) * (i + 0.5) for i in range(n_slice)])
+        ax0.set_xlim([-185, 185])
+        ax0.set_xticks([-180, -90, 0, 90, 180])
+
+    if EPOXI:
+        epoxi_bands = np.loadtxt("data/EPOXI_band")
+        wl = epoxi_bands[:,1]
+        xalb = wl
+        ax1.set_xlabel("Wavelength [nm]")
+        ax1.set_xlim([300,1000])
+    else:
+        ax1.set_xlabel("Band")
+        ax1.set_xlim([np.min(xalb)-0.05, np.max(xalb)+0.05])
+
+    if EYECOLORS:
+        epoxi_bands = np.loadtxt("data/EPOXI_band")
+        wl = epoxi_bands[:,1]
+        c = [convolve_with_eye(wl, med_alb[i,:]) for i in range(N_TYPE)]
+    else:
+        c = ["purple", "orange", "green", "lightblue"]
 
     for i in range(N_TYPE):
         ax0.plot(xarea, med_area[:,i], "o-", label="Surface %i" %(i+1), color=c[i])
@@ -63,8 +84,6 @@ def plot_median(med_alb, std_alb, med_area, std_area, directory=""):
 
     ax0.set_ylim([-0.02, 1.02])
     ax1.set_ylim([-0.02, 1.02])
-    ax0.set_xlim([np.min(xarea)-0.05, np.max(xarea)+0.05])
-    ax1.set_xlim([np.min(xalb)-0.05, np.max(xalb)+0.05])
 
     leg=ax0.legend(loc=0, fontsize=14)
     leg.get_frame().set_alpha(0.0)
@@ -86,12 +105,35 @@ def plot_sampling(x, directory=""):
     ax0.set_ylabel("Area Fraction")
     ax0.set_xlabel("Slice #")
     ax1.set_ylabel("Albedo")
-    ax1.set_xlabel("Band")
-
-    c = ["purple", "orange", "green", "lightblue"]
 
     xarea = np.arange(n_slice)
     xalb = np.arange(n_band)
+
+    if n_slice == n_times:
+        ax0.set_xlabel("Time [hrs]")
+        ax0.set_xlim([np.min(xarea)-0.05, np.max(xarea)+0.05])
+    else:
+        ax0.set_xlabel("Slice Longitude [deg]")
+        xarea = np.array([-180. + (360. / n_slice) * (i + 0.5) for i in range(n_slice)])
+        ax0.set_xlim([-185, 185])
+        ax0.set_xticks([-180, -90, 0, 90, 180])
+
+    if EPOXI:
+        epoxi_bands = np.loadtxt("data/EPOXI_band")
+        wl = epoxi_bands[:,1]
+        xalb = wl
+        ax1.set_xlabel("Wavelength [nm]")
+        ax1.set_xlim([300,1000])
+    else:
+        ax1.set_xlabel("Band")
+        ax1.set_xlim([np.min(xalb)-0.05, np.max(xalb)+0.05])
+
+    if EYECOLORS:
+        epoxi_bands = np.loadtxt("data/EPOXI_band")
+        wl = epoxi_bands[:,1]
+        c = [convolve_with_eye(wl, med_alb[i,:]) for i in range(N_TYPE)]
+    else:
+        c = ["purple", "orange", "green", "lightblue"]
 
     for s in range(len(x)):
         # Decompose x vector into albedo and area arrays
@@ -105,8 +147,6 @@ def plot_sampling(x, directory=""):
 
     ax0.set_ylim([-0.02, 1.02])
     ax1.set_ylim([-0.02, 1.02])
-    ax0.set_xlim([np.min(xarea)-0.05, np.max(xarea)+0.05])
-    ax1.set_xlim([np.min(xalb)-0.05, np.max(xalb)+0.05])
 
     leg=ax0.legend(loc=0, fontsize=16)
     leg.get_frame().set_alpha(0.0)
@@ -116,8 +156,6 @@ def plot_sampling(x, directory=""):
     fig.savefig(directory+"xsamples.pdf")
 
 def convolve_with_eye(wl, spectrum):
-    # Convert um to nm
-    wl = wl * 1000.
     # Construct 2d array for ColorPy
     spec = np.vstack([wl, spectrum]).T
     # Call ColorPy modules to get irgb string
@@ -130,7 +168,7 @@ def convolve_with_eye(wl, spectrum):
 #===================================================
 if __name__ == "__main__":
 
-    # Read command line args
+    ###### Read command line args ######
     myopts, args = getopt.getopt(sys.argv[1:],"d:b:")
     run = ""
     iburn = DEFAULT_BURN_INDEX
@@ -145,10 +183,21 @@ if __name__ == "__main__":
             iburn = int(a)
         else:
             pass
-
+    # Exit if no run directory provided
     if run == "":
         print("Please specify run directory using -d: \n e.g. >python mcmc_physical.py -d 2016-07-13--11-59")
         sys.exit()
+    # Check for flag to convolve albedos with eye for plot colors
+    if "eyecolors" in str(sys.argv):
+        EYECOLORS = True
+    else:
+        EYECOLORS = False
+    # Check for epoxi flag for wavelength labeling
+    if "epoxi" in str(sys.argv):
+        EPOXI = True
+    else:
+        EPOXI = False
+    ##################################
 
     print "Burn-in index:", iburn
 
@@ -177,13 +226,13 @@ if __name__ == "__main__":
 
     # Unpack Data
     Obs_ij = data[0]
-    n_slice = len(Obs_ij)
+    n_times = len(Obs_ij)
     n_band = len(Obs_ij[0])
     N_REGPARAM = data[3]
 
 
     # Compute slice longitude
-    slice_longitude = np.array([-180. + (360. / n_slice) * (i + 0.5) for i in range(n_slice)])
+    #slice_longitude = np.array([-180. + (360. / n_slice) * (i + 0.5) for i in range(n_slice)])
 
     try:
         # load physical samples
@@ -230,6 +279,11 @@ if __name__ == "__main__":
 
         # Plot median
         plot_median(med_alb, std_alb, med_area, std_area, directory=MCMC_DIR)
+
+        # Save median results
+        np.savetxt(MCMC_DIR+"albedo_median.txt", np.vstack([med_alb, std_alb]).T)
+        np.savetxt(MCMC_DIR+"area_median.txt", np.vstack([med_area.T, std_area.T]).T)
+        print "Saved:", "median_results.txt"
 
     if "corner" in str(sys.argv):
         print "Making Physical Corner Plot..."
