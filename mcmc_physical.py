@@ -175,9 +175,12 @@ if __name__ == "__main__":
     nsteps = samples.shape[1]
     nparam = samples.shape[2]
 
-    # Data dimensions
+    # Unpack Data
     Obs_ij = data[0]
+    n_slice = len(Obs_ij)
     n_band = len(Obs_ij[0])
+    N_REGPARAM = data[3]
+
 
     # Compute slice longitude
     slice_longitude = np.array([-180. + (360. / n_slice) * (i + 0.5) for i in range(n_slice)])
@@ -193,7 +196,13 @@ if __name__ == "__main__":
         samples = samples[:,iburn:,:].reshape((-1, nparam))
         # Transform all samples to physical units
         print "Converting Y -> X..."
-        xsam = np.array([transform_Y2X(samples[i], N_TYPE, n_band, n_slice, flatten=True) for i in range(len(samples))])
+        if (N_REGPARAM > 0):
+            # Exclude regularization parameters from albedo, area samples
+            xsam = np.array([transform_Y2X(samples[i,:-1*N_REGPARAM], N_TYPE, n_band, n_slice, flatten=True) for i in range(len(samples))])
+        else:
+            # Use all parameters
+            xsam = np.array([transform_Y2X(samples[i], N_TYPE, n_band, n_slice, flatten=True) for i in range(len(samples))])
+        #xsam = np.array([transform_Y2X(samples[i], N_TYPE, n_band, n_slice, flatten=True) for i in range(len(samples))])
         #xsam = np.array([transform_Y2X(samples[i], n_band, n_slice) for i in range(len(samples))])
         print "Saving mcmc_physical_samples.npz..."
         np.savez(MCMC_DIR+"mcmc_physical_samples.npz", xsam=xsam)
