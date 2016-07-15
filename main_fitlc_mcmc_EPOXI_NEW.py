@@ -10,40 +10,17 @@ import multiprocessing
 import os
 import pdb
 
+from fitlc_params import NUM_MCMC, NUM_MCMC_BURNIN, SEED_AMP, SIGMA_Y, NOISELEVEL, \
+    FLAG_REG_AREA, FLAG_REG_ALBD, N_TYPE, deg2rad, N_SIDE, INFILE, calculate_walkers
+
+NCPU = multiprocessing.cpu_count()
+
 
 # March 2008
 #LAT_S = -0.5857506  # sub-solar latitude
 #LON_S = 267.6066184  # sub-solar longitude
 #LAT_O = 1.6808370  # sub-observer longitude
 #LON_O = 210.1242232 # sub-observer longitude
-
-#NUM_MCMC = 2
-#NUM_MCMC_BURNIN = 1
-
-NUM_MCMC = 1000
-NUM_MCMC_BURNIN = 600
-SEED_AMP = 0.5
-
-# Set the number of CPUs on current machine for the MCMC
-NCPU = multiprocessing.cpu_count()
-
-SIGMA_Y  = 3.0
-NOISELEVEL = 0.01
-
-FLAG_REG_AREA = False
-FLAG_REG_ALBD = False
-
-#n_slice = 4
-N_TYPE  = 2
-
-deg2rad = np.pi/180.
-
-N_SIDE   = 32
-#INFILE = "data/raddata_12_norm"
-#INFILE = "data/raddata_2_norm"
-INFILE = "mockdata/mock_simple_1_data"
-#INFILE = "mockdata/mock_simple_3types_1_data"
-# INFILE = 'mockdata/mock_simple_1_scattered0.01_data_with_noise'
 
 
 #===================================================
@@ -128,41 +105,6 @@ def get_ln_prior_area( y_area_lk, x_area_lk):
     ln_prior = np.log( np.prod( prior_lk ) )
     return ln_prior
 
-
-"""
-#---------------------------------------------------
-def get_ln_prior_area( y_area_lk, x_area_lk ):
-
-    l_dim = len( y_area_lk )
-    k_dim = len( y_area_lk.T )
-    kk_dim = len( y_area_lk.T )
-
-    sumF = np.cumsum( x_area_lk, axis=1 )
-
-    # when kk < k
-    l_indx, k_indx, kk_indx = np.meshgrid( np.arange( l_dim ), np.arange( k_dim ), np.arange( kk_dim ), indexing='ij' )
-    dgdF = np.zeros( [ l_dim, k_dim, kk_dim  ] )
-    dgdF[ l_indx, k_indx, kk_indx ] = x_area_lk[ l_indx, kk_indx ] / x_area_lk[ l_indx, k_indx ] / ( 1 - sumF[ l_indx, k_indx ] )
-
-    # when kk > k
-    k_tmp, kk_tmp   = np.triu_indices(k_dim)
-    l_indx, k_indx  = np.meshgrid( np.arange( l_dim ), k_tmp,  indexing='ij' )
-    l_indx, kk_indx = np.meshgrid( np.arange( l_dim ), kk_tmp, indexing='ij' )
-    dgdF[ l_indx, k_indx, kk_indx ] = 0.
-
-    # when kk = k
-    k_tmp, kk_tmp = np.diag_indices(k_dim)
-    l_indx, k_indx  = np.meshgrid( np.arange( l_dim ), k_tmp,  indexing='ij' )
-    l_indx, kk_indx = np.meshgrid( np.arange( l_dim ), kk_tmp, indexing='ij' )
-    dgdF[ l_indx, k_indx, kk_indx ] = 1./x_area_lk[l_indx,k_indx]*(1. - sumF[l_indx, k_indx-1]) / ( 1 - sumF[ l_indx, k_indx ] )
-
-    dgdF_factor = np.linalg.det( dgdF )
-    ln_prior = np.sum( np.log( dgdF_factor ) )
-
-    return ln_prior
-"""
-
-
 #---------------------------------------------------
 def get_ln_prior_area_old( y_area_lj, x_area_lj ):
 
@@ -206,14 +148,14 @@ def lnprob(Y_array, *args):
     Misfit-function to be minimized
     """
 
-    Obs_ij, Obsnoise_ij, Kernel_il, n_param, flip, verbose  = args
+    Obs_ij, Obsnoise_ij, Kernel_il, N_REGPARAM, flip, verbose  = args
     n_slice = len(Obs_ij)
     n_band = len(Obs_ij[0])
 
 
     # parameter conversion
-    if (n_param > 0):
-        X_albd_kj, X_area_lk = transform_Y2X(Y_array[:-1*n_param], len(Obs_ij[0]))
+    if (N_REGPARAM > 0):
+        X_albd_kj, X_area_lk = transform_Y2X(Y_array[:-1*N_REGPARAM], len(Obs_ij[0]))
     else:
         X_albd_kj, X_area_lk = transform_Y2X(Y_array, len(Obs_ij[0]))
 
@@ -426,11 +368,15 @@ if __name__ == "__main__":
     os.mkdir(run_dir)
     print "Created directory:", run_dir
 
-    # Save THIS file for reproducibility!
+    # Save THIS file and the param file for reproducibility!
     thisfile = os.path.basename(__file__)
+    paramfile = "fitlc_params.py"
     newfile = run_dir + thisfile
-    commandString = "cp " + thisfile + " " + newfile
-    os.system(commandString)
+    commandString1 = "cp " + thisfile + " " + newfile
+    commandString2 = "cp "+paramfile+" " + run_dir+paramfile
+    os.system(commandString1)
+    os.system(commandString2)
+    print "Saved :", thisfile, " &", paramfile
 
     # input data
     Obs_ij = np.loadtxt(INFILE)
@@ -464,13 +410,13 @@ if __name__ == "__main__":
     n_dim = len(Y0_array)
     print '# of parameters', n_dim
 
-    n_param = 0
+    N_REGPARAM = 0
     if FLAG_REG_AREA:
         Y0_array = np.append(Y0_array, [1.0, 1.0])
-        n_param += 2
+        N_REGPARAM += 2
     if FLAG_REG_ALBD:
         Y0_array = np.append(Y0_array, [1.0, 1.0])
-        n_param += 2
+        N_REGPARAM += 2
 
 #    Y0_albd_kj = np.zeros([N_TYPE,  len(Obs_ij[0])])
 #    Y0_area_lk = np.zeros([n_slice, N_TYPE-1])
@@ -478,8 +424,8 @@ if __name__ == "__main__":
 #    Y0_list = [Y0_albd_kj, Y0_area_lk]
 #    print "Y0_array", Y0_array
 
-    if (n_param > 0):
-        X_albd_kj, X_area_lk =  transform_Y2X(Y0_array[:-1*n_param], n_band)
+    if (N_REGPARAM > 0):
+        X_albd_kj, X_area_lk =  transform_Y2X(Y0_array[:-1*N_REGPARAM], n_band)
     else:
         X_albd_kj, X_area_lk =  transform_Y2X(Y0_array, n_band)
 
@@ -488,56 +434,24 @@ if __name__ == "__main__":
 
     ########## use optimization for mcmc initial guesses ##########
 
-    data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, False)
+    data = (Obs_ij, Obsnoise_ij, Kernel_il, N_REGPARAM, True, False)
 
     best_fit = run_initial_optimization(lnprob, data, Y0_array, method="Nelder-Mead", run_dir=run_dir)
-
-    """
-    # minimize
-    print "finding best-fit values..."
-    data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, False)
-    output = minimize(lnprob, Y0_array, args=data, method="Nelder-Mead")
-
-    best_fit = output["x"]
-    print "best-fit", best_fit
-
-    data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, True, False)
-    lnprob_bestfit = lnprob( output['x'], *data )
-    BIC = 2.0 * lnprob_bestfit + len( output['x'] ) * np.log( len(Obs_ij.flatten()) )
-    print 'BIC: ', BIC
-
-    # Transform back to physical params
-    X_albd_kj, X_area_lk =  transform_Y2X(output["x"], n_band)
-    X_albd_kj_T = X_albd_kj.T
-    #np.savetxt("X_area_lk", X_area_lk)
-    #np.savetxt("X_albd_kj_T", X_albd_kj.T)
-    bestfit = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
-
-    # Calculate residuals
-    residuals = Obs_ij - np.dot( X_area_lk, X_albd_kj )
-    print "residuals", residuals
-
-    # Save initialization run as npz
-    print "Saving:", run_dir+"initial_minimize.npz"
-    np.savez(run_dir+"initial_minimize.npz", data=data, best_fity=best_fit, \
-        lnprob_bestfit=lnprob_bestfit, BIC=BIC, X_area_lk=X_area_lk, \
-        X_albd_kj_T=X_albd_kj_T, residuals=residuals, best_fitx = bestfit)
-    """
 
     ########## Run MCMC ##########
 
     # Data tuple to pass to emcee
-    data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, False, False)
+    data = (Obs_ij, Obsnoise_ij, Kernel_il, N_REGPARAM, False, False)
 
     #run_emcee(lnprob, data, best_fit, run_dir=run_dir)
 
     # Number of dimensions is number of free parameters
     n_dim = len(Y0_array)
     # Number of walkers
-    n_walkers = 2*n_dim**2
+    n_walkers = calculate_walkers(n_dim)
 
     # Data tuple to pass to emcee
-    data = (Obs_ij, Obsnoise_ij, Kernel_il, n_param, False, False)
+    data = (Obs_ij, Obsnoise_ij, Kernel_il, N_REGPARAM, False, False)
 
     # Initialize emcee EnsembleSampler object
     sampler = emcee.EnsembleSampler(n_walkers, n_dim, lnprob, args=data, threads=NCPU)

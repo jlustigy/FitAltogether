@@ -3,3 +3,4 @@
 mcmc_output/*/
 *.pyc
 map_EPOXI_params.py
+fitlc_params.py

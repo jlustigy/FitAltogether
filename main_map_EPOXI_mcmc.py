@@ -21,7 +21,8 @@ from map_utils import generate_tex_names
 #--------------------------------------------------------------------
 
 from map_EPOXI_params import N_TYPE, N_SLICE, MONTH, NOISELEVEL, \
-    NUM_MCMC, NUM_MCMC_BURNIN, SEED_AMP, N_SIDE, OMEGA
+    NUM_MCMC, NUM_MCMC_BURNIN, SEED_AMP, N_SIDE, OMEGA, REGULARIZATION, \
+    calculate_walkers
 
 NCPU = multiprocessing.cpu_count()
 
@@ -50,7 +51,7 @@ elif ( MONTH == 'June' ):
     LAT_O = 0.264
 #    LON_O = 165.4663412
 #    LAT_O = -0.3521857
-#    LON_S = 239.1424068 
+#    LON_S = 239.1424068
 #    LAT_S = 21.6159766
     INFILE = "data/raddata_2_norm"
     Time_i = np.arange(25)*1.
@@ -72,7 +73,7 @@ else :
     sys.exit()
 
 N_REGPARAM = 0
-if 'REGULARIZATION' in globals():
+if REGULARIZATION is not None:
     if REGULARIZATION == 'Tikhonov' :
         N_REGPARAM = 1
     elif REGULARIZATION == 'GP' :
@@ -116,7 +117,7 @@ def lnprob(Y_array, *args):
 
     # regularization
     # ---Tikhonov Regularization
-    if 'REGULARIZATION' in globals():
+    if REGULARIZATION is not None:
         if ( REGULARIZATION == 'Tikhonov' ):
             regparam = Y_array[-1*N_REGPARAM]
             regterm_area = prior.regularize_area_tikhonov( X_area_lk, regparam )
@@ -158,7 +159,7 @@ if __name__ == "__main__":
     os.mkdir(run_dir)
     print "Created directory:", run_dir
 
-    # Save THIS file for reproducibility!
+    # Save THIS file and the param file for reproducibility!
     thisfile = os.path.basename(__file__)
     paramfile = "map_EPOXI_params.py"
     newfile = run_dir + thisfile
@@ -218,7 +219,7 @@ if __name__ == "__main__":
     X_albd_kj_T = X_albd_kj.T
 
     # best-fit values for regularizing parameters
-    if 'REGULARIZATION' in globals():
+    if REGULARIZATION is not None:
         if REGULARIZATION == 'Tikhonov' :
             print 'sigma', best_fit[-1]
         elif REGULARIZATION == 'GP' :
@@ -238,7 +239,7 @@ if __name__ == "__main__":
 
     # Define MCMC parameters
     n_dim = len(Y0_array)
-    n_walkers = 2*n_dim**2
+    n_walkers = calculate_walkers(n_dim)
 
     # Define data tuple for emcee
     data = (Obs_ij, Obsnoise_ij, Kernel_il, N_REGPARAM, False, False)
