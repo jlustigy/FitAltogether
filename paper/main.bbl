@@ -1,0 +1,44 @@
+\begin{thebibliography}{}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+
+\bibitem[{{Cowan} \& {Strait}(2013)}]{cowan2013}
+{Cowan}, N.~B., \& {Strait}, T.~E. 2013, \apjl, 765, L17
+
+\bibitem[{{Cowan} {et~al.}(2009){Cowan}, {Agol}, {Meadows}, {Robinson},
+  {Livengood}, {Deming}, {Lisse}, {A'Hearn}, {Wellnitz}, {Seager},
+  {Charbonneau}, \& {the EPOXI Team}}]{cowan2009}
+{Cowan}, N.~B., {Agol}, E., {Meadows}, V.~S., {et~al.} 2009, \apj, 700, 915
+
+\bibitem[{{Cowan} {et~al.}(2011){Cowan}, {Robinson}, {Livengood}, {Deming},
+  {Agol}, {A'Hearn}, {Charbonneau}, {Lisse}, {Meadows}, {Seager}, {Shields}, \&
+  {Wellnitz}}]{cowan2011}
+{Cowan}, N.~B., {Robinson}, T., {Livengood}, T.~A., {et~al.} 2011, \apj, 731,
+  76
+
+\bibitem[{{Des Marais} {et~al.}(2002){Des Marais}, {Harwit}, {Jucks},
+  {Kasting}, {Lin}, {Lunine}, {Schneider}, {Seager}, {Traub}, \&
+  {Woolf}}]{desmarais2002}
+{Des Marais}, D.~J., {Harwit}, M.~O., {Jucks}, K.~W., {et~al.} 2002,
+  Astrobiology, 2, 153
+
+\bibitem[{{Ford} {et~al.}(2001){Ford}, {Seager}, \& {Turner}}]{ford2001}
+{Ford}, E.~B., {Seager}, S., \& {Turner}, E.~L. 2001, \nat, 412, 885
+
+\bibitem[{{Fujii} \& {Kawahara}(2012)}]{fujii2012}
+{Fujii}, Y., \& {Kawahara}, H. 2012, arXiv:1204.3504, arXiv:1204.3504
+
+\bibitem[{{Fujii} {et~al.}(2011){Fujii}, {Kawahara}, {Suto}, {Fukuda},
+  {Nakajima}, {Livengood}, \& {Turner}}]{fujii2011}
+{Fujii}, Y., {Kawahara}, H., {Suto}, Y., {et~al.} 2011, \apj, 738, 184
+
+\bibitem[{{Fujii} {et~al.}(2010){Fujii}, {Kawahara}, {Suto}, {Taruya},
+  {Fukuda}, {Nakajima}, \& {Turner}}]{fujii2010}
+---. 2010, \apj, 715, 866
+
+\bibitem[{{Kawahara} \& {Fujii}(2010)}]{kawahara2010}
+{Kawahara}, H., \& {Fujii}, Y. 2010, \apj, 720, 1333
+
+\bibitem[{{Kawahara} \& {Fujii}(2011)}]{kawahara2011}
+---. 2011, \apjl, 739, L62
+
+\end{thebibliography}

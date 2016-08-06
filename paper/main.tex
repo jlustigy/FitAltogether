@@ -1,0 +1,277 @@
+\documentclass[iop,numberedappendix,apj,]{emulateapj}
+
+\usepackage{epsfig}
+\usepackage{amsmath}
+\usepackage{rotating}
+\usepackage{natbib}
+\usepackage{enumerate}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{appendix}
+\usepackage{comment}
+\usepackage{color,xcolor}
+\usepackage{url}
+\usepackage{hyperref}
+\hypersetup{colorlinks,linkcolor={blue!50!black},citecolor={blue!50!black},urlcolor={blue!50!black}}
+\allowdisplaybreaks[1]
+\bibliographystyle{apj}
+\renewcommand{\bibname}{References}
+
+\def\plotonesc#1{\centering \leavevmode
+\includegraphics[clip=, width=1.70\columnwidth]{#1}}
+\def\plotoneh#1{\centering \leavevmode
+\includegraphics[clip=, width=.95\columnwidth]{#1}}
+\def\plotone#1{\centering \leavevmode
+\includegraphics[clip=, width=.85\columnwidth]{#1}}
+\def\plotoneShrinkSmall#1{\centering \leavevmode
+\includegraphics[clip=, width=.49\columnwidth]{#1}}
+\def\plotoneShrinkMed#1{\centering \leavevmode
+\includegraphics[clip=, width=.55\columnwidth]{#1}}
+\def\plotoneShrinkBig#1{\centering \leavevmode
+\includegraphics[clip=, width=.65\columnwidth]{#1}}
+\def\plottwo#1#2{\centering \leavevmode
+\includegraphics[width=.45\columnwidth]{#1} \hfil
+\includegraphics[width=.45\columnwidth]{#2}}
+\def\plottwob#1#2{\centering \leavevmode
+\includegraphics[width=.49\columnwidth]{#1} \hfil
+\includegraphics[width=.49\columnwidth]{#2}}
+\def\plottwor#1#2{\centering \leavevmode
+\includegraphics[width=.55\columnwidth,angle=90]{#1} \hfil
+\includegraphics[width=.55\columnwidth,angle=90]{#2}}
+\def\plotthree#1#2#3{\centering \leavevmode
+\includegraphics[width=.3\columnwidth]{#1} \hfil
+\includegraphics[width=.3\columnwidth]{#2} \hfil
+\includegraphics[width=.3\columnwidth]{#3}}
+
+\def\gsim{\;\rlap{\lower 2.5pt
+ \hbox{$\sim$}}\raise 1.5pt\hbox{$>$}\;}
+\def\lsim{\;\rlap{\lower 2.5pt
+   \hbox{$\sim$}}\raise 1.5pt\hbox{$<$}\;}
+
+% set formatting properties
+\setlength{\textwidth}{6.5in}
+\setlength{\textheight}{8.8in}
+\setlength{\hoffset}{0.0in}
+\setlength{\voffset}{-0.4in}
+\parindent 0.2in
+\parskip 0.1in
+
+\def\memoYF#1{\color{red}{\bf [#1]}\color{black}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% THE DOCUMENT BEGINS HERE                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\slugcomment{Submitted to ApJ, XX September 2015}
+
+\begin{document}
+
+\title{(tentative) Rotational Spectral Unmixing of Exoplanets}
+
+
+\author{
+%
+Yuka Fujii\altaffilmark{1,2} 
+%
+Jacob Lustig-Yaeger\altaffilmark{3} 
+%
+Nicolas Cowan ?\altaffilmark{4} 
+%
+}
+
+\affil{$^1$NASA Goddard Institute for Space Studies, 
+  New York, NY 10025, USA}
+      
+\affil{$^2$Earth-Life Science Institute, Tokyo Institute of Technology, 
+  Tokyo, 152-8550, JAPAN}
+  
+  
+\affil{$^3$University of Washington, 
+  }
+
+\affil{$^4$McGill University, 
+  }
+
+
+\vspace{0.5\baselineskip}
+
+\email{
+yuka.fujii.ebihara@gmail.com
+}
+
+\begin{abstract}
+
+\end{abstract}
+
+\keywords{planets and satellites: Jupiter --- Sun: evolution ---
+  planetary systems --- stars: evolution ---
+  stars: AGB and post-AGB --- radio continuum: planetary systems}
+  
+%]%%% End front material
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+\label{sec:intro}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Future direct imaging observations of terrestrial exoplanets is expected to play a vital role in characterizing Earth analogs in habitable zones and beyond. 
+A substantial number of work have seeked detectable features in disk-integrated spectra of the Earth and other planets, as they are observed from an astronomical distance. 
+It has been pointed out that not only some of atmospheric molecules are identifiable through spectral absorption features \citep[e.g.,][]{desmarais2002} but also surface reflectance spectra affect the continuum of the spectra, which could be measured through low-resolution spectra, or multi-band photometry (color) \citep[e.g.,][]{ford2001}. 
+
+However, interpretation of disk-integrated colors is not trivial. 
+This is particularly true for Earth-like planets which may harbor diverse atmospheric and surface characteristics including liquid water, partial cloud cover, continents, and possible biological surfaces, e.g. vegetation. 
+Disentangling specific features from mixed disk-integrated color can be very challenging. 
+
+A key here is to use time variation of the spectra; because the surface area that contributes to the scattered light changes due to planetary spin rotation and orbital revolution, the time variability can in principle be translated to the heterogeneity of the surface environment.  
+\citet{cowan2009, cowan2011} performed Principal Component Analysis (PCA) on the observed multi-band photometry of the Earth, and found that number of surface types can be inferred from the number of dominant principle components (with a difference of 1) and that the variation pattern is indicative of the surface properties. 
+\citet{fujii2010, fujii2011} decomposed multi-band photometric data of the Earth as a linear inverse problem, assuming the template reflectance spectra of the known major surface types, where they found that the relative abundance and the longitudinal variation of these surface types are reasonably recovered. 
+Moreover, by coupling the time variation due to spin rotation and that due to orbital revolution, 2-dimensional information of the surface may be retrieved with sufficient quality of data \citep{kawahara2010, kawahara2011, fujii2012}. 
+
+\citet{cowan2013} took another approach to the same inverse problem. 
+Their strategy is to try to estimate the physically meaningful reflectance spectra and their distribution across the globe simultaneously, by making all of them fitting parameters and letting them to fit the data. 
+The result appeared successful to the extent that the obtained reflectance spectra roughly match the typical spectra of clouds, ocean, and continents. 
+However, the longitudinal map of these components do not match the reality sufficiently well. 
+
+We were motivated by this unsatisfactory result and decided to revisit their analysis with some updates. 
+Specifically, the updates include:
+\begin{itemize}
+\item Revisiting the formulation and point out the inherit degeneracy. 
+\item Introducing regularization terms
+\item Influence of the unknown radius
+\end{itemize}
+
+The organization of this paper is as follows. 
+Section \ref{s:frame} revisits the problem, ....
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Framing the problem}
+\label{s:frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Algebraic Model}
+\label{ss:model}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Assuming that the planetary surface is Lambertian scatterer everywhere, with a certain number $K$ of mutually distinct surface types, 
+the disk-integrated spectra can be written as a weighted summation of the reflectance spectra of different surface types, e.g., 
+%%%
+\begin{equation}
+d_{ij} = R_p^2 \sum _{i,k} f_{ik}^{\ast } \, s_{kj}
+\end{equation}
+%%%
+where $R_p$ is the planetary radius, $i$, $j$, and $k$ are indices for the observation epochs, bands, and the surface types, respectively. 
+The symbols represent as follows:
+$d_{ij}$ is the observed apparent albedo (``$d$'' for data) at $i$-th epoch and $j$-th band, 
+$f_{lk}^{\ast }$ is the contribution factor of the $k$-th surface type at $i$-th observational epoch, and 
+$s_{kj}$ is the reflectance spectra of $k$-th surface type at $j$-th band. 
+
+The contribution factor $f^{\ast }$ is the weighted summation of the area fraction of $k$-th surface type, e.g., 
+%%%
+\begin{equation}
+f^{\ast }_{ik} = \sum _{l} W_{il} f_{lk}
+\end{equation}
+%%%
+where $l$ is the index for longitudinal slices, $f_{lk}$ is the area fraction of the $k$-th surface type at $l$-th longitudinal slice, and 
+$W_{il}$ is the weight function for $i$-th epoch and $l$-th longitudinal slice which depends only on the observational geometry. 
+As a result,
+%%%
+\begin{equation}
+d_{ij} = R_p^2 \sum _{l,k} W_{il} \, f_{lk} \, s_{kj}
+\end{equation}
+%%%
+
+Because $f$ is area fraction and $s$ is reflectance spectra, they are subject to the following constraints:
+%%%
+\begin{eqnarray}
+\begin{cases}
+\;\; 0 < s_{kj} < 1 \;\;\; & \mbox{for any $k$, $j$} \\
+\;\; 0 < f_{lk} < 1 \;\;\; & \mbox{for any $l$, $k$} \\
+\;\; \sum_k f_{lk} = 1 & \mbox{for any $l$} 
+\end{cases}
+\label{eq:constraints}
+\end{eqnarray}
+%%%
+
+Now, in the case that the planetary radius and observational geometry (latitude and longitude of the sub-stellar point and the sub-observer point) is fully known, the relevant problem is, given $d_{ij}$, estimate both $f_{lk}$ and $s_{kj}$ subject to the constraints of equation (\ref{eq:constraints}). 
+---This is pioneered by trial by \citet{cowan2013}. 
+
+We argue that estimating $f$ and $s$ is no superior to estimating $f^*$ and $s$ subject to the following similar constraint:
+%%%
+\begin{eqnarray}
+\begin{cases}
+\;\; 0 < s_{kj} < 1 \;\;\; & \mbox{for any $k$, $j$} \\
+\;\; 0 < f^{\ast }_{lk} < 1 \;\;\; & \mbox{for any $l$, $k$} \\
+\;\; \sum_k f_{lk}^{\ast } = 1 & \mbox{for any $l$} 
+\end{cases}
+\label{eq:constraints_ast}
+\end{eqnarray}
+%%%
+\memoYF{write here}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Degeneracy}
+\label{ss:degeneracy}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Baysean Formulation and Regularization}
+\label{ss:regularization}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{\# of Surface Types}
+\label{ss:regularization}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Testing with mock data}
+\label{s:mockdata}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Application to 4 EPOXI observation of the Earth}
+\label{ss:epoxi}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discussion}
+\label{s:discussion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Uncertainty in Radius}
+\label{ss:radius}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Sensitivity to Initial Condition}
+\label{ss:initialcondition}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Summary}
+\label{s:summary}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+\acknowledgments
+
+\bibliography{ref}
+
+
+
+\end{document}
