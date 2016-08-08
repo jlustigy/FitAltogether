@@ -152,7 +152,7 @@ Section \ref{s:frame} revisits the problem, ....
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Algebraic Model}
+\subsection{Algebraic Formulation}
 \label{ss:model}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -168,6 +168,7 @@ The symbols represent as follows:
 $d_{ij}$ is the observed apparent albedo (``$d$'' for data) at $i$-th epoch and $j$-th band, 
 $f_{lk}^{\ast }$ is the contribution factor of the $k$-th surface type at $i$-th observational epoch, and 
 $s_{kj}$ is the reflectance spectra of $k$-th surface type at $j$-th band. 
+The maximum number of $i$, $j$ and $k$ will be denoted by $I$, $J$, and $K$, below. 
 
 The contribution factor $f^{\ast }$ is the weighted summation of the area fraction of $k$-th surface type, e.g., 
 %%%
@@ -177,6 +178,7 @@ f^{\ast }_{ik} = \sum _{l} W_{il} f_{lk}
 %%%
 where $l$ is the index for longitudinal slices, $f_{lk}$ is the area fraction of the $k$-th surface type at $l$-th longitudinal slice, and 
 $W_{il}$ is the weight function for $i$-th epoch and $l$-th longitudinal slice which depends only on the observational geometry. 
+The maximum number of $l$ is denoted by $L$. 
 As a result,
 %%%
 \begin{equation}
@@ -218,11 +220,45 @@ We argue that estimating $f$ and $s$ is no superior to estimating $f^*$ and $s$ 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+%%%
+\begin{equation}
+\tilde d_{ij} = \sum _{i,k} f_{ik}^{\ast } \, s_{kj}
+\end{equation}
+%%%
+where $\tilde d_{ij} = d_{ij}/R_p^2$. 
+Without any constraints on $f^{\ast }$ and $s$, it is trivial to notice the degeneracy in the solutions. 
+Using an arbitrary regular matrix $X$ with rank $K$, a particular set of solution $\{ f^{\ast },\,s\}$ implies another set of solution $\{ f^{\ast }X^{-1},\,Xs\}$. 
+
+Now that they are subject to the constraints (equation (\ref{eq:constraints_ast})), the range of acceptable solution is limited. 
+However, the constraints cannot be sufficient to reduce them to a unique solution. 
+One can create a infinite number of candidates for $f_{ik}^{\ast }$ which satisfies both of the two constraints for $f$, then $s$ may be obtained by $s = f^{+} \tilde d$, where $f^+$ is the pseudo-inverse matrix (note that $K < I$ to be able to find the solution) and among these solutions there should be many that satisfy the constraint for $s$ as well. 
+\memoYF{Need to brush up. Possibly need to consider SVD of $f$. }
+
+To see this, we demonstrate the application to the mock data with known solution in Section \ref{s:mockdata}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Baysean Formulation and Regularization}
+\subsection{Bayesian Formulation}
 \label{ss:regularization}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%
+\begin{eqnarray}
+Posterior = \prod\limits_{i,j} \frac{1}{\sqrt{2\pi }\sigma_{ij}} &&  \exp \left[ - \frac{(d_{ij} - \sum _{lk} W_{il} f_{lk} s_{kj})^2}{2 \sigma _{ij}^2} \right] \notag \\
+&& \times \; \mathcal{P} (\{f_{l,k}\}) \cdot \mathcal{P}(\{s_{l,k}\}) 
+\end{eqnarray}
+%%%
+where $\mathcal{P} (X) $ is a prior for $X$. 
+
+In order to take account of constraints (equation (\ref{eq:constraints})), we adopt the following transformation of variables: 
+%%%
+\begin{eqnarray}
+\begin{cases}
+t_{kj} = \displaystyle \ln \left[ \frac{ s_{kj} }{1 - s_{kj} } \right]  \;\;\; & \mbox{for any $k$, $j$} \\
+g_{lk} = \displaystyle \ln \left[ \frac{ f_{lk} }{1 - \sum _{m=0}^{k} f_{lm} } \right] \;\;\; & \mbox{for $k=1, ..., K-1$, any $j$} 
+\end{cases}
+\end{eqnarray}
+%%%
+Note that there is a 1-to-1 correspondence between $t$ and $s$ or $g$ and $f$ where $s$ and $f$ satisfy our constraints. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{\# of Surface Types}
@@ -236,12 +272,33 @@ We argue that estimating $f$ and $s$ is no superior to estimating $f^*$ and $s$ 
 \label{s:mockdata}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Application to 4 EPOXI observation of the Earth}
+\section{Application to 4 EPOXI observations of the Earth}
 \label{ss:epoxi}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[!bt]
+    \begin{center}
+\includegraphics[width=\hsize]{EPOXI_vislightcurve_4obs.pdf}
+    \end{center}
+    \caption{4 light curves of the Earth obtained with EPOXI mission.}
+\label{fig:EPOXIlc}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[!bt]
+    \begin{center}
+    \includegraphics[width=\hsize]{June_xmed_std_GPReg.pdf}
+    \end{center}
+    \caption{Result of inversion of EPOXI June data. \memoYF{to be revised}}
+\label{fig:mcmc_June_tmp}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Discussion}
