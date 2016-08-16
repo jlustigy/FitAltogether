@@ -184,7 +184,6 @@ def regularize_area_GP2( x_area_lk, regparam ):
     return term1 + term2
 
 
-
 #---------------------------------------------------
 def get_cov2( sigma, lambda_angular, l_dim, periodic=True):
 
