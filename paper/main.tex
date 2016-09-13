@@ -277,18 +277,68 @@ g_{lk} = \displaystyle \ln \left[ \frac{ f_{lk} }{1 - \sum _{m=0}^{k} f_{lm} } \
 %%%
 Note that there is a 1-to-1 correspondence between $t$ and $s$ or $g$ and $f$ where $s$ and $f$ always satisfy our constraints. 
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{\# of Surface Types}
-\label{ss:regularization}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
+\newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Testing with mock data}
+\section{Test with idealized mock data}
 \label{s:mockdata}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Creating Mock Data}
+\label{ss:createmockdata}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+Before applying to the observed data, we shall demonstrate the analysis procedure with a mock dataset with the known answer. 
+For this purpose, we use a simplified albedo map of the Earth based on the IGBP classification. 
+We re-classify the IGBP map into four surface types, ``ocean', ``vegetation', and ``soil'' and following Table 2 of \citet{Fujii2010} except that we merge ``snow'' into ``soil'' considering its small fraction. 
+The upper left panel of Figure \ref{fig:mockdata} depicts such an surface classification. 
+The reflectance spectra for these three surface types ($s_{kj}$) are adopted from ASTER spectral library \citep{Baldridge2009} in the same way as \citet{Fujii2010} (Figure 7 in that paper), and are shown in the upper right panel of Figure \ref{fig:mockdata}. 
+
+We then compute the geometrically weighted area fraction of each surface type (``contribution factor'' or $f^{\ast }_{ik}$) assuming an equatorial view at the quadrature \memoYF{Describe in more detail.}; this is shown in the lower left panel of Figure \ref{fig:mockdata}. 
+Using $s_{kj}$ and $f^{\ast }_{ik}$, we compute the apparent albedo at each observation frame, on the assumption that the surfaces are ``Lambert'' scatterers. The effect of atmosphere is completely ignored. 
+The mock lightcurves created through the above-mentioned procedure is presented in the lower right panel of Figure \ref{fig:mockdata}. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[!bpth]
+    \begin{minipage}{0.5\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{IGBP_simplemap.pdf}
+    \end{center}
+     \end{minipage}
+  \begin{minipage}{0.5\hsize}
+    \begin{center}
+    \includegraphics[width=\hsize]{mockdata_quadrature_bandsp.pdf}
+    \end{center}
+\end{minipage}
+  \begin{minipage}{0.5\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{mockdata_quadrature_factor.pdf}
+    \end{center}
+ \end{minipage}
+   \begin{minipage}{0.5\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{mockdata_quadrature_lc.pdf}
+    \end{center}
+ \end{minipage}
+    \caption{Our mock data based on Earth surface. }
+\label{fig:mockdata}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Testing Rotational Unmixing with Mock Data}
+\label{ss:testmockdata}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 \newpage
 
@@ -335,13 +385,14 @@ The information is summarized in \citet{Cowan2011}, but we also outline in Table
 \begin{table*}[htp]
 \caption{EPOXI Observations}
 \begin{center}
-\begin{tabular}{cccccc} \hline \hline
-\multicolumn{2}{c}{Date} & 2008 Mar 18-19 & 2008 Jun 4-5 & 2009 Mar 27-28 & 2009 Oct 4-5 \\
-\multicolumn{2}{c}{Phase} & & & & \\ \hline
-\multirow{2}{*}{initial sub-solar} & latitude & & & & \\
-& longitude  & & & & \\ \hline 
-\multirow{2}{*}{initial sub-observer} & latitude & & & & \\
-& longitude & & & & \\ \hline
+\begin{tabular}{lcccc} \hline \hline
+& Equator (equinox) & Equator (solstice) & North & South \\ \hline
+Date & 2008 Mar 18-19 & 2008 Jun 4-5 & 2009 Mar 27-28 & 2009 Oct 4-5 \\ 
+Phase & $57.7^{\circ }$ & $76.6^{\circ }$ & $85.9^{\circ }$ & $86.4^{\circ }$ \\ 
+average sub-solar latitude & $-0.4^{\circ }$ & $22.6^{\circ }$ & $3.0^{\circ }$ & $-4.6^{\circ }$ \\
+average sub-observer latitude & $1.6^{\circ }$ & $0.3^{\circ }$ & $61.5^{\circ }$ & $-73.7^{\circ }$  \\
+initial sub-solar longitude & $267.6^{\circ }$ & $286.0^{\circ }$ & $296.7^{\circ }$ & $33.2^{\circ }$ \\
+initial sub-observer longitude & $210.1^{\circ }$ & $210.5^{\circ }$ & $210.1^{\circ }$ & $300.6^{\circ }$ \\ \hline
 \end{tabular}
 \end{center}
 \label{tab:EPOXI}
