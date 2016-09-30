@@ -65,7 +65,7 @@ LN_dl = np.zeros([ len( theta_d ), N_SLICE ])
 LN_dl[ np.arange( len( theta_d ) ), assignedL_d ] = 1.
 
 #for ll in xrange( len( LN_dl.T ) ):
-#    print ll, np.count_nonzero( LN_dl.T[ll] )
+ #    print ll, np.count_nonzero( LN_dl.T[ll] )
 
 
 rad_10min = np.pi / 180. * ( 1. / 6. )

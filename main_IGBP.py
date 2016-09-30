@@ -15,14 +15,16 @@ import operator
 # MONTH = 'March'
 MONTH = 'June'
 
+# vegetation
+# target_indx = [1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 14]
+ #target_indx = [1, 2, 3, 4, 5, 6, 10, 14]
+
 # soil
 # target_indx = [7,11,13,16]
+target_indx = [7,8,9,11,12,13,16]
 
 # ocean
 #target_indx = [17]
-
-# vegetation
-# target_indx = [1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 14]
 
 # all
 target_indx = range(1,18)
