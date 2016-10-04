@@ -163,6 +163,17 @@ def convolve_with_eye(wl, spectrum):
         colormodels.rgb_from_xyz (ciexyz.xyz_from_spectrum (spec)))
     return rgb_eye
 
+def plot_reg1(samples):
+    reg == 'Tikhonov'
+    par = 'sigma', samples[-1]
+    fig = plt.figure(figsize=(16,8))
+    gs = gridspec.GridSpec(1,2)
+    ax0 = plt.subplot(gs[0])
+    ax1 = plt.subplot(gs[1])
+    ax0.set_ylabel("Area Fraction")
+    ax0.set_xlabel("Slice #")
+    ax1.set_ylabel("Albedo")
+
 
 
 #===================================================

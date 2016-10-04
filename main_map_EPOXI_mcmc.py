@@ -139,6 +139,11 @@ def lnprob(Y_array, *args):
         print 'chi2/d.o.f.', chi2 / (len(Y_array)*1.-1.), len(Y_array)
 
     answer = - chi2 + ln_prior_albd + ln_prior_area + regterm_area
+
+    # Check for nans
+    if np.isnan(answer):
+        answer = -np.inf
+
     if flip :
         return -1. * answer
     else :

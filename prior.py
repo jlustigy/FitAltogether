@@ -235,7 +235,7 @@ def regularize_area_tikhonov( x_area_lk, regparam ):
 #    return ln_prior
 
 
- 
+
 #---------------------------------------------------
 #def get_ln_prior_area_old( y_area_lj, x_area_lj ):
 #
@@ -271,4 +271,3 @@ def regularize_area_tikhonov( x_area_lk, regparam ):
 #
 #    ln_prior = np.log( dxdy_det )
 #    return ln_prior
- 
