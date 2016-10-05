@@ -176,7 +176,7 @@ In the last expression, $f_{lk}^{\ast }$ represents the contribution factor of t
 $s_{kj}$ is the reflectance spectra of $k$-th surface type at $j$-th band. 
 The maximum number of $i$, $j$ and $k$ will be denoted by $I$, $J$, and $K$, below, as summarized in Table \ref{tab:index}. 
 
-By definition, that the area fraction $f$ and reflectance spectra $s$ are subject to the following conditions:
+By definition, the area fraction $f$ and reflectance spectra $s$ are subject to the following conditions:
 %%%
 \begin{eqnarray}
 \begin{cases}
@@ -210,8 +210,8 @@ The time variability of the contribution factor $f^{\ast }$ due to spin rotation
 \begin{eqnarray}
 f^{\ast }_{ik} &=& \frac{ \int_{{\rm IV}_{i}} f_k (\vec \Omega ) \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }  \\
 &=& \sum_l \frac{ \int_{{\rm IV}_{il}}  f_k (\vec \Omega ) W (\vec \Omega  ) \cdot d\vec \Omega }{ \int_{{\rm IV}}  W (\vec \Omega ) \cdot d\vec \Omega } \\
-&\sim & \sum_l f_{lk} \frac{ \int_{{\rm IV}_{il}} W (\vec \Omega ) \cdot d\vec \Omega }{ \int_{{\rm IV}}  W (\vec \Omega ) \cdot d\vec \Omega } \\
-&\equiv & \sum_l  W_{il} f_{lk}
+&\sim & \sum_l f_{lk} \frac{ \int_{{\rm IV}_{il}} W (\vec \Omega ) \cdot d\vec \Omega }{ \int_{{\rm IV}}  W (\vec \Omega ) \cdot d\vec \Omega } \label{eq:discretize}\\
+&\equiv & \sum_l  W_{il} f_{lk} \label{eq:Wf}
 \end{eqnarray}
 %%%
 where $l$ is the index for longitudinal slices, $f_{lk}$ is the area fraction of the $k$-th surface type in the $l$-th longitudinal slice. 
@@ -234,28 +234,23 @@ with the following condition similar to equation (\ref{eq:cond_f_ast}):
 \label{eq:constraints}
 \end{eqnarray}
 %%%
-Now, the relevant problem is, given $d_{ij}$, estimate both $f_{lk}$ and $s_{kj}$ subject to the constraints of equation (\ref{eq:constraints})---this is where \citet{Cowan2013} stood. 
+Now, the relevant problem is, given $d$, estimate $\{f, s\}$ subject to the constraints of equation (\ref{eq:constraints})---this is where \citet{Cowan2013} stood. 
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Fit with $f$ or $f^{\ast}$?}
+\subsection{Fit with $f$ or with $f^{\ast}$?}
 \label{ss:degeneracy}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\memoYF{I am not 100\% sure if the following statement is right. Need to check.} 
+We argue that estimating $\{ f, s \}$ is no superior to estimating $\{ f^{\ast }, s \}$. 
+One reason comes from the fact the approximation adopted in equation (\ref{eq:discretize}). This is valid only when $f_k (\vec \Omega)$ does not change significantly in the $l$-th slice. 
+If this isn't the case, equation (\ref{eq:Wf}) is no longer a good discritization. 
 
-We argue that estimating $f$ and $s$ is no superior to estimating $f^*$ and $s$ subject to the following similar constraint:
-%%%
-\begin{eqnarray}
-\begin{cases}
-\;\; 0 < s_{kj} < 1 \;\;\; & \mbox{for any $k$, $j$} \\
-\;\; 0 < f^{\ast }_{lk} < 1 \;\;\; & \mbox{for any $l$, $k$} \\
-\;\; \sum_k f_{lk}^{\ast } = 1 & \mbox{for any $l$} 
-\end{cases}
-\label{eq:constraints_ast}
-\end{eqnarray}
-%%%
-\memoYF{write here}.
+If that condition is satisfied for $L=I$ slices, then in general cases there is a one-to-one relationship between $f^{\ast}_{ik}$ and $f_{lk}$ through $W_{il}$ as far as ${\rm rank}(W)=L(=I)$. 
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Degeneracy}
