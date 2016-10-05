@@ -14,7 +14,7 @@ import corner
 import geometry
 import prior
 from reparameterize import *
-from map_utils import generate_tex_names
+from map_utils import generate_tex_names, save2hdf5
 
 #--------------------------------------------------------------------
 # Parameters
@@ -281,9 +281,32 @@ if __name__ == "__main__":
     # Extract chain from sampler
     original_samples = sampler.chain
 
+    ############ Save HDF5 File ############
+
+    # Specify save file
+    hfile = run_dir + "samurai_out.hdf5"
+
+    # print
+    print "Saving:", hfile
+
+    # Add moderately small files to dictionary
+    dictionary = {
+        "data" : data,
+        "Y_names" : Y_names,
+        "X_names" : X_names,
+        "N_TYPE" : N_TYPE,
+        "N_SLICE" : n_slice,
+        "p0" : p0
+    }
+
+    # Save emcee samples with dictionary as metadata
+    save2hdf5(hfile, original_samples, name="samples", dictionary=dictionary, compression='lzf')
+
+    """# Old saving
     # Save chains and other info
     print "Saving:", run_dir+"mcmc_samples.npz"
     np.savez(run_dir+"mcmc_samples.npz", data=data, samples=original_samples,\
              Y_names=Y_names, X_names=X_names, N_TYPE=N_TYPE, N_SLICE=N_SLICE, p0=p0)
+    """
 
     sys.exit()
