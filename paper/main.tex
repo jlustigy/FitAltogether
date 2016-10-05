@@ -121,16 +121,16 @@ A substantial number of work have seeked detectable features in disk-integrated 
 It has been pointed out that not only some of atmospheric molecules are identifiable through spectral absorption features \citep[e.g.,][]{DesMarais2002} but also surface reflectance spectra affect the continuum of the spectra, which could be measured through low-resolution spectra, or multi-band photometry (color) \citep[e.g.,][]{Ford2001}. 
 
 However, interpretation of disk-integrated colors is not trivial. 
-This is particularly true for Earth-like planets which may harbor diverse atmospheric and surface characteristics including liquid water, partial cloud cover, continents, and possible biological surfaces, e.g. vegetation. 
-Disentangling specific features from mixed disk-integrated color can be very challenging. 
+This is particularly true for Earth-like planets that harbor diverse atmospheric and surface characteristics including liquid water, partial cloud cover, continents, and possible biological surfaces, e.g. vegetation. 
+Disentangling specific features from the mixed disk-integrated colors can be very challenging. 
 
-A key here is to use time variation of the spectra; because the surface area that contributes to the scattered light changes due to planetary spin rotation and orbital revolution, the time variability can in principle be translated to the heterogeneity of the surface environment.  
+A key here is to use time variation of the spectra; because the surface area that contributes to the scattered light changes due to the planetary spin rotation and the orbital revolution, the time variability can in principle be translated to the heterogeneity of the surface environment.  
 \citet{Cowan2009, Cowan2011} performed Principal Component Analysis (PCA) on the observed multi-band photometry of the Earth, and found that number of surface types can be inferred from the number of dominant principle components (with a difference of 1) and that the variation pattern is indicative of the surface properties. 
-\citet{Fujii2010, Fujii2011} decomposed multi-band photometric data of the Earth as a linear inverse problem, assuming the template reflectance spectra of the known major surface types, where they found that the relative abundance and the longitudinal variation of these surface types are reasonably recovered. 
+\citet{Fujii2010, Fujii2011} decomposed multi-band photometric data of the Earth as a linear inverse problem, assuming the template reflectance spectra of the known major surface types, and they found that the relative abundance and the longitudinal variation of these surface types are reasonably recovered. 
 Moreover, by coupling the time variation due to spin rotation and that due to orbital revolution, 2-dimensional information of the surface may be retrieved with sufficient quality of data \citep{Kawahara2010, Kawahara2011, Fujii2012}. 
 
 \citet{Cowan2013} took another approach to the same inverse problem. 
-Their strategy is to try to estimate the physically meaningful reflectance spectra and their distribution across the globe simultaneously, by making all of them fitting parameters and letting them to fit the data. 
+Their strategy is to try to estimate the physically meaningful reflectance spectra and their distribution across the globe simultaneously, by making all of them fitting parameters and letting them fit the data. 
 The result appeared successful to the extent that the obtained reflectance spectra roughly match the typical spectra of clouds, ocean, and continents. 
 However, the longitudinal map of these components do not match the reality sufficiently well. 
 
@@ -143,7 +143,7 @@ Specifically, the updates include:
 \end{itemize}
 
 The organization of this paper is as follows. 
-Section \ref{s:frame} revisits the problem, ...
+Section \ref{s:frame} revisits the problem, ....
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Framing the problem}
@@ -156,19 +156,38 @@ Section \ref{s:frame} revisits the problem, ...
 \label{ss:model}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Assuming that the planetary surface is Lambertian scatterer everywhere, with a certain number $K$ of mutually distinct surface types, 
-the disk-integrated spectra can be written as a weighted summation of the reflectance spectra of different surface types, e.g., 
+Assuming that the planetary surface is Lambertian scatterer everywhere, with a certain number $K$ of spectrally distinct surface types, 
+the disk-integrated scattered light can be written as a weighted summation of the reflectance spectra of different surface types. 
+
+For the moment, let us suppose that the planetary radius and the observational geometry (latitude/longitude of the sub-stellar/sub-observer points, and the distance between the star and the planet) are fully known. (This will be relaxed in \S\ref{s:discussion}.) 
+In this case, we can straightforwardly translate the observed planetary intensity to albedo (or reflectivity) using the stellar flux. 
+A useful normalization for albedo in exoplanet observations is {\it apparent albedo}, which is the planetary intensity normalized by that of a loss-less Lambert sphere with the same radius and at the same phase \citep{Qiu2003, Seager2010}; in this paper we will consistently use apparent albedo for our study unless otherwise noted. 
+
+The observed apparent albedo, $d_{ij}$ (``$d$'' for data), can be written as \citep[see][]{Fujii2010}: 
 %%%
-\begin{equation}
-d_{ij} = R_p^2 \sum _{i,k} f_{ik}^{\ast } \, s_{kj}
-\end{equation}
+\begin{eqnarray}
+d_{i} (\lambda_j) &=& \displaystyle \frac{ \int_{{\rm IV}_i} s_{\vec \Omega }(\lambda_j) \cdot \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega } \\
+&=& \sum _{k} s_k (\lambda_j) \; \displaystyle \frac{ \int_{{\rm IV}_{i}} f_k (\vec \Omega ) \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega } \\
+&\equiv & \sum _{i,k} f_{ik}^{\ast } \, s_{kj}
+\end{eqnarray}
 %%%
-where $R_p$ is the planetary radius, $i$, $j$, and $k$ are indices for the observation epochs, bands, and the surface types, respectively \citep[see][]{Fujii2010} . 
-The symbols represent as follows:
-$d_{ij}$ is the observed apparent albedo (``$d$'' for data) at $i$-th epoch and $j$-th band, 
-$f_{lk}^{\ast }$ is the contribution factor of the $k$-th surface type at $i$-th observational epoch, and 
+where $i$, $j$, and $k$ are indices for the observation epochs, bands, and the surface types, respectively, ${\rm IV }_i$ denotes the illuminated and visible area over the planetary surface at $i$-th observation, and $f (\vec \Omega )$ is the area fraction of $k$-th surface type in $d\vec \Omega$. 
+In the last expression, $f_{lk}^{\ast }$ represents the contribution factor of the $k$-th surface type at $i$-th observational epoch, and 
 $s_{kj}$ is the reflectance spectra of $k$-th surface type at $j$-th band. 
 The maximum number of $i$, $j$ and $k$ will be denoted by $I$, $J$, and $K$, below, as summarized in Table \ref{tab:index}. 
+
+By definition, that the area fraction $f$ and reflectance spectra $s$ are subject to the following conditions:
+%%%
+\begin{eqnarray}
+\begin{cases}
+\;\; 0 < s_{kj} < 1 \;\;\; & \mbox{for any $k$, $j$} \\
+\;\; 0 < f^{\ast }_{lk} < 1 \;\;\; & \mbox{for any $l$, $k$} \label{eq:cond_f_ast}\\
+\;\; \sum_k f_{lk}^{\ast } = 1 & \mbox{for any $l$} 
+\end{cases}
+\label{eq:constraints_ast}
+\end{eqnarray}
+%%%
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{table}[bh]
@@ -186,24 +205,25 @@ Longitudinal Slice  & $l$ & L \\ \hline
 \end{table}%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-The contribution factor $f^{\ast }$ is the weighted summation of the area fraction of $k$-th surface type, i. e.,
+The time variability of the contribution factor $f^{\ast }$ due to spin rotation is related to the surface inhomogeneity along the equator. Approximately, $f^{\ast }_{ik}$ may be written as the weighted summation of the area fraction of $k$-th surface type in each of (the finite number $L$ of) longitudinal slices, i.e.,
 %%%
-\begin{equation}
-f^{\ast }_{ik} = \sum _{l} W_{il} f_{lk}
-\end{equation}
+\begin{eqnarray}
+f^{\ast }_{ik} &=& \frac{ \int_{{\rm IV}_{i}} f_k (\vec \Omega ) \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }  \\
+&=& \sum_l \frac{ \int_{{\rm IV}_{il}}  f_k (\vec \Omega ) W (\vec \Omega  ) \cdot d\vec \Omega }{ \int_{{\rm IV}}  W (\vec \Omega ) \cdot d\vec \Omega } \\
+&\sim & \sum_l f_{lk} \frac{ \int_{{\rm IV}_{il}} W (\vec \Omega ) \cdot d\vec \Omega }{ \int_{{\rm IV}}  W (\vec \Omega ) \cdot d\vec \Omega } \\
+&\equiv & \sum_l  W_{il} f_{lk}
+\end{eqnarray}
 %%%
-where $l$ is the index for longitudinal slices, $f_{lk}$ is the area fraction of the $k$-th surface type at $l$-th longitudinal slice, and 
-$W_{il}$ is the weight function for $i$-th epoch and $l$-th longitudinal slice which depends only on the observational geometry. 
-The maximum number of $l$ is denoted by $L$. 
+where $l$ is the index for longitudinal slices, $f_{lk}$ is the area fraction of the $k$-th surface type in the $l$-th longitudinal slice. 
+The approximation is valid only when $f_k(\vec \Omega)$ does not change or changes little in the $l$-th slice for all $k$ and $l$. 
+In the last equation, $W_{il}$ is the weight function for $i$-th epoch and $l$-th longitudinal slice which depends only on the observational geometry. 
 As a result,
 %%%
 \begin{equation}
 d_{ij} = R_p^2 \sum _{l,k} W_{il} \, f_{lk} \, s_{kj}
 \end{equation}
 %%%
-
-Because $f$ is area fraction and $s$ is reflectance spectra, they are subject to the following constraints:
+with the following condition similar to equation (\ref{eq:cond_f_ast}):
 %%%
 \begin{eqnarray}
 \begin{cases}
@@ -214,9 +234,15 @@ Because $f$ is area fraction and $s$ is reflectance spectra, they are subject to
 \label{eq:constraints}
 \end{eqnarray}
 %%%
+Now, the relevant problem is, given $d_{ij}$, estimate both $f_{lk}$ and $s_{kj}$ subject to the constraints of equation (\ref{eq:constraints})---this is where \citet{Cowan2013} stood. 
 
-Now, in the case that the planetary radius and observational geometry (latitude and longitude of the sub-stellar point and the sub-observer point) is fully known, the relevant problem is, given $d_{ij}$, estimate both $f_{lk}$ and $s_{kj}$ subject to the constraints of equation (\ref{eq:constraints}). 
----This is pioneered by trial by \citet{Cowan2013}. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Fit with $f$ or $f^{\ast}$?}
+\label{ss:degeneracy}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 We argue that estimating $f$ and $s$ is no superior to estimating $f^*$ and $s$ subject to the following similar constraint:
 %%%
@@ -330,8 +356,19 @@ The mock lightcurves created through the above-mentioned procedure is presented 
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[!bpth]
+    \begin{center}
+\includegraphics[width=\hsize]{PCA_projected.pdf}
+    \end{center}
+    \caption{Colors of 3 surface types and the light curves projected to the plane of 1st and 2nd principal components. }
+\label{fig:shrinkwrap}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\newpage
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -366,7 +403,7 @@ We now apply our framework to the observed multi-band reflected light curves of 
 There are 7 photometric filters from about 300 nm to 1000 nm, each of which has roughly 100-nm band width. 
 In total, 5 series of observations were conducted, each of which spans $\sim $24 hours with 1-hour intervals. 
 Since one of them includes lunar transit in front of the Earth and the interpretation is not straightforward, we just remove it from our data and consider only 4 series of observations, which were conducted on March 2008, June 2008, March 2009, and October 2009. 
-The data are presented in Figure \ref{fig:EPOXIlc} in terms of {\it apparent albedo}, the planetary intensity normalized by that of a loss-less Lambert sphere with the same radius and at the same phase \citep{Qiu2003, Seager2010}. 
+The data are presented in Figure \ref{fig:EPOXIlc} in terms of {\it apparent albedo}. 
 
 The geometrical configuration among the star, the target (the Earth), and the detector varies from observation to observation. 
 The information is summarized in \citet{Cowan2011}, but we also outline in Table \ref{tab:EPOXI} just for reference. 
