@@ -25,6 +25,8 @@ DIR = "mcmc_output/"
 # Specify burn-in index for corner plot
 DEFAULT_BURN_INDEX = 0
 
+DEFAULT_WHICH = None
+
 def estimate_burnin1(samples):
     # Determine time of burn-in by calculating first time median is crossed
     # Algorithm by Eric Agol 2016
@@ -45,7 +47,7 @@ def estimate_burnin1(samples):
     # Now return the index of the last walker to cross its median
     return np.amax(first_median_crossing)
 
-def plot_trace(samples, directory="", X_names=None):
+def plot_trace(samples, directory="", X_names=None, which=None):
 
     print "Plotting Trace..."
 
@@ -58,6 +60,8 @@ def plot_trace(samples, directory="", X_names=None):
 
     # Loop over all parameters making trace plots
     for i in range(nparam):
+        if which is not None:
+            i = which
         print i
         if X_names is None:
             pname = ""
@@ -80,30 +84,37 @@ def plot_trace(samples, directory="", X_names=None):
         plt.setp(ax1.get_xticklabels(), fontsize=18, rotation=45)
         plt.setp(ax1.get_yticklabels(), fontsize=18, rotation=45)
         fig.subplots_adjust(wspace=0)
-        fig.savefig(directory+"trace"+str(i)+".png")
+        fig.savefig(directory+"trace"+str(i)+".png", bbox_inches="tight")
+        fig.clear()
+        plt.close()
+        if which is not None:
+            break
     return
 
 #===================================================
 if __name__ == "__main__":
 
     # Read command line args
-    myopts, args = getopt.getopt(sys.argv[1:],"d:b:")
+    myopts, args = getopt.getopt(sys.argv[1:],"d:b:n:")
     run = ""
+    iburn = DEFAULT_BURN_INDEX
+    which = DEFAULT_WHICH
     for o, a in myopts:
         # o == option
         # a == argument passed to the o
-        # Get MCMC directory timestamp name
         if o == '-d':
+            # Get MCMC directory timestamp name
             run=a
+        elif o == "-b":
+            # Get burn in index
+            iburn = int(a)
+        elif o == "-n":
+            # Get which index
+            which = int(a)
         else:
-            print("Please specify run directory using -d: \n e.g. >python mcmc_physical.py -d 2016-07-13--11-59")
-            sys.exit()
-        # Get burn in index
-        if o == "-b":
-            iburn = int(b)
-        else:
-            iburn = DEFAULT_BURN_INDEX
-        print "Burn-in index:", iburn
+            pass
+
+    print "Burn-in index:", iburn
 
     MCMC_DIR = DIR + run + "/"
 
@@ -140,7 +151,7 @@ if __name__ == "__main__":
             print trace_dir, "already exists."
 
         # Make trace plots
-        plot_trace(samples, X_names=Y_names, directory=trace_dir)
+        plot_trace(samples, X_names=Y_names, directory=trace_dir, which=which)
 
     if "corner" in str(sys.argv):
         print "Making Corner Plot..."
