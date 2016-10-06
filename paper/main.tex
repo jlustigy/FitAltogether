@@ -47,6 +47,8 @@
  \hbox{$\sim$}}\raise 1.5pt\hbox{$>$}\;}
 \def\lsim{\;\rlap{\lower 2.5pt
    \hbox{$\sim$}}\raise 1.5pt\hbox{$<$}\;}
+%\def\fast{\;$f^{\ast }$\;}
+\def\fast{\tilde f}
 
 % set formatting properties
 \setlength{\textwidth}{6.5in}
@@ -56,7 +58,7 @@
 \parindent 0.2in
 \parskip 0.1in
 
-\def\memoYF#1{\color{red}{\bf [#1]}\color{black}}
+\def\memoYF#1{\color{red}[NOTE: {\bf #1}]\color{black}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % THE DOCUMENT BEGINS HERE                      %
@@ -125,7 +127,7 @@ This is particularly true for Earth-like planets that harbor diverse atmospheric
 Disentangling specific features from the mixed disk-integrated colors can be very challenging. 
 
 A key here is to use time variation of the spectra; because the surface area that contributes to the scattered light changes due to the planetary spin rotation and the orbital revolution, the time variability can in principle be translated to the heterogeneity of the surface environment.  
-\citet{Cowan2009, Cowan2011} performed Principal Component Analysis (PCA) on the observed multi-band photometry of the Earth, and found that number of surface types can be inferred from the number of dominant principle components (with a difference of 1) and that the variation pattern is indicative of the surface properties. 
+\citet{Cowan2009, Cowan2011} performed Principal Component Analysis (PCA) on the observed multi-band photometry of the Earth, and found that number of surface types can be inferred from the number of dominant principle components; (\# of surface types) $\ge $ (\# of principal componentes) $+ 1$. %) and that the variation pattern is indicative of the surface properties. 
 \citet{Fujii2010, Fujii2011} decomposed multi-band photometric data of the Earth as a linear inverse problem, assuming the template reflectance spectra of the known major surface types, and they found that the relative abundance and the longitudinal variation of these surface types are reasonably recovered. 
 Moreover, by coupling the time variation due to spin rotation and that due to orbital revolution, 2-dimensional information of the surface may be retrieved with sufficient quality of data \citep{Kawahara2010, Kawahara2011, Fujii2012}. 
 
@@ -168,11 +170,11 @@ The observed apparent albedo, $d_{ij}$ (``$d$'' for data), can be written as \ci
 \begin{eqnarray}
 d_{i} (\lambda_j) &=& \displaystyle \frac{ \int_{{\rm IV}_i} s_{\vec \Omega }(\lambda_j) \cdot \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega } \\
 &=& \sum _{k} s_k (\lambda_j) \; \displaystyle \frac{ \int_{{\rm IV}_{i}} f_k (\vec \Omega ) \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega } \\
-&\equiv & \sum _{i,k} f_{ik}^{\ast } \, s_{kj}
+&\equiv & \sum _{i,k} \fast_{ik} \, s_{kj} \label{eq:d_f_ast_s}
 \end{eqnarray}
 %%%
 where $i$, $j$, and $k$ are indices for the observation epochs, bands, and the surface types, respectively, ${\rm IV }_i$ denotes the illuminated and visible area over the planetary surface at $i$-th observation, and $f (\vec \Omega )$ is the area fraction of $k$-th surface type in $d\vec \Omega$. 
-In the last expression, $f_{lk}^{\ast }$ represents the contribution factor of the $k$-th surface type at $i$-th observational epoch, and 
+In the last expression, $\fast_{lk}$ represents the apparent covering fraction of the $k$-th surface type at $i$-th observational epoch, and 
 $s_{kj}$ is the reflectance spectra of $k$-th surface type at $j$-th band. 
 The maximum number of $i$, $j$ and $k$ will be denoted by $I$, $J$, and $K$, below, as summarized in Table \ref{tab:index}. 
 
@@ -181,10 +183,9 @@ By definition, the area fraction $f$ and reflectance spectra $s$ are subject to 
 \begin{eqnarray}
 \begin{cases}
 \;\; 0 < s_{kj} < 1 \;\;\; & \mbox{for any $k$, $j$} \\
-\;\; 0 < f^{\ast }_{lk} < 1 \;\;\; & \mbox{for any $l$, $k$} \label{eq:cond_f_ast}\\
-\;\; \sum_k f_{lk}^{\ast } = 1 & \mbox{for any $l$} 
+\;\; 0 < \fast_{lk} < 1 \;\;\; & \mbox{for any $l$, $k$} \label{eq:cond_f_ast}\\
+\;\; \sum_k \fast_{lk} = 1 & \mbox{for any $l$} 
 \end{cases}
-\label{eq:constraints_ast}
 \end{eqnarray}
 %%%
 
@@ -205,10 +206,10 @@ Longitudinal Slice  & $l$ & L \\ \hline
 \end{table}%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The time variability of the contribution factor $f^{\ast }$ due to spin rotation is related to the surface inhomogeneity along the equator. Approximately, $f^{\ast }_{ik}$ may be written as the weighted summation of the area fraction of $k$-th surface type in each of (the finite number $L$ of) longitudinal slices, i.e.,
+The time variability of the apparent covering fraction $\fast $ due to spin rotation is related to the surface inhomogeneity along the equator. Approximately, $\fast _{ik}$ may be written as the weighted summation of the area fraction of $k$-th surface type in each of (the finite number $L$ of) longitudinal slices, i.e.,
 %%%
 \begin{eqnarray}
-f^{\ast }_{ik} &=& \frac{ \int_{{\rm IV}_{i}} f_k (\vec \Omega ) \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }  \\
+\fast _{ik} &=& \frac{ \int_{{\rm IV}_{i}} f_k (\vec \Omega ) \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }  \\
 &=& \sum_l \frac{ \int_{{\rm IV}_{il}}  f_k (\vec \Omega ) W (\vec \Omega  ) \cdot d\vec \Omega }{ \int_{{\rm IV}}  W (\vec \Omega ) \cdot d\vec \Omega } \\
 &\sim & \sum_l f_{lk} \frac{ \int_{{\rm IV}_{il}} W (\vec \Omega ) \cdot d\vec \Omega }{ \int_{{\rm IV}}  W (\vec \Omega ) \cdot d\vec \Omega } \label{eq:discretize}\\
 &\equiv & \sum_l  W_{il} f_{lk} \label{eq:Wf}
@@ -220,7 +221,7 @@ In the last equation, $W_{il}$ is the weight function for $i$-th epoch and $l$-t
 As a result,
 %%%
 \begin{equation}
-d_{ij} = R_p^2 \sum _{l,k} W_{il} \, f_{lk} \, s_{kj}
+d_{ij} = R_p^2 \sum _{l,k} W_{il} \, f_{lk} \, s_{kj} \label{eq:d_f_s}
 \end{equation}
 %%%
 with the following condition similar to equation (\ref{eq:cond_f_ast}):
@@ -236,54 +237,76 @@ with the following condition similar to equation (\ref{eq:cond_f_ast}):
 %%%
 Now, the relevant problem is, given $d$, estimate $\{f, s\}$ subject to the constraints of equation (\ref{eq:constraints})---this is where \citet{Cowan2013} stood. 
 
+
+\citet{Cowan2013} suggested the specific procedure to find the solution for $\{f, s\}$. 
+Namely, 
+(1) perform PCA on the data to reduce the dimensionality as needed, 
+(2) perform simplex shrink-wrapping analysis to find the first guess for $s$, 
+and 
+(3) find the maximum posterior values for $\{f, s\}$ using MCMC algorithm  and setting the first guess for $s$ as the initial condition. 
+(In the last step, the initial value for $f$ is fixed at 1/(\# of surface types).)
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Fit data with $f$ or with $f^{\ast}$?}
 \label{ss:degeneracy}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\memoYF{I am not 100\% sure if the following statement is right. Need to check.}
+\memoYF{I am not 100\% sure if the following statement is right. Need to check. The argument below probably makes sense for the noiseless case. What if the data are noisy?}
  
 We argue that estimating $\{ f, s \}$ is no superior to estimating $\{ f^{\ast }, s \}$. 
 %
-One reason comes from the fact the approximation adopted in equation (\ref{eq:discretize}) is valid only when $f_k (\vec \Omega)$ does not change significantly in the $l$-th slice. 
-Otherwise, fitting data with $f$ by equation (\ref{eq:Wf}) includes some errors by design. 
+One reason comes from the approximation adopted in equation (\ref{eq:discretize}) is valid only when $f_k (\vec \Omega)$ does not change significantly in the $l$-th slice. 
+Otherwise, fitting data with $f$ by equation (\ref{eq:Wf}) produces some errors by design. 
 
 %Suppose the above approximation is justified. 
 In essence, $f^{\ast }_{ik}$ and $f_{lk}$ contains the same information, where they are related through a fixed $W_{il}$ (eq. \ref{eq:Wf}). 
 %
 If $L=I$, in general there is a one-to-one relationship between $f^{\ast}_{ik}$ and $f_{lk}$ through $W_{il}$ as far as ${\rm rank}(W)=L(=I)$. 
-In this case, clearly, equations (\ref{eq:cond_f_ast}) and (\ref{eq:cond_f}) are equivalent given $W_{il}>0$ (for any $i$ and $j$), and $\sum _l W_{il} = 1$. 
+In this case, clearly, equations (\ref{eq:cond_f_ast}) and (\ref{eq:cond_f}) are equivalent, given $W_{il}>0$ (for any $i$ and $j$) and $\sum _l W_{il} = 1$. 
 %
-If $L<I$, $W$ works as a low-pass filter, as discussed in \citet{Cowan2013}. 
-In this case, the inverse problem described by equation (\ref{eq:Wf}), $f^{\ast }=Wf$ is an overdetermined system, and one must to find the solution for $f$ by some means (e.g. least squares method), and the resultant $f$ may not automatically satisfy the condition listed by eqution (\ref{eq:cond_f}). 
-However, this is because of the design of the problem and the assumed lowered resolution, and not because of the wrong estimation for $f$ (or $s$). 
+If $L<I$, the matrix $W$ works as a low-pass filter \citep{Cowan2013}. 
+In this case, the inverse problem described by equation (\ref{eq:Wf}), $f^{\ast }=Wf$, is an overdetermined system, and one must to find the solution for $f$ by some means (e.g. the least squares method), and the resultant $f$ may not automatically satisfy the condition listed by eqution (\ref{eq:cond_f}). 
+However, this is because of the design of the problem and the assumed lowered resolution. 
 
-Thus, although both $\{ f^{\ast }, s \}$ and $\{ f, s \}$ could be a fitting parameters to the light curves, the estimation for $s$ should not be affected by this conversion in fitting parameters. 
-In that sense, $\{ f, s \}$ is not likely to return a better solution than $\{ f^{\ast }, s \}$ does. 
+Therefore, although either $\{ \fast, s \}$ or $\{ f, s \}$ could be fitting parameters to the data, the estimation for $s$ should not be affected by this conversion in fitting parameters. 
+In that sense, $\{ f, s \}$ is not likely to return a better solution than $\{ \fast, s \}$ does. 
+Rather, it could return less reasonable results because of the approximation adopted in equation (\ref{eq:discretize}). 
+
+\memoYF{\citet{Cowan2013} found a more reasonable answer for $s$ when they fitted with $\{ f, s \}$, but I think this is a coincidence. }
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Strong Degeneracy}
+\subsection{Degeneracy}
 \label{ss:degeneracy}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\memoYF{The degeneracy in solving $\{ \fast ,\,s\} $ is already indicated in \citet{Cowan2013}, but might be worth clarifying here again. }
+
+
+One could try to find the solutions for $\{ \fast, s \}$ given $d$ using equation (\ref{eq:d_f_ast_s}), or the solutions for  $\{ f, s \}$ using equation (\ref{eq:d_f_s}), but we must keep in mind that 
+these two formulations both embrace intrinsic degeneracies in the solutions if there is no other information about $\fast$ (or $f$) and $s$. 
+
 %%%
-\begin{equation}
-\tilde d_{ij} = \sum _{i,k} f_{ik}^{\ast } \, s_{kj}
-\end{equation}
+%\begin{equation}
+%d_{ij} = \sum _{i,k} f^{\ast }_{ik} \, s_{kj} \tag{\ref{eq:d_f_ast_s}}
+%\end{equation}
 %%%
-where $\tilde d_{ij} = d_{ij}/R_p^2$. 
-Without any constraints on $f^{\ast }$ and $s$, it is trivial to notice the degeneracy in the solutions. 
-Using an arbitrary regular matrix $X$ with rank $K$, a particular set of solution $\{ f^{\ast },\,s\}$ implies another set of solution $\{ f^{\ast }X^{-1},\,Xs\}$. 
+%When one tries to find solutions for both $\fast$ and $s$ given $d$, the results are strongly degenerate if there are not other information about $\fast$ and $s$. 
 
-Now that they are subject to the constraints (equation (\ref{eq:constraints_ast})), the range of acceptable solution is limited. 
-However, the constraints cannot be sufficient to reduce them to a unique solution. 
-One can create a infinite number of candidates for $f_{ik}^{\ast }$ which satisfies both of the two constraints for $f$, then $s$ may be obtained by $s = f^{+} \tilde d$, where $f^+$ is the pseudo-inverse matrix (note that $K < I$ to be able to find the solution) and among these solutions there should be many that satisfy the constraint for $s$ as well. 
-\memoYF{Need to brush up. Possibly need to consider SVD of $f$. }
+Without any constraints on $\fast$ (or $f$) and $s$, it is trivial to notice the degeneracy in the solutions. 
+Using an arbitrary regular matrix $X$ with rank $K$, a particular set of solution $\{ \fast ,\,s\}$ implies another set of solution $\{ \fast X^{-1},\,Xs\}$. 
 
-To see this, we demonstrate the application to the mock data with known solution in Section \ref{s:mockdata}.
-
+Now that they are subject to the constraints (equation (\ref{eq:cond_f_ast}) or (\ref{eq:cond_f})), the range of the acceptable solution is limited. Nevertheless, the constraints cannot be sufficient to narrow them to a unique set of solution. 
+%
+To see this, %let us consider equation (\ref{eq:d_f_ast_s}) for the moment.
+imagine a $J$-dimensional space.
+Suppose there are $K$ number of vertices in that space, $\vec x_1,\,\vec x_2,\,...,\,\vec x_K$, and that all of the coordinate of $\vec x_k$ in this $J$-dimensional space is between 0 and 1. 
+Mathematically, any points (say, $\vec y_1$, $\vec y_2$, ..., $\vec y_I$) that are {\it enclosed} in the hyperplane defined by these vertices may be represented by $\vec y_i=\sum _k^K p_{ik} \vec x_k $ where $\sum _k^K p_{ik} = 1$ for any $i$. 
+%In the matrix form, $Y_{ij} = P_{ik} X_{kj}$. 
+This is essentially same as the situation described by equation (\ref{eq:d_f_ast_s}). 
+In other words, any set of vertices in $J$-dimensional space that can enclose the observed data, $\vec d_i$, if any, can be the solutions for equation (\ref{eq:d_f_ast_s}), as long as all of the element in $x_{kj}$ satisfy $0<x_{kj}<1$. 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -310,31 +333,14 @@ g_{lk} = \displaystyle \ln \left[ \frac{ f_{lk} }{1 - \sum _{m=0}^{k} f_{lm} } \
 %%%
 Note that there is a 1-to-1 correspondence between $t$ and $s$ or $g$ and $f$ where $s$ and $f$ always satisfy our constraints. 
 
-\newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Test with idealized mock data}
 \label{s:mockdata}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Creating Mock Data}
-\label{ss:createmockdata}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-Before applying to the observed data, we shall demonstrate the analysis procedure with a mock dataset with the known answer. 
-For this purpose, we use a simplified albedo map of the Earth based on the IGBP classification. 
-We re-classify the IGBP map into four surface types, ``ocean', ``vegetation', and ``soil'' and following Table 2 of \citet{Fujii2010} except that we merge ``snow'' into ``soil'' considering its small fraction. 
-The upper left panel of Figure \ref{fig:mockdata} depicts such an surface classification. 
-The reflectance spectra for these three surface types ($s_{kj}$) are adopted from ASTER spectral library \citep{Baldridge2009} in the same way as \citet{Fujii2010} (Figure 7 in that paper), and are shown in the upper right panel of Figure \ref{fig:mockdata}. 
-
-We then compute the geometrically weighted area fraction of each surface type (``contribution factor'' or $f^{\ast }_{ik}$) assuming an equatorial view at the quadrature \memoYF{Describe in more detail.}; this is shown in the lower left panel of Figure \ref{fig:mockdata}. 
-Using $s_{kj}$ and $f^{\ast }_{ik}$, we compute the apparent albedo at each observation frame, on the assumption that the surfaces are ``Lambert'' scatterers. The effect of atmosphere is completely ignored. 
-The mock lightcurves created through the above-mentioned procedure is presented in the lower right panel of Figure \ref{fig:mockdata}. 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{figure*}[!bpth]
+\begin{figure*}[!hbt]
     \begin{minipage}{0.5\hsize}
     \begin{center}
 \includegraphics[width=\hsize]{IGBP_simplemap.pdf}
@@ -360,9 +366,36 @@ The mock lightcurves created through the above-mentioned procedure is presented 
 \end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Creating Mock Data}
+\label{ss:createmockdata}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+Before applying to the observed data, we shall demonstrate the analysis procedure with a mock dataset with the known answer. 
+For this purpose, we use a simplified albedo map of the Earth based on the IGBP classification. 
+We re-classify the IGBP map into four surface types, ``ocean', ``vegetation', and ``soil'' and following Table 2 of \citet{Fujii2010} except that we merge ``snow'' into ``soil'' considering its small fraction. 
+The upper left panel of Figure \ref{fig:mockdata} depicts such an surface classification. 
+The reflectance spectra for these three surface types ($s_{kj}$) are adopted from ASTER spectral library \citep{Baldridge2009} in the same way as \citet{Fujii2010} (Figure 7 in that paper), and are shown in the upper right panel of Figure \ref{fig:mockdata}. 
 
+We then compute the geometrically weighted area fraction of each surface type (``apparent covering fraction'' or $f^{\ast }_{ik}$) assuming an equatorial view at the quadrature, as is shown in the lower left panel of Figure \ref{fig:mockdata}. 
+Specifically, we fix the sub-observer latitude at $0^{\circ }$, sub-observer at $0^{\circ }$, the sub-solar latitude at $0^{\circ }$, and sub-solar longitude at $90^{\circ }$. 
+Using $s_{kj}$ and $f^{\ast }_{ik}$, we compute the apparent albedo at each observation frame, on the assumption that the surfaces are ``Lambert'' scatterers. The effect of atmosphere is completely ignored. 
+The mock lightcurves created through the above-mentioned procedure is presented in the lower right panel of Figure \ref{fig:mockdata}. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{PCA and Shrink-Wrapping}
+\label{ss:shrinkwrap}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Now, we analyze the mock data created in the preceding section (Figure \ref{fig:mockdata}). 
+In this section, the result of PCA and shrink-wrapping are presented and discussed. 
+
+PCA on the mock data indicated one dominant component (contribution: $\sim $98\%) and one minor component (contribution: $\sim $2\%). The residual is virtually zero, leaving 2 components in total, consistent with the assumption of 3 surface types. 
+The corresponding principal components are shown in Figure \ref{fig:PCs}. 
+
+ 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure}[!bpth]
     \begin{center}
@@ -374,14 +407,26 @@ The mock lightcurves created through the above-mentioned procedure is presented 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+Then, we performed simplex shrink-wrapping analysis in the plane defined by these two principal components, based on the algorithm described in \citet{Fuhrmann1999}. 
+The result are presented in Figure \ref{fig:shrinkwrap}. 
+The black solid line indicates the trajectory of the light curves projected in this plane. 
+The minimum-volume triangle that encloses the data points are found at the orange line in the same figure. 
+For reference, the locations of the assumed three surface colors projected onto this plane are shown as points. 
+As can be seen, the light curves the minimum-volume enclosure does not match the colors of physical surfaces, except for ocean. 
+This is a natural consequence from the fact that the soil and vegetation are minor components and never dominate the surface in the illuminated and visible area, while the apparent covering fraction of ocean comes close to unity. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[!bpth]
+    \begin{center}
+\includegraphics[width=\hsize]{xmed_std_time.pdf}
+\includegraphics[width=\hsize]{xmed_std_longitude.pdf}
+    \end{center}
+    \caption{Left: result of estimation for $\{ \fast,\,s\}$. Right: result of estimation for $\{ f,\,s\}$}
+\label{fig:shrinkwrap}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Testing Rotational Unmixing with Mock Data}
-\label{ss:testmockdata}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \newpage
