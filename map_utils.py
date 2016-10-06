@@ -40,7 +40,7 @@ def save2hdf5(f, dataset, name="dataset", dictionary=None, compression='lzf', cl
         return None
 
     # Create dataset for mcmc chain samples
-    s = f.create_dataset('samples', data=samples, compression=compression)
+    s = f.create_dataset(name, data=dataset, compression=compression)
 
     # Save dictionary to attributes
     if dictionary is not None:

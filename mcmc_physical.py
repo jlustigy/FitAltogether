@@ -1,14 +1,12 @@
 import numpy as np
 import healpy as hp
 import emcee
-import matplotlib.pyplot as pl
 from scipy.optimize import minimize
 import sys, getopt
 import corner
 import datetime
 import multiprocessing
 import os
-import pdb
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
@@ -18,6 +16,7 @@ import pdb
 from colorpy import colormodels, ciexyz
 
 from reparameterize import transform_Y2X
+from map_utils import save2hdf5
 
 mpl.rc('font', family='Times New Roman')
 mpl.rcParams['font.size'] = 25.0
@@ -214,6 +213,26 @@ if __name__ == "__main__":
 
     MCMC_DIR = DIR + run + "/"
 
+    # Load MCMC samples
+    try:
+        # Open the file stream
+        f = h5py.File(MCMC_DIR+"samurai_out.hdf5", 'r+')
+    except IOError:
+        print "Run directory does not exist! Check -d argument."
+        sys.exit()
+
+    # Extract info from HDF5 file
+    samples=f["samples"]
+    data = samples.attrs["data"]
+    N_TYPE = samples.attrs["N_TYPE"]
+    p0 = samples.attrs["p0"]
+    X_names = samples.attrs["X_names"]
+    Y_names = samples.attrs["Y_names"]
+    nwalkers = samples.attrs[0]
+    nsteps = samples.attrs[1]
+    nparam = samples.attrs[2]
+
+    """# old load
     # Load MCMC samples from numpy archive
     try:
         temp = np.load(MCMC_DIR+"mcmc_samples.npz")
@@ -234,6 +253,7 @@ if __name__ == "__main__":
     nwalkers = samples.shape[0]
     nsteps = samples.shape[1]
     nparam = samples.shape[2]
+    """
 
     # Unpack Data
     Obs_ij = data[0]
@@ -245,12 +265,53 @@ if __name__ == "__main__":
     # Compute slice longitude
     #slice_longitude = np.array([-180. + (360. / n_slice) * (i + 0.5) for i in range(n_slice)])
 
-    try:
+    """
+    temp = np.load(MCMC_DIR+"mcmc_physical_samples.npz")
+    xsam = temp["xsam"]
+    """
+
+    NAME_YSAM = "samples"
+    NAME_XSAM = "physical_samples"
+
+    # If the xsamples are already in the hdf5 file
+    if NAME_XSAM in f.keys():
         # load physical samples
-        temp = np.load(MCMC_DIR+"mcmc_physical_samples.npz")
-        xsam = temp["xsam"]
-        print "Physical  xsamples loaded from file!"
-    except IOError:
+        xsam = f["physical_samples"]
+        print NAME_XSAM + " loaded from file!"
+        if xsam.attrs["iburn"] == iburn:
+            # This is the exact same file
+            rerun = False
+        else:
+            # Must re-run xsamples with new burnin, overwrite
+            print "Different burn-in index here. Must reflatten and convert..."
+            rerun = True
+
+    # If the xsamples are not in the hdf5 file,
+    # or if they need to be re-run
+    if NAME_XSAM not in f.keys() or rerun:
+        # Determine shape of new dataset
+        new_shape = (nwalkers*(nsteps-iburn), nparam)
+        # Construct attrs dictionary
+        adic = {"iburn" : iburn}
+        # Create new dataset in existing hdf5 file
+        xs = f.create_dataset(NAME_XSAM, dtype=np.float64, compression='lzf',
+                         shape=new_shape)
+        # Add attributes to dataset
+        for key, value in adic.iteritems(): xs.attrs[key] = value
+
+        # Loop over all parameters?
+        for i in range(nwalker):
+            for j in range(nsteps):
+                
+        xsam = np.array([transform_Y2X(samples[i,:-1*N_REGPARAM], N_TYPE, n_band, n_slice, flatten=True) for i in range(len(samples))])
+        for i in range(nparam):
+            xs[:,i] = samples[:, iburn:, i].reshape((-1, 1))
+
+        # Create new dataset in open hdf5 file
+
+
+
+        """
         # Flatten chains that go beyond burn-in (aka sampling the posterior)
         print "Flattening chains..."
         samples = samples[:,iburn:,:].reshape((-1, nparam))
@@ -266,6 +327,7 @@ if __name__ == "__main__":
         #xsam = np.array([transform_Y2X(samples[i], n_band, n_slice) for i in range(len(samples))])
         print "Saving mcmc_physical_samples.npz..."
         np.savez(MCMC_DIR+"mcmc_physical_samples.npz", xsam=xsam)
+        """
 
     if "sample" in str(sys.argv):
         N_SAMP = 1000
@@ -304,5 +366,8 @@ if __name__ == "__main__":
             labels=X_names, show_titles=True)
         fig.savefig(MCMC_DIR+"xcorner.png")
 
+
+    # Close HDF5 file stream
+    f.close()
 
     sys.exit()

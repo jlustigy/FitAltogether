@@ -1,6 +1,4 @@
 import numpy as np
-import healpy as hp
-import emcee
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
@@ -14,7 +12,7 @@ import corner
 import datetime
 import multiprocessing
 import os
-import pdb
+import h5py
 
 
 # Specify directory of run to analyze
@@ -51,11 +49,12 @@ def plot_trace(samples, directory="", X_names=None, which=None):
 
     print "Plotting Trace..."
 
-    nwalkers = samples.shape[0]
-    nsteps = samples.shape[1]
-    nparam = samples.shape[2]
+    nwalkers = samples.attrs["nwalkers"]
+    nsteps = samples.attrs["nsteps"]
+    nparam = samples.attrs["nparam"]
 
     # Flatten chains for histogram
+    print "Flattening chains for histogram (slow)..."
     samples_flat = samples[:, :, :].reshape((-1, nparam))
 
     # Loop over all parameters making trace plots
@@ -118,6 +117,26 @@ if __name__ == "__main__":
 
     MCMC_DIR = DIR + run + "/"
 
+    # Load MCMC samples
+    try:
+        # Open the file stream
+        f = h5py.File(MCMC_DIR+"samurai_out.hdf5", 'r')
+    except IOError:
+        print "Run directory does not exist! Check -d argument."
+        sys.exit()
+
+    # Extract info from HDF5 file
+    samples=f["samples"]
+    data = samples.attrs["data"]
+    N_TYPE = samples.attrs["N_TYPE"]
+    p0 = samples.attrs["p0"]
+    X_names = samples.attrs["X_names"]
+    Y_names = samples.attrs["Y_names"]
+    nwalkers = samples.attrs[0]
+    nsteps = samples.attrs[1]
+    nparam = samples.attrs[2]
+
+    """
     # Load MCMC samples from numpy archive
     try:
         temp = np.load(MCMC_DIR+"mcmc_samples.npz")
@@ -136,9 +155,7 @@ if __name__ == "__main__":
     nwalkers = samples.shape[0]
     nsteps = samples.shape[1]
     nparam = samples.shape[2]
-
-    # Flatten chains
-    samples_flat = samples[:,iburn:,:].reshape((-1, nparam))
+    """
 
     if "trace" in str(sys.argv):
 
@@ -154,8 +171,15 @@ if __name__ == "__main__":
         plot_trace(samples, X_names=Y_names, directory=trace_dir, which=which)
 
     if "corner" in str(sys.argv):
-        print "Making Corner Plot..."
+
+        # Flatten chains
+        print "Flattening chains..."
+        samples_flat = samples[:,iburn:,:].reshape((-1, nparam))
 
         # Make corner plot
+        print "Making Corner Plot..."
         fig = corner.corner(samples_flat, plot_datapoints=True, plot_contours=False, plot_density=False, labels=Y_names)
         fig.savefig(MCMC_DIR+"ycorner.png")
+
+    # Close HDF5 file stream
+    f.close()
