@@ -228,7 +228,7 @@ with the following condition similar to equation (\ref{eq:cond_f_ast}):
 \begin{eqnarray}
 \begin{cases}
 \;\; 0 < s_{kj} < 1 \;\;\; & \mbox{for any $k$, $j$} \\
-\;\; 0 < f_{lk} < 1 \;\;\; & \mbox{for any $l$, $k$} \\
+\;\; 0 < f_{lk} < 1 \;\;\; & \mbox{for any $l$, $k$} \label{eq:cond_f} \\
 \;\; \sum_k f_{lk} = 1 & \mbox{for any $l$} 
 \end{cases}
 \label{eq:constraints}
@@ -236,27 +236,37 @@ with the following condition similar to equation (\ref{eq:cond_f_ast}):
 %%%
 Now, the relevant problem is, given $d$, estimate $\{f, s\}$ subject to the constraints of equation (\ref{eq:constraints})---this is where \citet{Cowan2013} stood. 
 
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Fit with $f$ or with $f^{\ast}$?}
+\subsection{Fit data with $f$ or with $f^{\ast}$?}
 \label{ss:degeneracy}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\memoYF{I am not 100\% sure if the following statement is right. Need to check.} 
+\memoYF{I am not 100\% sure if the following statement is right. Need to check.}
+ 
 We argue that estimating $\{ f, s \}$ is no superior to estimating $\{ f^{\ast }, s \}$. 
-One reason comes from the fact the approximation adopted in equation (\ref{eq:discretize}). This is valid only when $f_k (\vec \Omega)$ does not change significantly in the $l$-th slice. 
-If this isn't the case, equation (\ref{eq:Wf}) is no longer a good discritization. 
+%
+One reason comes from the fact the approximation adopted in equation (\ref{eq:discretize}) is valid only when $f_k (\vec \Omega)$ does not change significantly in the $l$-th slice. 
+Otherwise, fitting data with $f$ by equation (\ref{eq:Wf}) includes some errors by design. 
 
-If that condition is satisfied for $L=I$ slices, then in general cases there is a one-to-one relationship between $f^{\ast}_{ik}$ and $f_{lk}$ through $W_{il}$ as far as ${\rm rank}(W)=L(=I)$. 
+%Suppose the above approximation is justified. 
+In essence, $f^{\ast }_{ik}$ and $f_{lk}$ contains the same information, where they are related through a fixed $W_{il}$ (eq. \ref{eq:Wf}). 
+%
+If $L=I$, in general there is a one-to-one relationship between $f^{\ast}_{ik}$ and $f_{lk}$ through $W_{il}$ as far as ${\rm rank}(W)=L(=I)$. 
+In this case, clearly, equations (\ref{eq:cond_f_ast}) and (\ref{eq:cond_f}) are equivalent given $W_{il}>0$ (for any $i$ and $j$), and $\sum _l W_{il} = 1$. 
+%
+If $L<I$, $W$ works as a low-pass filter, as discussed in \citet{Cowan2013}. 
+In this case, the inverse problem described by equation (\ref{eq:Wf}), $f^{\ast }=Wf$ is an overdetermined system, and one must to find the solution for $f$ by some means (e.g. least squares method), and the resultant $f$ may not automatically satisfy the condition listed by eqution (\ref{eq:cond_f}). 
+However, this is because of the design of the problem and the assumed lowered resolution, and not because of the wrong estimation for $f$ (or $s$). 
+
+Thus, although both $\{ f^{\ast }, s \}$ and $\{ f, s \}$ could be a fitting parameters to the light curves, the estimation for $s$ should not be affected by this conversion in fitting parameters. 
+In that sense, $\{ f, s \}$ is not likely to return a better solution than $\{ f^{\ast }, s \}$ does. 
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Degeneracy}
+\subsection{Strong Degeneracy}
 \label{ss:degeneracy}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
 %%%
 \begin{equation}
@@ -273,6 +283,8 @@ One can create a infinite number of candidates for $f_{ik}^{\ast }$ which satisf
 \memoYF{Need to brush up. Possibly need to consider SVD of $f$. }
 
 To see this, we demonstrate the application to the mock data with known solution in Section \ref{s:mockdata}.
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Bayesian Formulation}
