@@ -88,9 +88,7 @@ def plot_median(med_alb, std_alb, med_area, std_area, directory=""):
     leg=ax0.legend(loc=0, fontsize=14)
     leg.get_frame().set_alpha(0.0)
 
-    fig.tight_layout()
-
-    fig.savefig(directory+"xmed_std.pdf")
+    fig.savefig(directory+"xmed_std.pdf", bbox_inches="tight")
 
 def plot_sampling(x, directory=""):
 
@@ -151,9 +149,7 @@ def plot_sampling(x, directory=""):
     leg=ax0.legend(loc=0, fontsize=16)
     leg.get_frame().set_alpha(0.0)
 
-    fig.tight_layout()
-
-    fig.savefig(directory+"xsamples.pdf")
+    fig.savefig(directory+"xsamples.pdf", bbox_inches="tight")
 
 def convolve_with_eye(wl, spectrum):
     # Construct 2d array for ColorPy
@@ -223,32 +219,31 @@ if __name__ == "__main__":
         sys.exit()
 
     # Extract info from HDF5 file
-    samples=f["samples"]
+    samples=f["mcmc/samples"]
     assert iburn < samples.shape[1]
-    N_TYPE = samples.attrs["N_TYPE"]
-    n_slice = samples.attrs["N_SLICE"]
-    p0 = f["p0"]
-    X_names = samples.attrs["X_names"]
-    Y_names = samples.attrs["Y_names"]
+    N_TYPE = f.attrs["N_TYPE"]
+    n_slice = f.attrs["N_SLICE"]
+    p0 = f["mcmc/p0"]
+    X_names = f["mcmc"].attrs["X_names"]
+    Y_names = f["mcmc"].attrs["Y_names"]
     nwalkers = samples.shape[0]
     nsteps = samples.shape[1]
     nparam = samples.shape[2]
     # Unpack Data
-    Obs_ij = f["Obs_ij"]
+    Obs_ij = f["data/Obs_ij"]
     n_times = len(Obs_ij)
     n_band = len(Obs_ij[0])
-    N_REGPARAM = samples.attrs["N_REGPARAM"]
+    N_REGPARAM = f.attrs["N_REGPARAM"]
 
     # Compute slice longitude
     #slice_longitude = np.array([-180. + (360. / n_slice) * (i + 0.5) for i in range(n_slice)])
 
-    NAME_YSAM = "samples"
     NAME_XSAM = "physical_samples"
 
     # If the xsamples are already in the hdf5 file
-    if NAME_XSAM in f.keys():
+    if NAME_XSAM in f["mcmc/"].keys():
         # load physical samples
-        xs = f["physical_samples"]
+        xs = f["mcmc/"+NAME_XSAM]
         print NAME_XSAM + " loaded from file!"
         if (xs.attrs["iburn"] == iburn) and (int(np.sum(xs[0,:])) != 0):
             # This is the exact same file or it has been loaded with 0's
@@ -260,7 +255,7 @@ if __name__ == "__main__":
 
     # If the xsamples are not in the hdf5 file,
     # or if they need to be re-run
-    if NAME_XSAM not in f.keys() or rerun:
+    if NAME_XSAM not in f["mcmc/"].keys() or rerun:
 
         # Determine shape of new dataset
         nxparam = len(transform_Y2X(samples[0,0,:], N_TYPE, n_band, n_slice, flatten=True))
@@ -270,8 +265,8 @@ if __name__ == "__main__":
         adic = {"iburn" : iburn}
 
         # Delete existing dataset if it already exists
-        if NAME_XSAM in f.keys():
-            del f[NAME_XSAM]
+        if NAME_XSAM in f["mcmc/"].keys():
+            del f["mcmc/"+NAME_XSAM]
 
         # Flatten chains
         print "Flattening chains beyond burn-in (slow, especially if low burn-in index)..."
@@ -295,7 +290,7 @@ if __name__ == "__main__":
                             )
 
         # Create new dataset in existing hdf5 file
-        xs = f.create_dataset(NAME_XSAM, data=xsam, compression='lzf')
+        xs = f.create_dataset("mcmc/"+NAME_XSAM, data=xsam, compression='lzf')
         # Add attributes to dataset
         for key, value in adic.iteritems(): xs.attrs[key] = value
 

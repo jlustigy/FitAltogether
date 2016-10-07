@@ -126,11 +126,11 @@ if __name__ == "__main__":
         sys.exit()
 
     # Extract info from HDF5 file
-    samples=f["samples"]
-    N_TYPE = samples.attrs["N_TYPE"]
-    p0 = f["p0"]
-    X_names = samples.attrs["X_names"]
-    Y_names = samples.attrs["Y_names"]
+    samples = f["mcmc/samples"]
+    N_TYPE = f.attrs["N_TYPE"]
+    p0 = f["mcmc/p0"]
+    X_names = f["mcmc"].attrs["X_names"]
+    Y_names = f["mcmc"].attrs["Y_names"]
     nwalkers = samples.shape[0]
     nsteps = samples.shape[1]
     nparam = samples.shape[2]

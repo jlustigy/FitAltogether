@@ -10,6 +10,7 @@ import pdb
 import healpy as hp
 import emcee
 import corner
+import h5py
 
 import geometry
 import prior
@@ -235,10 +236,26 @@ if __name__ == "__main__":
             print 'overall_amp', best_fit[-2]
             print 'lambda _angular', best_fit[-1]* ( 180. / np.pi )
 
+    # Create dictionaries of initial results to convert to hdf5
+    # datasets and attributes
+    init_dict_datasets = {
+        "best_fity" : best_fit,
+        "X_area_lk" : X_area_lk,
+        "X_albd_kj_T" : X_albd_kj_T,
+        "residuals" : residuals,
+        "best_fitx" : bestfit
+    }
+    init_dict_attrs = {
+        "best_lnprob" : lnprob_bestfit,
+        "best_BIC" : BIC
+    }
+
+    """
     # Save initialization run as npz
     print "Saving:", run_dir+"initial_minimize.npz"
     np.savez(run_dir+"initial_minimize.npz", data=data, best_fity=best_fit, \
         lnprob_bestfit=lnprob_bestfit, X_area_lk=X_area_lk, X_albd_kj_T=X_albd_kj_T)
+    """
 
     ############ run MCMC ############
 
@@ -283,38 +300,78 @@ if __name__ == "__main__":
 
     ############ Save HDF5 File ############
 
-    # Specify save file
+    # Specify hdf5 save file and group names
     hfile = run_dir + "samurai_out.hdf5"
+    grp_init_name = "initial_optimization"
+    grp_mcmc_name = "mcmc"
+    grp_data_name = "data"
+    compression='lzf'
 
     # print
     print "Saving:", hfile
 
-    # Add small files to dictionary
-    dictionary = {
-        "Y_names" : Y_names,
-        "X_names" : X_names,
+    # dictionary for global run metadata
+    hfile_attrs = {
         "N_TYPE" : N_TYPE,
         "N_SLICE" : n_slice,
         "N_REGPARAM" : N_REGPARAM
     }
 
-    # Create dict for additional datasets (larger arrays)
-    data_dict = {
+    # Create dictionaries for mcmc data and metadata
+    mcmc_dict_datasets = {
+        "samples" : original_samples,
+        "p0" : p0
+    }
+    mcmc_dict_attrs = {
+        "Y_names" : Y_names,
+        "X_names" : X_names,
+    }
+
+    # Create dictionaries for observation data and metadata
+    data_dict_datasets = {
     "Obs_ij" : Obs_ij,
     "Obsnoise_ij" : Obsnoise_ij,
     "Kernel_il" : Kernel_il,
-    "p0" : p0
+    }
+    data_dict_attrs = {
+        "datafile" : INFILE
     }
 
-    # Save emcee samples with dictionary as metadata
-    f = save2hdf5(hfile, original_samples, name="samples", dictionary=dictionary,
-              compression='lzf', close=False)
-    # Save data to hdf5 file
-    for key, value in data_dict.iteritems():
-        f.create_dataset(key, data=value, compression='lzf')
+    # Create hdf5 file
+    f = h5py.File(hfile, 'w')
+
+    # Add global metadata
+    for key, value in hfile_attrs.iteritems(): f.attrs[key] = value
+
+    # Create hdf5 groups (like a directory structure)
+    grp_init = f.create_group(grp_init_name)    # f["initial_optimization/"]
+    grp_data = f.create_group(grp_data_name)    # f["data/"]
+    grp_mcmc = f.create_group(grp_mcmc_name)    # f[mcmc/]
+
+    # Save initial run datasets
+    for key, value in init_dict_datasets.iteritems():
+        grp_init.create_dataset(key, data=value, compression=compression)
+    # Save initial run metadata
+    for key, value in init_dict_attrs.iteritems():
+        grp_init.attrs[key] = value
+
+    # Save data datasets
+    for key, value in data_dict_datasets.iteritems():
+        grp_data.create_dataset(key, data=value, compression=compression)
+    # Save data metadata
+    for key, value in data_dict_attrs.iteritems():
+        grp_data.attrs[key] = value
+
+    # Save mcmc run datasets
+    for key, value in mcmc_dict_datasets.iteritems():
+        grp_mcmc.create_dataset(key, data=value, compression=compression)
+    # Save mcmc run metadata
+    for key, value in mcmc_dict_attrs.iteritems():
+        grp_mcmc.attrs[key] = value
 
     # Close hdf5 file stream
     f.close()
+
     """# Old saving
     # Save chains and other info
     print "Saving:", run_dir+"mcmc_samples.npz"
