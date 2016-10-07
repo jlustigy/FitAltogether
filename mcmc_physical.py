@@ -11,6 +11,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from matplotlib import rc
+import h5py
 import pdb
 
 from colorpy import colormodels, ciexyz
@@ -223,52 +224,23 @@ if __name__ == "__main__":
 
     # Extract info from HDF5 file
     samples=f["samples"]
-    data = samples.attrs["data"]
+    assert iburn < samples.shape[1]
     N_TYPE = samples.attrs["N_TYPE"]
-    p0 = samples.attrs["p0"]
+    n_slice = samples.attrs["N_SLICE"]
+    p0 = f["p0"]
     X_names = samples.attrs["X_names"]
     Y_names = samples.attrs["Y_names"]
-    nwalkers = samples.attrs[0]
-    nsteps = samples.attrs[1]
-    nparam = samples.attrs[2]
-
-    """# old load
-    # Load MCMC samples from numpy archive
-    try:
-        temp = np.load(MCMC_DIR+"mcmc_samples.npz")
-    except IOError:
-        print "Run directory does not exist! Check -d argument."
-        sys.exit()
-
-    # Extract info from numpy archive
-    samples=temp["samples"]
-    data = temp["data"]
-    N_TYPE = temp["N_TYPE"]
-    p0 = temp["p0"]
-    X_names = temp["X_names"]
-    Y_names = temp["Y_names"]
-    n_slice = temp["N_SLICE"]
-
-    # MCMC dimensions
     nwalkers = samples.shape[0]
     nsteps = samples.shape[1]
     nparam = samples.shape[2]
-    """
-
     # Unpack Data
-    Obs_ij = data[0]
+    Obs_ij = f["Obs_ij"]
     n_times = len(Obs_ij)
     n_band = len(Obs_ij[0])
-    N_REGPARAM = data[3]
-
+    N_REGPARAM = samples.attrs["N_REGPARAM"]
 
     # Compute slice longitude
     #slice_longitude = np.array([-180. + (360. / n_slice) * (i + 0.5) for i in range(n_slice)])
-
-    """
-    temp = np.load(MCMC_DIR+"mcmc_physical_samples.npz")
-    xsam = temp["xsam"]
-    """
 
     NAME_YSAM = "samples"
     NAME_XSAM = "physical_samples"
@@ -276,10 +248,10 @@ if __name__ == "__main__":
     # If the xsamples are already in the hdf5 file
     if NAME_XSAM in f.keys():
         # load physical samples
-        xsam = f["physical_samples"]
+        xs = f["physical_samples"]
         print NAME_XSAM + " loaded from file!"
-        if xsam.attrs["iburn"] == iburn:
-            # This is the exact same file
+        if (xs.attrs["iburn"] == iburn) and (int(np.sum(xs[0,:])) != 0):
+            # This is the exact same file or it has been loaded with 0's
             rerun = False
         else:
             # Must re-run xsamples with new burnin, overwrite
@@ -289,49 +261,47 @@ if __name__ == "__main__":
     # If the xsamples are not in the hdf5 file,
     # or if they need to be re-run
     if NAME_XSAM not in f.keys() or rerun:
+
         # Determine shape of new dataset
-        new_shape = (nwalkers*(nsteps-iburn), nparam)
+        nxparam = len(transform_Y2X(samples[0,0,:], N_TYPE, n_band, n_slice, flatten=True))
+        new_shape = (nwalkers*(nsteps-iburn), nxparam)
+
         # Construct attrs dictionary
         adic = {"iburn" : iburn}
+
+        # Delete existing dataset if it already exists
+        if NAME_XSAM in f.keys():
+            del f[NAME_XSAM]
+
+        # Flatten chains
+        print "Flattening chains beyond burn-in (slow, especially if low burn-in index)..."
+        flat_samples = samples[:,iburn:,:].reshape((-1, nparam))
+
+        # Different approach if there are regularization params
+        if (N_REGPARAM > 0):
+            print "Filling xsample dataset..."
+            sys.stdout.flush()
+            # Loop over walkers
+            # Exclude regularization parameters from albedo, area samples
+            xsam = np.array([transform_Y2X(flat_samples[i,:-1*N_REGPARAM],
+                            N_TYPE, n_band, n_slice, flatten=True)
+                            for i in range(len(flat_samples))]
+                            )
+        else:
+            # Use all parameters
+            xsam = np.array([transform_Y2X(flat_samples[i], N_TYPE, n_band,
+                            n_slice, flatten=True)
+                            for i in range(len(flat_samples))]
+                            )
+
         # Create new dataset in existing hdf5 file
-        xs = f.create_dataset(NAME_XSAM, dtype=np.float64, compression='lzf',
-                         shape=new_shape)
+        xs = f.create_dataset(NAME_XSAM, data=xsam, compression='lzf')
         # Add attributes to dataset
         for key, value in adic.iteritems(): xs.attrs[key] = value
 
-        # Loop over all parameters?
-        for i in range(nwalker):
-            for j in range(nsteps):
-                
-        xsam = np.array([transform_Y2X(samples[i,:-1*N_REGPARAM], N_TYPE, n_band, n_slice, flatten=True) for i in range(len(samples))])
-        for i in range(nparam):
-            xs[:,i] = samples[:, iburn:, i].reshape((-1, 1))
-
-        # Create new dataset in open hdf5 file
-
-
-
-        """
-        # Flatten chains that go beyond burn-in (aka sampling the posterior)
-        print "Flattening chains..."
-        samples = samples[:,iburn:,:].reshape((-1, nparam))
-        # Transform all samples to physical units
-        print "Converting Y -> X..."
-        if (N_REGPARAM > 0):
-            # Exclude regularization parameters from albedo, area samples
-            xsam = np.array([transform_Y2X(samples[i,:-1*N_REGPARAM], N_TYPE, n_band, n_slice, flatten=True) for i in range(len(samples))])
-        else:
-            # Use all parameters
-            xsam = np.array([transform_Y2X(samples[i], N_TYPE, n_band, n_slice, flatten=True) for i in range(len(samples))])
-        #xsam = np.array([transform_Y2X(samples[i], N_TYPE, n_band, n_slice, flatten=True) for i in range(len(samples))])
-        #xsam = np.array([transform_Y2X(samples[i], n_band, n_slice) for i in range(len(samples))])
-        print "Saving mcmc_physical_samples.npz..."
-        np.savez(MCMC_DIR+"mcmc_physical_samples.npz", xsam=xsam)
-        """
-
     if "sample" in str(sys.argv):
         N_SAMP = 1000
-        rand_sam = xsam[np.random.randint(len(xsam), size=N_SAMP),:]
+        rand_sam = xs[np.random.randint(len(xs), size=N_SAMP),:]
         plot_sampling(rand_sam, directory=MCMC_DIR)
 
 
@@ -340,8 +310,8 @@ if __name__ == "__main__":
         print "Computing Median Parameters..."
 
         # Find median & standard deviation
-        xmed = np.median(xsam, axis=0)
-        xstd = np.std(xsam, axis=0)
+        xmed = np.median(xs, axis=0)
+        xstd = np.std(xs, axis=0)
 
         # Decompose into useful 2d arrays
         med_alb, med_area = decomposeX(xmed, n_band, n_slice, N_TYPE)
@@ -362,7 +332,7 @@ if __name__ == "__main__":
         print "Making Physical Corner Plot..."
 
         # Make corner plot
-        fig = corner.corner(xsam, plot_datapoints=True, plot_contours=False, plot_density=False,
+        fig = corner.corner(xs, plot_datapoints=True, plot_contours=False, plot_density=False,
             labels=X_names, show_titles=True)
         fig.savefig(MCMC_DIR+"xcorner.png")
 

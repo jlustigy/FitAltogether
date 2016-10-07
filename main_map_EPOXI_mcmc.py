@@ -289,19 +289,32 @@ if __name__ == "__main__":
     # print
     print "Saving:", hfile
 
-    # Add moderately small files to dictionary
+    # Add small files to dictionary
     dictionary = {
-        "data" : data,
         "Y_names" : Y_names,
         "X_names" : X_names,
         "N_TYPE" : N_TYPE,
         "N_SLICE" : n_slice,
-        "p0" : p0
+        "N_REGPARAM" : N_REGPARAM
+    }
+
+    # Create dict for additional datasets (larger arrays)
+    data_dict = {
+    "Obs_ij" : Obs_ij,
+    "Obsnoise_ij" : Obsnoise_ij,
+    "Kernel_il" : Kernel_il,
+    "p0" : p0
     }
 
     # Save emcee samples with dictionary as metadata
-    save2hdf5(hfile, original_samples, name="samples", dictionary=dictionary, compression='lzf')
+    f = save2hdf5(hfile, original_samples, name="samples", dictionary=dictionary,
+              compression='lzf', close=False)
+    # Save data to hdf5 file
+    for key, value in data_dict.iteritems():
+        f.create_dataset(key, data=value, compression='lzf')
 
+    # Close hdf5 file stream
+    f.close()
     """# Old saving
     # Save chains and other info
     print "Saving:", run_dir+"mcmc_samples.npz"

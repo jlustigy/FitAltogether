@@ -49,9 +49,9 @@ def plot_trace(samples, directory="", X_names=None, which=None):
 
     print "Plotting Trace..."
 
-    nwalkers = samples.attrs["nwalkers"]
-    nsteps = samples.attrs["nsteps"]
-    nparam = samples.attrs["nparam"]
+    nwalkers = samples.shape[0]
+    nsteps = samples.shape[1]
+    nparam = samples.shape[2]
 
     # Flatten chains for histogram
     print "Flattening chains for histogram (slow)..."
@@ -127,14 +127,13 @@ if __name__ == "__main__":
 
     # Extract info from HDF5 file
     samples=f["samples"]
-    data = samples.attrs["data"]
     N_TYPE = samples.attrs["N_TYPE"]
-    p0 = samples.attrs["p0"]
+    p0 = f["p0"]
     X_names = samples.attrs["X_names"]
     Y_names = samples.attrs["Y_names"]
-    nwalkers = samples.attrs[0]
-    nsteps = samples.attrs[1]
-    nparam = samples.attrs[2]
+    nwalkers = samples.shape[0]
+    nsteps = samples.shape[1]
+    nparam = samples.shape[2]
 
     """
     # Load MCMC samples from numpy archive
