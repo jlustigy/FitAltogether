@@ -342,9 +342,9 @@ if __name__ == "__main__":
 
     # Create dictionaries for observation data and metadata
     data_dict_datasets = {
-    "Obs_ij" : Obs_ij,
-    "Obsnoise_ij" : Obsnoise_ij,
-    "Kernel_il" : Kernel_il,
+        "Obs_ij" : Obs_ij,
+        "Obsnoise_ij" : Obsnoise_ij,
+        "Kernel_il" : Kernel_il,
     }
     data_dict_attrs = {
         "datafile" : INFILE
