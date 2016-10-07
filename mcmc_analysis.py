@@ -61,7 +61,8 @@ def plot_trace(samples, directory="", X_names=None, which=None):
     for i in range(nparam):
         if which is not None:
             i = which
-        print i
+        sys.stdout.write("\r{0}/{1}".format(i+1,nparam))
+        sys.stdout.flush()
         if X_names is None:
             pname = ""
         else:

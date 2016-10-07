@@ -29,6 +29,8 @@ EPOXI = True
 # Specify burn-in index for corner plot
 DEFAULT_BURN_INDEX = 0
 
+DEFAULT_WHICH = None
+
 #---------------------------------------------------
 def decomposeX(x,n_band,n_slice,n_type):
     alb = x[0:n_band * n_type].reshape((n_type,n_band))
@@ -170,15 +172,67 @@ def plot_reg1(samples):
     ax0.set_xlabel("Slice #")
     ax1.set_ylabel("Albedo")
 
+def nsig_intervals(x, intvls=[0.16, 0.5, 0.84]):
+    # Compute median and n-sigma intervals
+    q_l, q_50, q_h = np.percentile(x, list(100.0 * np.array(intvls)))
+    q_m, q_p = q_50-q_l, q_h-q_50
+    return q_l, q_50, q_h, q_m, q_p
+
+def plot_posteriors(samples, directory="", X_names=None, which=None, nbins=50):
+
+    print "Plotting Posteriors..."
+
+    nsteps = samples.shape[0]
+    nparam = samples.shape[1]
+
+    # Loop over all parameters making posterior histograms
+    for i in range(nparam):
+        if which is not None:
+            i = which
+        sys.stdout.write("\r{0}/{1}".format(i+1,nparam))
+        sys.stdout.flush()
+        if X_names is None:
+            pname = ""
+        else:
+            pname = X_names[i]
+        fig = plt.figure(figsize=(10,8))
+        gs = gridspec.GridSpec(1,1)
+        ax0 = plt.subplot(gs[0])
+        ax0.set_xlabel(pname)
+        ax0.set_ylabel("Relative Probability")
+        bins = np.linspace(np.min(samples[:,i]), np.max(samples[:,i]), nbins, endpoint=True)
+        h = ax0.hist(samples[:,i], bins, color="k", alpha=0.5)
+        ax0.set_yticks([])
+        plt.setp(ax0.get_xticklabels(), fontsize=18, rotation=45)
+        plt.setp(ax0.get_yticklabels(), fontsize=18, rotation=45)
+        q_l, q_50, q_h, q_m, q_p = nsig_intervals(samples[:,i], intvls=[0.16, 0.5, 0.84])
+        # Format title
+        title_fmt = ".3f"
+        fmt = "{{0:{0}}}".format(title_fmt).format
+        title = r"${{{0}}}_{{-{1}}}^{{+{2}}}$"
+        title = title.format(fmt(q_50), fmt(q_m), fmt(q_p))
+        ax0.set_title(title, y=1.01)
+        # Plot vertical lines
+        ax0.axvline(q_50, color="k", lw=2.0, ls="-")
+        ax0.axvline(q_l, color="k", lw=2.0, ls="--")
+        ax0.axvline(q_h, color="k", lw=2.0, ls="--")
+        # Save
+        fig.savefig(directory+"posterior"+str(i)+".png", bbox_inches="tight")
+        fig.clear()
+        plt.close()
+        if which is not None:
+            break
+    return
 
 
 #===================================================
 if __name__ == "__main__":
 
     ###### Read command line args ######
-    myopts, args = getopt.getopt(sys.argv[1:],"d:b:")
+    myopts, args = getopt.getopt(sys.argv[1:],"d:b:n:")
     run = ""
     iburn = DEFAULT_BURN_INDEX
+    which = DEFAULT_WHICH
     for o, a in myopts:
         # o == option
         # a == argument passed to the o
@@ -188,6 +242,9 @@ if __name__ == "__main__":
         elif o == "-b":
             # Get burn in index
             iburn = int(a)
+        elif o == "-n":
+            # Get which index
+            which = int(a)
         else:
             pass
     # Exit if no run directory provided
@@ -330,6 +387,19 @@ if __name__ == "__main__":
         fig = corner.corner(xs, plot_datapoints=True, plot_contours=False, plot_density=False,
             labels=X_names, show_titles=True)
         fig.savefig(MCMC_DIR+"xcorner.png")
+
+    if "posterior" in str(sys.argv):
+
+        # Create directory for trace plots
+        post_dir = MCMC_DIR+"physical_posteriors/"
+        try:
+            os.mkdir(post_dir)
+            print "Created directory:", post_dir
+        except OSError:
+            print post_dir, "already exists."
+
+        # Make posterior plots
+        plot_posteriors(xs, X_names=X_names, directory=post_dir, which=which)
 
 
     # Close HDF5 file stream
