@@ -111,7 +111,7 @@ def plot_area_alb(samples, n_all, directory="", savetxt=True, intvls=[0.16, 0.5,
     alb_p, area_p = decomposeX(quantiles[:,4], n_all["nband"], n_all["nslice"], n_all["ntype"])
 
     # Make plot
-    fig = plt.figure(figsize=(16,8))
+    fig = plt.figure(figsize=(18,8))
     gs = gridspec.GridSpec(1,2)
     ax0 = plt.subplot(gs[0])
     ax1 = plt.subplot(gs[1])
