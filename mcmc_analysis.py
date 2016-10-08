@@ -92,31 +92,13 @@ def plot_trace(samples, directory="", X_names=None, which=None):
     return
 
 #===================================================
-if __name__ == "__main__":
 
-    # Read command line args
-    myopts, args = getopt.getopt(sys.argv[1:],"d:b:n:")
-    run = ""
-    iburn = DEFAULT_BURN_INDEX
-    which = DEFAULT_WHICH
-    for o, a in myopts:
-        # o == option
-        # a == argument passed to the o
-        if o == '-d':
-            # Get MCMC directory timestamp name
-            run=a
-        elif o == "-b":
-            # Get burn in index
-            iburn = int(a)
-        elif o == "-n":
-            # Get which index
-            which = int(a)
-        else:
-            pass
+def run_mcmc_analysis(run, directory=DIR, iburn=DEFAULT_BURN_INDEX, which=DEFAULT_WHICH,
+                      run_trace=False, run_corner=False):
 
     print "Burn-in index:", iburn
 
-    MCMC_DIR = DIR + run + "/"
+    MCMC_DIR = directory + run + "/"
 
     # Load MCMC samples
     try:
@@ -136,28 +118,7 @@ if __name__ == "__main__":
     nsteps = samples.shape[1]
     nparam = samples.shape[2]
 
-    """
-    # Load MCMC samples from numpy archive
-    try:
-        temp = np.load(MCMC_DIR+"mcmc_samples.npz")
-    except IOError:
-        print "Run directory does not exist! Check -d argument."
-        sys.exit()
-
-    # Extract info from numpy archive
-    samples=temp["samples"]
-    data = temp["data"]
-    N_TYPE = temp["N_TYPE"]
-    p0 = temp["p0"]
-    X_names = temp["X_names"]
-    Y_names = temp["Y_names"]
-
-    nwalkers = samples.shape[0]
-    nsteps = samples.shape[1]
-    nparam = samples.shape[2]
-    """
-
-    if "trace" in str(sys.argv):
+    if run_trace:
 
         # Create directory for trace plots
         trace_dir = MCMC_DIR+"trace_plots/"
@@ -170,7 +131,7 @@ if __name__ == "__main__":
         # Make trace plots
         plot_trace(samples, X_names=Y_names, directory=trace_dir, which=which)
 
-    if "corner" in str(sys.argv):
+    if run_corner:
 
         # Flatten chains
         print "Flattening chains..."
@@ -183,3 +144,42 @@ if __name__ == "__main__":
 
     # Close HDF5 file stream
     f.close()
+
+    # END
+
+#===================================================
+
+if __name__ == "__main__":
+
+    # Read command line args
+    myopts, args = getopt.getopt(sys.argv[1:],"d:b:w:")
+    run = ""
+    iburn = DEFAULT_BURN_INDEX
+    which = DEFAULT_WHICH
+    for o, a in myopts:
+        # o == option
+        # a == argument passed to the o
+        if o == '-d':
+            # Get MCMC directory timestamp name
+            run=a
+        elif o == "-b":
+            # Get burn in index
+            iburn = int(a)
+        elif o == "-w":
+            # Get which index
+            which = int(a)
+        else:
+            pass
+
+    #
+    run_trace = False
+    if "trace" in str(sys.argv):
+        run_trace = True
+
+    #
+    run_corner = False
+    if "corner" in str(sys.argv):
+        run_corner = True
+
+    run_mcmc_analysis(run, directory=DIR, iburn=iburn, which=which,
+                      run_trace=run_trace, run_corner=run_corner)

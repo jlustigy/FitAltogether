@@ -300,13 +300,13 @@ def plot_posteriors(samples, directory="", X_names=None, which=None, nbins=50):
 
 #===================================================
 
-def run_physical_mcmc_analysis(run, run_sample=False, run_median=False, run_corner=False,
+def run_physical_mcmc_analysis(run, directory=DIR, run_sample=False, run_median=False, run_corner=False,
                            run_posterior=False, run_area_alb=False, iburn=DEFAULT_BURN_INDEX,
                            which=DEFAULT_WHICH, eyecolors=False, epoxi=DEFAULT_EPOXI):
 
     print "Burn-in index:", iburn
 
-    MCMC_DIR = DIR + run + "/"
+    MCMC_DIR = directory + run + "/"
 
     # Load MCMC samples
     try:
@@ -499,7 +499,7 @@ def run_physical_mcmc_analysis(run, run_sample=False, run_median=False, run_corn
 if __name__ == "__main__":
 
     ###### Read command line args ######
-    myopts, args = getopt.getopt(sys.argv[1:],"d:b:n:")
+    myopts, args = getopt.getopt(sys.argv[1:],"d:b:w:")
     run = ""
     iburn = DEFAULT_BURN_INDEX
     which = DEFAULT_WHICH
@@ -512,7 +512,7 @@ if __name__ == "__main__":
         elif o == "-b":
             # Get burn in index
             iburn = int(a)
-        elif o == "-n":
+        elif o == "-w":
             # Get which index
             which = int(a)
         else:
