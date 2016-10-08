@@ -92,6 +92,83 @@ def plot_median(med_alb, std_alb, med_area, std_area, directory=""):
 
     fig.savefig(directory+"xmed_std.pdf", bbox_inches="tight")
 
+def plot_area_alb(samples, directory="", savetxt=True, intvls=[0.16, 0.5, 0.84]):
+
+    print "Plotting Area & Albedo..."
+
+    nparam = samples.shape[1]
+
+    # Compute grid of quantiles
+    # q_l, q_50, q_h, q_m, q_p
+    quantiles = np.array([nsig_intervals(samples[:,i], intvls=intvls)
+        for i in range(nparam)])
+
+    # Construct 2d arrays from 1d array
+    alb_med, area_med = decomposeX(quantiles[:,1], n_band, n_slice, N_TYPE)
+    alb_m, area_m = decomposeX(quantiles[:,3], n_band, n_slice, N_TYPE)
+    alb_p, area_p = decomposeX(quantiles[:,4], n_band, n_slice, N_TYPE)
+
+    # Make plot
+    fig = plt.figure(figsize=(16,8))
+    gs = gridspec.GridSpec(1,2)
+    ax0 = plt.subplot(gs[0])
+    ax1 = plt.subplot(gs[1])
+    ax0.set_ylabel("Area Fraction")
+    ax0.set_xlabel("Slice #")
+    ax1.set_ylabel("Albedo")
+
+    xarea = np.arange(n_slice)
+    xalb = np.arange(n_band)
+
+    if n_slice == n_times:
+        ax0.set_xlabel("Time [hrs]")
+        ax0.set_xlim([np.min(xarea)-0.05, np.max(xarea)+0.05])
+    else:
+        ax0.set_xlabel("Slice Longitude [deg]")
+        xarea = np.array([-180. + (360. / n_slice) * (i + 0.5) for i in range(n_slice)])
+        ax0.set_xlim([-185, 185])
+        ax0.set_xticks([-180, -90, 0, 90, 180])
+
+    if EPOXI:
+        epoxi_bands = np.loadtxt("data/EPOXI_band")
+        wl = epoxi_bands[:,1]
+        xalb = wl
+        ax1.set_xlabel("Wavelength [nm]")
+        ax1.set_xlim([300,1000])
+    else:
+        ax1.set_xlabel("Band")
+        ax1.set_xlim([np.min(xalb)-0.05, np.max(xalb)+0.05])
+
+    if EYECOLORS:
+        epoxi_bands = np.loadtxt("data/EPOXI_band")
+        wl = epoxi_bands[:,1]
+        c = [convolve_with_eye(wl, med_alb[i,:]) for i in range(N_TYPE)]
+    else:
+        c = ["purple", "orange", "green", "lightblue"]
+
+    for i in range(N_TYPE):
+        ax0.plot(xarea, area_med[:,i], "o-", label="Surface %i" %(i+1), color=c[i])
+        ax0.fill_between(xarea, area_med[:,i] - area_m[:,i], area_med[:,i] + area_p[:,i], alpha=0.3, color=c[i])
+        ax1.plot(xalb, alb_med[i,:], "o-", color=c[i])
+        ax1.fill_between(xalb, alb_med[i,:] - alb_m[i,:], alb_med[i,:] + alb_p[i,:], alpha=0.3 ,color=c[i])
+
+    ax0.set_ylim([-0.02, 1.02])
+    ax1.set_ylim([-0.02, 1.02])
+
+    leg=ax0.legend(loc=0, fontsize=14)
+    leg.get_frame().set_alpha(0.0)
+
+    # Save the plot
+    fig.savefig(directory+"area-alb.pdf", bbox_inches="tight")
+    print "Saved:", "area-alb.pdf"
+
+    # Save median results
+    #np.savetxt(MCMC_DIR+"albedo_sigma.txt", np.vstack([alb_med, alb_m, alb_p]).T)
+    #np.savetxt(MCMC_DIR+"area_sigma.txt", np.vstack([area_med.T, area_m.T, area_p.T]).T)
+    #print "Saved:", "area-albedo sigma txt file"
+
+    return quantiles
+
 def plot_sampling(x, directory=""):
 
     ALPHA = 0.05
@@ -401,6 +478,32 @@ if __name__ == "__main__":
         # Make posterior plots
         plot_posteriors(xs, X_names=X_names, directory=post_dir, which=which)
 
+    if "area-alb" in str(sys.argv):
+        # Define quantile intervals (1-sigma)
+        intvls=[0.16, 0.5, 0.84]
+
+        # Plot and save
+        quantiles = plot_area_alb(xs, directory=MCMC_DIR, savetxt=True, intvls=intvls)
+
+        # Delete save, if already exists
+        if "quantiles" in f["mcmc/"].keys():
+            del f["mcmc/quantiles"]
+            print "Overwritting 'mcmc/quantiles' in hdf5 file"
+
+        # Create new dataset
+        qd = f["mcmc/"].create_dataset("quantiles", data=quantiles)
+
+        # Create metadata dict
+        dictionary = {
+            "q_low" : 0,
+            "q_50" : 1,
+            "q_high" : 2,
+            "q_minus" : 3,
+            "q_plus" : 4,
+            "intervals" : intvls
+        }
+        # Add metadata
+        for key, value in dictionary.iteritems(): qd.attrs[key] = value
 
     # Close HDF5 file stream
     f.close()
