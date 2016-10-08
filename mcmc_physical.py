@@ -24,7 +24,7 @@ mpl.rcParams['font.size'] = 25.0
 
 DIR = "mcmc_output/"
 EYECOLORS = False
-EPOXI = True
+DEFAULT_EPOXI = True
 
 # Specify burn-in index for corner plot
 DEFAULT_BURN_INDEX = 0
@@ -37,7 +37,8 @@ def decomposeX(x,n_band,n_slice,n_type):
     area = x[n_band * n_type:].reshape((n_slice , n_type))
     return alb, area
 
-def plot_median(med_alb, std_alb, med_area, std_area, directory=""):
+def plot_median(med_alb, std_alb, med_area, std_area, n_all, directory="",
+                epoxi=DEFAULT_EPOXI, eyecolors=False):
 
     print "Plotting Median, Std..."
 
@@ -49,19 +50,19 @@ def plot_median(med_alb, std_alb, med_area, std_area, directory=""):
     ax0.set_xlabel("Slice #")
     ax1.set_ylabel("Albedo")
 
-    xarea = np.arange(n_slice)
-    xalb = np.arange(n_band)
+    xarea = np.arange(n_all["nslice"])
+    xalb = np.arange(n_all["nband"])
 
-    if n_slice == n_times:
+    if n_all["nslice"] == n_all["ntimes"]:
         ax0.set_xlabel("Time [hrs]")
         ax0.set_xlim([np.min(xarea)-0.05, np.max(xarea)+0.05])
     else:
         ax0.set_xlabel("Slice Longitude [deg]")
-        xarea = np.array([-180. + (360. / n_slice) * (i + 0.5) for i in range(n_slice)])
+        xarea = np.array([-180. + (360. / n_all["nslice"]) * (i + 0.5) for i in range(n_all["nslice"])])
         ax0.set_xlim([-185, 185])
         ax0.set_xticks([-180, -90, 0, 90, 180])
 
-    if EPOXI:
+    if epoxi:
         epoxi_bands = np.loadtxt("data/EPOXI_band")
         wl = epoxi_bands[:,1]
         xalb = wl
@@ -71,14 +72,14 @@ def plot_median(med_alb, std_alb, med_area, std_area, directory=""):
         ax1.set_xlabel("Band")
         ax1.set_xlim([np.min(xalb)-0.05, np.max(xalb)+0.05])
 
-    if EYECOLORS:
+    if eyecolors:
         epoxi_bands = np.loadtxt("data/EPOXI_band")
         wl = epoxi_bands[:,1]
-        c = [convolve_with_eye(wl, med_alb[i,:]) for i in range(N_TYPE)]
+        c = [convolve_with_eye(wl, med_alb[i,:]) for i in range(n_all["ntype"])]
     else:
         c = ["purple", "orange", "green", "lightblue"]
 
-    for i in range(N_TYPE):
+    for i in range(n_all["ntype"]):
         ax0.plot(xarea, med_area[:,i], "o-", label="Surface %i" %(i+1), color=c[i])
         ax0.fill_between(xarea, med_area[:,i] - std_area[:,i], med_area[:,i] + std_area[:,i], alpha=0.3, color=c[i])
         ax1.plot(xalb, med_alb[i,:], "o-", color=c[i])
@@ -92,7 +93,8 @@ def plot_median(med_alb, std_alb, med_area, std_area, directory=""):
 
     fig.savefig(directory+"xmed_std.pdf", bbox_inches="tight")
 
-def plot_area_alb(samples, directory="", savetxt=True, intvls=[0.16, 0.5, 0.84]):
+def plot_area_alb(samples, n_all, directory="", savetxt=True, intvls=[0.16, 0.5, 0.84],
+                  epoxi=DEFAULT_EPOXI, eyecolors=False):
 
     print "Plotting Area & Albedo..."
 
@@ -104,9 +106,9 @@ def plot_area_alb(samples, directory="", savetxt=True, intvls=[0.16, 0.5, 0.84])
         for i in range(nparam)])
 
     # Construct 2d arrays from 1d array
-    alb_med, area_med = decomposeX(quantiles[:,1], n_band, n_slice, N_TYPE)
-    alb_m, area_m = decomposeX(quantiles[:,3], n_band, n_slice, N_TYPE)
-    alb_p, area_p = decomposeX(quantiles[:,4], n_band, n_slice, N_TYPE)
+    alb_med, area_med = decomposeX(quantiles[:,1], n_all["nband"], n_all["nslice"], n_all["ntype"])
+    alb_m, area_m = decomposeX(quantiles[:,3], n_all["nband"], n_all["nslice"], n_all["ntype"])
+    alb_p, area_p = decomposeX(quantiles[:,4], n_all["nband"], n_all["nslice"], n_all["ntype"])
 
     # Make plot
     fig = plt.figure(figsize=(16,8))
@@ -117,19 +119,19 @@ def plot_area_alb(samples, directory="", savetxt=True, intvls=[0.16, 0.5, 0.84])
     ax0.set_xlabel("Slice #")
     ax1.set_ylabel("Albedo")
 
-    xarea = np.arange(n_slice)
-    xalb = np.arange(n_band)
+    xarea = np.arange(n_all["nslice"])
+    xalb = np.arange(n_all["nband"])
 
-    if n_slice == n_times:
+    if n_all["nslice"] == n_all["ntimes"]:
         ax0.set_xlabel("Time [hrs]")
         ax0.set_xlim([np.min(xarea)-0.05, np.max(xarea)+0.05])
     else:
         ax0.set_xlabel("Slice Longitude [deg]")
-        xarea = np.array([-180. + (360. / n_slice) * (i + 0.5) for i in range(n_slice)])
+        xarea = np.array([-180. + (360. / n_all["nslice"]) * (i + 0.5) for i in range(n_all["nslice"])])
         ax0.set_xlim([-185, 185])
         ax0.set_xticks([-180, -90, 0, 90, 180])
 
-    if EPOXI:
+    if epoxi:
         epoxi_bands = np.loadtxt("data/EPOXI_band")
         wl = epoxi_bands[:,1]
         xalb = wl
@@ -139,14 +141,14 @@ def plot_area_alb(samples, directory="", savetxt=True, intvls=[0.16, 0.5, 0.84])
         ax1.set_xlabel("Band")
         ax1.set_xlim([np.min(xalb)-0.05, np.max(xalb)+0.05])
 
-    if EYECOLORS:
+    if eyecolors:
         epoxi_bands = np.loadtxt("data/EPOXI_band")
         wl = epoxi_bands[:,1]
-        c = [convolve_with_eye(wl, med_alb[i,:]) for i in range(N_TYPE)]
+        c = [convolve_with_eye(wl, med_alb[i,:]) for i in range(n_all["ntype"])]
     else:
         c = ["purple", "orange", "green", "lightblue"]
 
-    for i in range(N_TYPE):
+    for i in range(n_all["ntype"]):
         ax0.plot(xarea, area_med[:,i], "o-", label="Surface %i" %(i+1), color=c[i])
         ax0.fill_between(xarea, area_med[:,i] - area_m[:,i], area_med[:,i] + area_p[:,i], alpha=0.3, color=c[i])
         ax1.plot(xalb, alb_med[i,:], "o-", color=c[i])
@@ -162,14 +164,9 @@ def plot_area_alb(samples, directory="", savetxt=True, intvls=[0.16, 0.5, 0.84])
     fig.savefig(directory+"area-alb.pdf", bbox_inches="tight")
     print "Saved:", "area-alb.pdf"
 
-    # Save median results
-    #np.savetxt(MCMC_DIR+"albedo_sigma.txt", np.vstack([alb_med, alb_m, alb_p]).T)
-    #np.savetxt(MCMC_DIR+"area_sigma.txt", np.vstack([area_med.T, area_m.T, area_p.T]).T)
-    #print "Saved:", "area-albedo sigma txt file"
-
     return quantiles
 
-def plot_sampling(x, directory=""):
+def plot_sampling(x, directory="", epoxi=DEFAULT_EPOXI):
 
     ALPHA = 0.05
 
@@ -195,7 +192,7 @@ def plot_sampling(x, directory=""):
         ax0.set_xlim([-185, 185])
         ax0.set_xticks([-180, -90, 0, 90, 180])
 
-    if EPOXI:
+    if epoxi:
         epoxi_bands = np.loadtxt("data/EPOXI_band")
         wl = epoxi_bands[:,1]
         xalb = wl
@@ -301,44 +298,11 @@ def plot_posteriors(samples, directory="", X_names=None, which=None, nbins=50):
             break
     return
 
-
 #===================================================
-if __name__ == "__main__":
 
-    ###### Read command line args ######
-    myopts, args = getopt.getopt(sys.argv[1:],"d:b:n:")
-    run = ""
-    iburn = DEFAULT_BURN_INDEX
-    which = DEFAULT_WHICH
-    for o, a in myopts:
-        # o == option
-        # a == argument passed to the o
-        if o == '-d':
-            # Get MCMC directory timestamp name
-            run=a
-        elif o == "-b":
-            # Get burn in index
-            iburn = int(a)
-        elif o == "-n":
-            # Get which index
-            which = int(a)
-        else:
-            pass
-    # Exit if no run directory provided
-    if run == "":
-        print("Please specify run directory using -d: \n e.g. >python mcmc_physical.py -d 2016-07-13--11-59")
-        sys.exit()
-    # Check for flag to convolve albedos with eye for plot colors
-    if "eyecolors" in str(sys.argv):
-        EYECOLORS = True
-    else:
-        EYECOLORS = False
-    # Check for epoxi flag for wavelength labeling
-    if "epoxi" in str(sys.argv):
-        EPOXI = True
-    else:
-        EPOXI = False
-    ##################################
+def run_physical_mcmc_analysis(run, run_sample=False, run_median=False, run_corner=False,
+                           run_posterior=False, run_area_alb=False, iburn=DEFAULT_BURN_INDEX,
+                           which=DEFAULT_WHICH, eyecolors=False, epoxi=DEFAULT_EPOXI):
 
     print "Burn-in index:", iburn
 
@@ -354,7 +318,6 @@ if __name__ == "__main__":
 
     # Extract info from HDF5 file
     samples=f["mcmc/samples"]
-    assert iburn < samples.shape[1]
     N_TYPE = f.attrs["N_TYPE"]
     n_slice = f.attrs["N_SLICE"]
     p0 = f["mcmc/p0"]
@@ -368,6 +331,21 @@ if __name__ == "__main__":
     n_times = len(Obs_ij)
     n_band = len(Obs_ij[0])
     N_REGPARAM = f.attrs["N_REGPARAM"]
+
+    # Put all the n's in a dictionary for easy access
+    n_all = {
+        "ntype" : N_TYPE,
+        "nslice" : n_slice,
+        "nwalkers" : nwalkers,
+        "nsteps" : nsteps,
+        "nparam" : nparam,
+        "ntimes" : n_times,
+        "nband" : n_band,
+        "nregparam" : N_REGPARAM
+    }
+
+    # Throw assertion error if burn-in index exceeds number of steps
+    assert iburn < samples.shape[1]
 
     # Compute slice longitude
     #slice_longitude = np.array([-180. + (360. / n_slice) * (i + 0.5) for i in range(n_slice)])
@@ -428,13 +406,16 @@ if __name__ == "__main__":
         # Add attributes to dataset
         for key, value in adic.iteritems(): xs.attrs[key] = value
 
-    if "sample" in str(sys.argv):
+    if run_sample:
+        print "This functionality has been depreciated."
+        """
         N_SAMP = 1000
         rand_sam = xs[np.random.randint(len(xs), size=N_SAMP),:]
         plot_sampling(rand_sam, directory=MCMC_DIR)
+        """
 
 
-    if "median" in str(sys.argv):
+    if run_median:
 
         print "Computing Median Parameters..."
 
@@ -450,14 +431,16 @@ if __name__ == "__main__":
         print "Std:", xstd
 
         # Plot median
-        plot_median(med_alb, std_alb, med_area, std_area, directory=MCMC_DIR)
+        plot_median(med_alb, std_alb, med_area, std_area, n_all, directory=MCMC_DIR,
+                    epoxi=epoxi, eyecolors=eyecolors)
 
         # Save median results
         np.savetxt(MCMC_DIR+"albedo_median.txt", np.vstack([med_alb, std_alb]).T)
         np.savetxt(MCMC_DIR+"area_median.txt", np.vstack([med_area.T, std_area.T]).T)
         print "Saved:", "median_results.txt"
 
-    if "corner" in str(sys.argv):
+    if run_corner:
+
         print "Making Physical Corner Plot..."
 
         # Make corner plot
@@ -465,7 +448,7 @@ if __name__ == "__main__":
             labels=X_names, show_titles=True)
         fig.savefig(MCMC_DIR+"xcorner.png")
 
-    if "posterior" in str(sys.argv):
+    if run_posterior:
 
         # Create directory for trace plots
         post_dir = MCMC_DIR+"physical_posteriors/"
@@ -478,12 +461,14 @@ if __name__ == "__main__":
         # Make posterior plots
         plot_posteriors(xs, X_names=X_names, directory=post_dir, which=which)
 
-    if "area-alb" in str(sys.argv):
+    if run_area_alb:
+
         # Define quantile intervals (1-sigma)
         intvls=[0.16, 0.5, 0.84]
 
         # Plot and save
-        quantiles = plot_area_alb(xs, directory=MCMC_DIR, savetxt=True, intvls=intvls)
+        quantiles = plot_area_alb(xs, n_all, directory=MCMC_DIR, savetxt=True,
+                                  intvls=intvls, epoxi=epoxi, eyecolors=eyecolors)
 
         # Delete save, if already exists
         if "quantiles" in f["mcmc/"].keys():
@@ -508,4 +493,73 @@ if __name__ == "__main__":
     # Close HDF5 file stream
     f.close()
 
-    sys.exit()
+    # END
+
+#===================================================
+if __name__ == "__main__":
+
+    ###### Read command line args ######
+    myopts, args = getopt.getopt(sys.argv[1:],"d:b:n:")
+    run = ""
+    iburn = DEFAULT_BURN_INDEX
+    which = DEFAULT_WHICH
+    for o, a in myopts:
+        # o == option
+        # a == argument passed to the o
+        if o == '-d':
+            # Get MCMC directory timestamp name
+            run=a
+        elif o == "-b":
+            # Get burn in index
+            iburn = int(a)
+        elif o == "-n":
+            # Get which index
+            which = int(a)
+        else:
+            pass
+    # Exit if no run directory provided
+    if run == "":
+        print("Please specify run directory using -d: \n e.g. >python mcmc_physical.py -d 2016-07-13--11-59")
+        sys.exit()
+    # Check for flag to convolve albedos with eye for plot colors
+    if "eyecolors" in str(sys.argv):
+        eyecolors = True
+    else:
+        eyecolors = False
+    # Check for epoxi flag for wavelength labeling
+    if "epoxi" in str(sys.argv):
+        epoxi = True
+    else:
+        epoxi = False
+
+    #
+    run_sample = False
+    if "sample" in str(sys.argv):
+        run_sample = True
+
+    #
+    run_median=False
+    if "median" in str(sys.argv):
+        run_median=True
+
+    #
+    run_corner = False
+    if "corner" in str(sys.argv):
+        run_corner = True
+
+    #
+    run_posterior = False
+    if "posterior" in str(sys.argv):
+        run_posterior = True
+    #
+    run_area_alb = False
+    if "area-alb" in str(sys.argv):
+        run_area_alb = True
+
+    # Call analysis function
+    run_physical_mcmc_analysis(run, run_sample=run_sample, run_median=run_median,
+                               run_corner=run_corner, run_posterior=run_posterior,
+                               run_area_alb=run_area_alb, iburn=iburn,
+                               which=which, eyecolors=eyecolors, epoxi=epoxi)
+
+    ##################################
