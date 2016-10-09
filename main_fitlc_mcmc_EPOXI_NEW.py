@@ -12,7 +12,7 @@ import pdb
 import h5py
 
 from fitlc_params import NUM_MCMC, NUM_MCMC_BURNIN, SEED_AMP, SIGMA_Y, NOISELEVEL, \
-    REGULARIZATION, N_TYPE, deg2rad, N_SIDE, INFILE, calculate_walkers
+    REGULARIZATION, N_TYPE, deg2rad, N_SIDE, INFILE, calculate_walkers, HDF5_COMPRESSION
 
 import prior
 import reparameterize
@@ -134,7 +134,7 @@ def run_initial_optimization(lnlike, data, guess, method="Nelder-Mead", run_dir=
 
     # Calculate residuals
     residuals = Obs_ij - np.dot( X_area_lk, X_albd_kj )
-    print "residuals", residuals
+    #print "residuals", residuals
 
     # Create dictionaries of initial results to convert to hdf5
     # datasets and attributes
@@ -142,7 +142,6 @@ def run_initial_optimization(lnlike, data, guess, method="Nelder-Mead", run_dir=
         "best_fity" : best_fit,
         "X_area_lk" : X_area_lk,
         "X_albd_kj_T" : X_albd_kj_T,
-        "residuals" : residuals,
         "best_fitx" : bestfit
     }
     init_dict_attrs = {
@@ -158,34 +157,7 @@ def run_initial_optimization(lnlike, data, guess, method="Nelder-Mead", run_dir=
         X_albd_kj_T=X_albd_kj_T, residuals=residuals, best_fitx =bestfit)
     """
 
-    return (init_dict_datasets, init_dict_attrs)#best_fit
-
-#---------------------------------------------------
-def run_emcee(lnlike, data, guess, N=500, run_dir="", seed_amp=0.01, *args):
-
-    print "MCMC until burn-in..."
-
-    # Number of dimensions is number of free parameters
-    n_dim = len(guess)
-    # Number of walkers
-    n_walkers = 2*n_dim**2
-
-    # Initialize emcee EnsembleSampler object
-    sampler = emcee.EnsembleSampler(n_walkers, n_dim, lnprob, args=data, threads=NCPU)
-
-    # Set starting guesses as gaussian noise ontop of intial optimized solution
-    # note: consider using emcee.utils.sample_ball(p0, std) (std: axis-aligned standard deviation.)
-    #       to produce a ball of walkers around an initial parameter value.
-    p0 = seed_amp * np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + best_fit
-
-    # Run MCMC
-    sampler.run_mcmc( p0, N )
-
-    original_samples = sampler.chain
-
-    print "Saving:", run_dir+"mcmc_samples.npz"
-    np.savez(run_dir+"mcmc_samples.npz", data=data, samples=original_samples, Y_names=Y_names, X_names=X_names, N_TYPE=N_TYPE, p0=p0)
-
+    return (init_dict_datasets, init_dict_attrs)
 
 #===================================================
 if __name__ == "__main__":
@@ -203,9 +175,9 @@ if __name__ == "__main__":
     # Save THIS file and the param file for reproducibility!
     thisfile = os.path.basename(__file__)
     paramfile = "fitlc_params.py"
-    newfile = run_dir + thisfile
+    newfile = os.path.join(run_dir, thisfile)
     commandString1 = "cp " + thisfile + " " + newfile
-    commandString2 = "cp "+paramfile+" " + run_dir+paramfile
+    commandString2 = "cp "+paramfile+" " + os.path.join(run_dir,paramfile)
     os.system(commandString1)
     os.system(commandString2)
     print "Saved :", thisfile, " &", paramfile
@@ -268,8 +240,6 @@ if __name__ == "__main__":
     # Data tuple to pass to emcee
     data = (Obs_ij, Obsnoise_ij, Kernel_il, N_REGPARAM, False, False)
 
-    #run_emcee(lnprob, data, best_fit, run_dir=run_dir)
-
     # Number of dimensions is number of free parameters
     n_dim = len(Y0_array)
     # Number of walkers
@@ -314,11 +284,11 @@ if __name__ == "__main__":
     ############ Save HDF5 File ############
 
     # Specify hdf5 save file and group names
-    hfile = run_dir + "samurai_out.hdf5"
+    hfile = os.path.join(run_dir, "samurai_out.hdf5")
     grp_init_name = "initial_optimization"
     grp_mcmc_name = "mcmc"
     grp_data_name = "data"
-    compression='lzf'
+    compression = HDF5_COMPRESSION
 
     # print
     print "Saving:", hfile

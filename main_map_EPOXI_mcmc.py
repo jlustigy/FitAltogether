@@ -23,7 +23,7 @@ from map_utils import generate_tex_names, save2hdf5
 
 from map_EPOXI_params import N_TYPE, N_SLICE, MONTH, NOISELEVEL, \
     NUM_MCMC, NUM_MCMC_BURNIN, SEED_AMP, N_SIDE, OMEGA, REGULARIZATION, \
-    calculate_walkers
+    calculate_walkers, HDF5_COMPRESSION
 
 NCPU = multiprocessing.cpu_count()
 
@@ -161,16 +161,16 @@ if __name__ == "__main__":
 
     # Create directory for this run
     startstr = now.strftime("%Y-%m-%d--%H-%M")
-    run_dir = "mcmc_output/" + startstr + "/"
+    run_dir = os.path.join("mcmc_output", startstr)
     os.mkdir(run_dir)
     print "Created directory:", run_dir
 
     # Save THIS file and the param file for reproducibility!
     thisfile = os.path.basename(__file__)
     paramfile = "map_EPOXI_params.py"
-    newfile = run_dir + thisfile
+    newfile = os.path.join(run_dir, thisfile)
     commandString1 = "cp " + thisfile + " " + newfile
-    commandString2 = "cp "+paramfile+" " + run_dir+paramfile
+    commandString2 = "cp "+paramfile+" " + os.path.join(run_dir,paramfile)
     os.system(commandString1)
     os.system(commandString2)
     print "Saved :", thisfile, " &", paramfile
@@ -236,13 +236,15 @@ if __name__ == "__main__":
             print 'overall_amp', best_fit[-2]
             print 'lambda _angular', best_fit[-1]* ( 180. / np.pi )
 
+    # Flatten best-fitting physical parameters
+    bestfit = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
+
     # Create dictionaries of initial results to convert to hdf5
     # datasets and attributes
     init_dict_datasets = {
         "best_fity" : best_fit,
         "X_area_lk" : X_area_lk,
         "X_albd_kj_T" : X_albd_kj_T,
-        "residuals" : residuals,
         "best_fitx" : bestfit
     }
     init_dict_attrs = {
@@ -305,7 +307,7 @@ if __name__ == "__main__":
     grp_init_name = "initial_optimization"
     grp_mcmc_name = "mcmc"
     grp_data_name = "data"
-    compression='lzf'
+    compression = HDF5_COMPRESSION
 
     # print
     print "Saving:", hfile
