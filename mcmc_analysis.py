@@ -16,7 +16,7 @@ import h5py
 
 
 # Specify directory of run to analyze
-MCMC_DIR = "mcmc_output/2016-07-13--11-59/"
+MCMC_DIR = ""
 
 DIR = "mcmc_output/"
 
@@ -53,9 +53,10 @@ def plot_trace(samples, directory="", X_names=None, which=None):
     nsteps = samples.shape[1]
     nparam = samples.shape[2]
 
-    # Flatten chains for histogram
+    """# Flatten chains (for histogram)
     print "Flattening chains for histogram (slow)..."
     samples_flat = samples[:, :, :].reshape((-1, nparam))
+    """
 
     # Loop over all parameters making trace plots
     for i in range(nparam):
@@ -68,23 +69,25 @@ def plot_trace(samples, directory="", X_names=None, which=None):
         else:
             pname = X_names[i]
         fig = plt.figure(figsize=(13,5))
-        gs = gridspec.GridSpec(1,2, width_ratios=(1,.3))
+        gs = gridspec.GridSpec(1,1)
         ax0 = plt.subplot(gs[0])
-        ax0.plot(samples[:,:,i].T, lw=0.5)
+        ax0.plot(samples[:,:,i].T, lw=0.5, alpha=0.5)
         ax0.set_xlabel("Iteration")
         ax0.set_ylabel(pname+" Value")
+        """# Add histogram on right
         ax1 = plt.subplot(gs[1], sharey=ax0)
         bins = np.linspace(np.min(samples_flat[:,i]), np.max(samples_flat[:,i]), 25, endpoint=True)
         h = ax1.hist(samples_flat[:,i], bins, orientation='horizontal', color="k", alpha=0.5)
         ax1.set_xticks([])
         ax1.yaxis.tick_right()
         ax1.yaxis.set_label_position("right")
-        plt.setp(ax0.get_xticklabels(), fontsize=18, rotation=45)
-        plt.setp(ax0.get_yticklabels(), fontsize=18, rotation=45)
         plt.setp(ax1.get_xticklabels(), fontsize=18, rotation=45)
         plt.setp(ax1.get_yticklabels(), fontsize=18, rotation=45)
+        """
+        plt.setp(ax0.get_xticklabels(), fontsize=18, rotation=45)
+        plt.setp(ax0.get_yticklabels(), fontsize=18, rotation=45)
         fig.subplots_adjust(wspace=0)
-        fig.savefig(directory+"trace"+str(i)+".png", bbox_inches="tight")
+        fig.savefig(os.path.join(directory, "trace"+str(i)+".png"), bbox_inches="tight")
         fig.clear()
         plt.close()
         if which is not None:
@@ -98,12 +101,13 @@ def run_mcmc_analysis(run, directory=DIR, iburn=DEFAULT_BURN_INDEX, which=DEFAUL
 
     print "Burn-in index:", iburn
 
-    MCMC_DIR = directory + run + "/"
+    MCMC_DIR = os.path.join(directory, run)
 
     # Load MCMC samples
     try:
         # Open the file stream
-        f = h5py.File(MCMC_DIR+"samurai_out.hdf5", 'r')
+        hpath = os.path.join(MCMC_DIR, "samurai_out.hdf5")
+        f = h5py.File(hpath, 'r')
     except IOError:
         print "Run directory does not exist! Check -d argument."
         sys.exit()
@@ -121,7 +125,7 @@ def run_mcmc_analysis(run, directory=DIR, iburn=DEFAULT_BURN_INDEX, which=DEFAUL
     if run_trace:
 
         # Create directory for trace plots
-        trace_dir = MCMC_DIR+"trace_plots/"
+        trace_dir = os.path.join(MCMC_DIR, "trace_plots/")
         try:
             os.mkdir(trace_dir)
             print "Created directory:", trace_dir
@@ -140,7 +144,7 @@ def run_mcmc_analysis(run, directory=DIR, iburn=DEFAULT_BURN_INDEX, which=DEFAUL
         # Make corner plot
         print "Making Corner Plot..."
         fig = corner.corner(samples_flat, plot_datapoints=True, plot_contours=False, plot_density=False, labels=Y_names)
-        fig.savefig(MCMC_DIR+"ycorner.png")
+        fig.savefig(os.path.join(MCMC_DIR, "ycorner.png"))
 
     # Close HDF5 file stream
     f.close()

@@ -91,7 +91,7 @@ def plot_median(med_alb, std_alb, med_area, std_area, n_all, directory="",
     leg=ax0.legend(loc=0, fontsize=14)
     leg.get_frame().set_alpha(0.0)
 
-    fig.savefig(directory+"xmed_std.pdf", bbox_inches="tight")
+    fig.savefig(os.path.join(directory,"xmed_std.pdf"), bbox_inches="tight")
 
 def plot_area_alb(samples, n_all, directory="", savetxt=True, intvls=[0.16, 0.5, 0.84],
                   epoxi=DEFAULT_EPOXI, eyecolors=False):
@@ -161,7 +161,7 @@ def plot_area_alb(samples, n_all, directory="", savetxt=True, intvls=[0.16, 0.5,
     leg.get_frame().set_alpha(0.0)
 
     # Save the plot
-    fig.savefig(directory+"area-alb.pdf", bbox_inches="tight")
+    fig.savefig(os.path.join(directory, "area-alb.pdf"), bbox_inches="tight")
     print "Saved:", "area-alb.pdf"
 
     return quantiles
@@ -291,7 +291,7 @@ def plot_posteriors(samples, directory="", X_names=None, which=None, nbins=50):
         ax0.axvline(q_l, color="k", lw=2.0, ls="--")
         ax0.axvline(q_h, color="k", lw=2.0, ls="--")
         # Save
-        fig.savefig(directory+"posterior"+str(i)+".png", bbox_inches="tight")
+        fig.savefig(os.path.join(directory, "posterior"+str(i)+".png"), bbox_inches="tight")
         fig.clear()
         plt.close()
         if which is not None:
@@ -306,12 +306,13 @@ def run_physical_mcmc_analysis(run, directory=DIR, run_sample=False, run_median=
 
     print "Burn-in index:", iburn
 
-    MCMC_DIR = directory + run + "/"
+    MCMC_DIR = os.path.join(directory, run)
 
     # Load MCMC samples
     try:
         # Open the file stream
-        f = h5py.File(MCMC_DIR+"samurai_out.hdf5", 'r+')
+        hpath = os.path.join(MCMC_DIR, "samurai_out.hdf5")
+        f = h5py.File(hpath, 'r+')
     except IOError:
         print "Run directory does not exist! Check -d argument."
         sys.exit()
@@ -435,8 +436,8 @@ def run_physical_mcmc_analysis(run, directory=DIR, run_sample=False, run_median=
                     epoxi=epoxi, eyecolors=eyecolors)
 
         # Save median results
-        np.savetxt(MCMC_DIR+"albedo_median.txt", np.vstack([med_alb, std_alb]).T)
-        np.savetxt(MCMC_DIR+"area_median.txt", np.vstack([med_area.T, std_area.T]).T)
+        np.savetxt(os.path.join(MCMC_DIR, "albedo_median.txt"), np.vstack([med_alb, std_alb]).T)
+        np.savetxt(os.path.join(MCMC_DIR, "area_median.txt"), np.vstack([med_area.T, std_area.T]).T)
         print "Saved:", "median_results.txt"
 
     if run_corner:
@@ -446,12 +447,12 @@ def run_physical_mcmc_analysis(run, directory=DIR, run_sample=False, run_median=
         # Make corner plot
         fig = corner.corner(xs, plot_datapoints=True, plot_contours=False, plot_density=False,
             labels=X_names, show_titles=True)
-        fig.savefig(MCMC_DIR+"xcorner.png")
+        fig.savefig(os.path.join(MCMC_DIR, "xcorner.png"))
 
     if run_posterior:
 
         # Create directory for trace plots
-        post_dir = MCMC_DIR+"physical_posteriors/"
+        post_dir = os.path.join(MCMC_DIR, "physical_posteriors/")
         try:
             os.mkdir(post_dir)
             print "Created directory:", post_dir
