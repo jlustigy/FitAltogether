@@ -43,30 +43,32 @@ if REGULARIZATION is not None:
 else :
     N_REGPARAM = 0
 
-
 #---------------------------------------------------
 def lnprob(Y_array, *args):
     """
     Misfit-function to be minimized
     """
 
+    # Unpack args
     Obs_ij, Obsnoise_ij, Kernel_il, N_REGPARAM, flip, verbose  = args
     n_slice = len(Obs_ij)
     n_band = len(Obs_ij[0])
 
-    # parameter conversion
+    # Parameter conversion
     if (N_REGPARAM > 0):
         X_albd_kj, X_area_lk = reparameterize.transform_Y2X(Y_array[:-1*N_REGPARAM], N_TYPE, n_band, n_slice )
     else:
         X_albd_kj, X_area_lk = reparameterize.transform_Y2X(Y_array, N_TYPE, n_band, n_slice )
 
-    # making matrix...
+    # Model
     Model_ij = np.dot(Kernel_il, np.dot(X_area_lk, X_albd_kj))
+
+    # Chi-squared statistic
     Diff_ij = ( Obs_ij - Model_ij ) / Obsnoise_ij
     Chi2_i  = np.diag(np.dot( Diff_ij, Diff_ij.T ))
     chi2    = np.sum(Chi2_i)
 
-    # flat prior for albedo
+    # Flat prior for albedo
     Y_albd_kj = Y_array[0:N_TYPE*n_band].reshape([N_TYPE, n_band])
     ln_prior_albd = prior.get_ln_prior_albd( Y_albd_kj )
 
@@ -101,7 +103,7 @@ def lnprob(Y_array, *args):
     if flip :
         return -1. * answer
     else :
-         return answer
+         return answer, Model_ij
 
 #---------------------------------------------------
 def run_initial_optimization(lnlike, data, guess, method="Nelder-Mead", run_dir=""):
@@ -237,9 +239,6 @@ if __name__ == "__main__":
 
     ########## Run MCMC ##########
 
-    # Data tuple to pass to emcee
-    data = (Obs_ij, Obsnoise_ij, Kernel_il, N_REGPARAM, False, False)
-
     # Number of dimensions is number of free parameters
     n_dim = len(Y0_array)
     # Number of walkers
@@ -281,6 +280,11 @@ if __name__ == "__main__":
     # Get emcee chain samples
     original_samples = sampler.chain
 
+    # Get model evaluations
+    blobs = sampler.blobs
+    shape = (len(blobs), len(blobs[0]), len(blobs[0][0]), len(blobs[0][0][0]))
+    model_ij = np.reshape(blobs, shape)
+
     ############ Save HDF5 File ############
 
     # Specify hdf5 save file and group names
@@ -303,6 +307,7 @@ if __name__ == "__main__":
     # Create dictionaries for mcmc data and metadata
     mcmc_dict_datasets = {
         "samples" : original_samples,
+        "model_ij" : model_ij,
         "p0" : p0
     }
     mcmc_dict_attrs = {

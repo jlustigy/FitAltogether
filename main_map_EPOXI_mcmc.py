@@ -148,7 +148,7 @@ def lnprob(Y_array, *args):
     if flip :
         return -1. * answer
     else :
-         return answer
+         return answer, Model_ij
 
 
 
@@ -300,6 +300,11 @@ if __name__ == "__main__":
     # Extract chain from sampler
     original_samples = sampler.chain
 
+    # Get model evaluations
+    blobs = sampler.blobs
+    shape = (len(blobs), len(blobs[0]), len(blobs[0][0]), len(blobs[0][0][0]))
+    model_ij = np.reshape(blobs, shape)
+
     ############ Save HDF5 File ############
 
     # Specify hdf5 save file and group names
@@ -322,6 +327,7 @@ if __name__ == "__main__":
     # Create dictionaries for mcmc data and metadata
     mcmc_dict_datasets = {
         "samples" : original_samples,
+        "model_ij" : model_ij,
         "p0" : p0
     }
     mcmc_dict_attrs = {
