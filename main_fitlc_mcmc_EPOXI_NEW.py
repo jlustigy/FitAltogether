@@ -73,7 +73,7 @@ def lnprob(Y_array, *args):
     ln_prior_albd = prior.get_ln_prior_albd( Y_albd_kj )
 
     # flat prior for area fraction
-    Y_area_lk = Y_array[N_TYPE*n_band:].reshape([n_slice, N_TYPE-1])
+    Y_area_lk = Y_array[N_TYPE*n_band:N_TYPE*n_band+n_slice*(N_TYPE-1)].reshape([n_slice, N_TYPE-1])
     ln_prior_area = prior.get_ln_prior_area_new( Y_area_lk, X_area_lk[:,:-1] )
 
     # regularization
@@ -100,6 +100,11 @@ def lnprob(Y_array, *args):
         print 'chi2/d.o.f.', chi2 / (len(Y_array)*1.-1.), len(Y_array)
 
     answer = - chi2 + ln_prior_albd + ln_prior_area + regterm_area
+
+    # Check for nans
+    if np.isnan(answer):
+        answer = -np.inf
+
     if flip :
         return -1. * answer
     else :
@@ -114,6 +119,7 @@ def run_initial_optimization(lnlike, data, guess, method="Nelder-Mead", run_dir=
     Obs_ij = data[0]
     n_slice = len(Obs_ij)
     n_band = len(Obs_ij[0])
+    n_regparam = data[3]
 
     # Run optimization
     output = minimize(lnlike, guess, args=data, method=method)
@@ -128,7 +134,11 @@ def run_initial_optimization(lnlike, data, guess, method="Nelder-Mead", run_dir=
     print 'BIC: ', BIC
 
     # Transform back to physical params
-    X_albd_kj, X_area_lk =  reparameterize.transform_Y2X(output["x"], N_TYPE, n_band, n_slice )
+    if (n_regparam > 0):
+        X_albd_kj, X_area_lk =  reparameterize.transform_Y2X(output["x"][:-1*n_regparam], N_TYPE, n_band, n_slice )
+    else:
+        X_albd_kj, X_area_lk =  reparameterize.transform_Y2X(output["x"], N_TYPE, n_band, n_slice )
+    #X_albd_kj, X_area_lk =  reparameterize.transform_Y2X(output["x"], N_TYPE, n_band, n_slice )
     X_albd_kj_T = X_albd_kj.T
 
     # Flatten best-fitting physical parameters
@@ -213,6 +223,10 @@ if __name__ == "__main__":
     Y_names, X_names = generate_tex_names(N_TYPE, n_band, n_slice)
 
     Y0_array = reparameterize.transform_X2Y(X0_albd_kj, X0_area_lk)
+
+    if ( N_REGPARAM > 0 ) :
+        Y0_array = np.append(Y0_array, np.array([10.]*N_REGPARAM) )
+
     n_dim = len(Y0_array)
     print '# of parameters', n_dim
 

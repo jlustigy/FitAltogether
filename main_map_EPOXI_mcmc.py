@@ -120,15 +120,15 @@ def lnprob(Y_array, *args):
     # ---Tikhonov Regularization
     if REGULARIZATION is not None:
         if ( REGULARIZATION == 'Tikhonov' ):
-            regparam = Y_array[-1*N_REGPARAM]
+            regparam = Y_array[-1*n_regparam]
             regterm_area = prior.regularize_area_tikhonov( X_area_lk, regparam )
     # ---Gaussian Process
         elif ( REGULARIZATION == 'GP' ):
-            regparam = ( Y_array[-1*N_REGPARAM], Y_array[-1*N_REGPARAM+1], Y_array[-1*N_REGPARAM+2] )
+            regparam = ( Y_array[-1*n_regparam], Y_array[-1*n_regparam+1], Y_array[-1*n_regparam+2] )
             regterm_area = prior.regularize_area_GP( X_area_lk, regparam )
     # ---Gaussian Process without constraint
         elif ( REGULARIZATION == 'GP2' ):
-            regparam = ( Y_array[-1*N_REGPARAM], Y_array[-1*N_REGPARAM+1] )
+            regparam = ( Y_array[-1*n_regparam], Y_array[-1*n_regparam+1] )
             regterm_area = prior.regularize_area_GP2( X_area_lk, regparam )
     # ---Others
     else :
@@ -149,8 +149,6 @@ def lnprob(Y_array, *args):
         return -1. * answer
     else :
          return answer, Model_ij
-
-
 
 #===================================================
 if __name__ == "__main__":
@@ -215,6 +213,10 @@ if __name__ == "__main__":
     # more information about the best-fit parameters
     data = (Obs_ij, Obsnoise_ij, Kernel_il, N_REGPARAM, True, False)
     lnprob_bestfit = lnprob( output['x'], *data )
+
+    # compute BIC
+    BIC = 2.0 * lnprob_bestfit + len( output['x'] ) * np.log( len(Obs_ij.flatten()) )
+    print 'BIC: ', BIC
 
     # best-fit values for physical parameters
     if N_REGPARAM > 0:
@@ -308,7 +310,7 @@ if __name__ == "__main__":
     ############ Save HDF5 File ############
 
     # Specify hdf5 save file and group names
-    hfile = run_dir + "samurai_out.hdf5"
+    hfile = os.path.join(run_dir, "samurai_out.hdf5")
     grp_init_name = "initial_optimization"
     grp_mcmc_name = "mcmc"
     grp_data_name = "data"
@@ -320,7 +322,7 @@ if __name__ == "__main__":
     # dictionary for global run metadata
     hfile_attrs = {
         "N_TYPE" : N_TYPE,
-        "N_SLICE" : n_slice,
+        "N_SLICE" : N_SLICE,
         "N_REGPARAM" : N_REGPARAM
     }
 
@@ -337,9 +339,9 @@ if __name__ == "__main__":
 
     # Create dictionaries for observation data and metadata
     data_dict_datasets = {
-    "Obs_ij" : Obs_ij,
-    "Obsnoise_ij" : Obsnoise_ij,
-    "Kernel_il" : Kernel_il,
+        "Obs_ij" : Obs_ij,
+        "Obsnoise_ij" : Obsnoise_ij,
+        "Kernel_il" : Kernel_il,
     }
     data_dict_attrs = {
         "datafile" : INFILE
