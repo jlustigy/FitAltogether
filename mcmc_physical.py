@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from matplotlib import rc
 import h5py
+import matplotlib.cm as cmx
+import matplotlib.colors as colors
 import pdb
 
 from colorpy import colormodels, ciexyz
@@ -32,6 +34,40 @@ DEFAULT_BURN_INDEX = 0
 DEFAULT_WHICH = None
 
 #---------------------------------------------------
+
+def colorize(vector,cmap='plasma', vmin=None, vmax=None):
+    """Convert a vector to RGBA colors.
+    Parameters
+    ----------
+    vector : array
+        Array of values to be represented by relative colors
+    cmap : str (optional)
+        Matplotlib Colormap name
+    vmin : float (optional)
+        Minimum value for color normalization. Defaults to np.min(vector)
+    vmax : float (optional)
+        Maximum value for color normalization. Defaults to np.max(vector)
+
+    Returns
+    -------
+    vcolors : np.ndarray
+        Array of RGBA colors
+    scalarmap : matplotlib.cm.ScalarMappable
+        ScalerMap to convert values to colors
+    cNorm : matplotlib.colors.Normalize
+        Color normalization
+    """
+
+    if vmin is None: vmin = np.min(vector)
+    if vmax is None: vmax = np.max(vector)
+
+    cm = plt.get_cmap(cmap)
+    cNorm  = colors.Normalize(vmin=vmin, vmax=vmax)
+    scalarmap = cmx.ScalarMappable(norm=cNorm, cmap=cm)
+    vcolors = scalarmap.to_rgba(vector)
+
+    return vcolors,scalarmap,cNorm
+
 def decomposeX(x,n_band,n_slice,n_type):
     alb = x[0:n_band * n_type].reshape((n_type,n_band))
     area = x[n_band * n_type:].reshape((n_slice , n_type))
@@ -298,10 +334,79 @@ def plot_posteriors(samples, directory="", X_names=None, which=None, nbins=50):
             break
     return
 
+def plot_model_data(model_ij, Obs_ij, Obsnoise_ij, n_all, iburn=0, directory="",
+                    show_all = True):
+
+    print "Model-Data comparison..."
+
+    nt = Obs_ij.shape[0]
+    nb = Obs_ij.shape[1]
+
+    ylabel = "Apparent Albedo"
+    xlabel = "Time from start of observation [hrs]"
+
+    time = np.arange(nt)+1.0
+    colors = colorize(np.arange(nb), cmap="viridis")[0]
+    labels = [r"$\lambda_{%i}$" %i for i in range(nb)]
+
+    model = model_ij[iburn:,:,:,:].reshape(((-1, nt,nb)))
+
+    intvls=[0.16, 0.5, 0.84]
+    # Compute grid of quantiles
+    # q_l, q_50, q_h, q_m, q_p
+
+    quantiles = np.array([[nsig_intervals(model[:,i,j], intvls=intvls)
+            for i in range(nt)] for j in range(nb)])
+
+    medians = quantiles[:,:,1]
+    qminus = quantiles[:,:,3]
+    qplus = quantiles[:,:,4]
+
+    for i in range(nb):
+        # Make plot
+        fig = plt.figure(figsize=(18,8))
+        gs = gridspec.GridSpec(1,1)
+        ax0 = plt.subplot(gs[0])
+        ax0.set_ylabel(ylabel)
+        ax0.set_xlabel(xlabel)
+        ax0.plot(time, medians[i,:], alpha=1.0, color=colors[i], label=labels[i], lw=2.0)
+        ax0.fill_between(time, medians[i,:] - qminus[i,:], medians[i,:] + qplus[i,:],
+                    alpha=0.3, color=colors[i])
+        ax0.errorbar(time, Obs_ij[:,i], yerr=Obsnoise_ij[:,i], c=colors[i],
+                     fmt="o", ms=0, capsize=0, elinewidth=3)
+        leg=ax0.legend(loc=0, fontsize=16)
+        leg.get_frame().set_alpha(0.0)
+        # Save
+        fig.savefig(os.path.join(directory, "data_model"+str(i)+".png"), bbox_inches="tight")
+        fig.clear()
+        plt.close()
+
+    # Make plot
+    fig = plt.figure(figsize=(18,8))
+    gs = gridspec.GridSpec(1,1)
+    ax0 = plt.subplot(gs[0])
+    ax0.set_ylabel(ylabel)
+    ax0.set_xlabel(xlabel)
+    for i in range(nb):
+        ax0.plot(time, medians[i,:], alpha=1.0, color=colors[i], label=labels[i], lw=2.0)
+        ax0.fill_between(time, medians[i,:] - qminus[i,:], medians[i,:] + qplus[i,:],
+                    alpha=0.3, color=colors[i])
+        ax0.errorbar(time, Obs_ij[:,i], yerr=Obsnoise_ij[:,i], c=colors[i],
+                     fmt="o", ms=0, capsize=0, elinewidth=3)
+    leg=ax0.legend(loc=0, fontsize=16)
+    leg.get_frame().set_alpha(0.0)
+    # Save
+    fig.savefig(os.path.join(directory, "data_model_all"+str(i)+".png"), bbox_inches="tight")
+    fig.clear()
+    plt.close()
+
+    return
+
 #===================================================
 
 def run_physical_mcmc_analysis(run, directory=DIR, run_sample=False, run_median=False, run_corner=False,
-                           run_posterior=False, run_area_alb=False, iburn=DEFAULT_BURN_INDEX,
+                           run_posterior=False, run_area_alb=False, run_model_data=False,
+                           iburn=DEFAULT_BURN_INDEX,
                            which=DEFAULT_WHICH, eyecolors=False, epoxi=DEFAULT_EPOXI):
 
     print "Burn-in index:", iburn
@@ -318,7 +423,8 @@ def run_physical_mcmc_analysis(run, directory=DIR, run_sample=False, run_median=
         sys.exit()
 
     # Extract info from HDF5 file
-    samples=f["mcmc/samples"]
+    samples = f["mcmc/samples"]
+    model_ij = f["mcmc/model_ij"]
     N_TYPE = f.attrs["N_TYPE"]
     n_slice = f.attrs["N_SLICE"]
     p0 = f["mcmc/p0"]
@@ -329,6 +435,7 @@ def run_physical_mcmc_analysis(run, directory=DIR, run_sample=False, run_median=
     nparam = samples.shape[2]
     # Unpack Data
     Obs_ij = f["data/Obs_ij"]
+    Obsnoise_ij = f["data/Obsnoise_ij"]
     n_times = len(Obs_ij)
     n_band = len(Obs_ij[0])
     N_REGPARAM = f.attrs["N_REGPARAM"]
@@ -491,6 +598,19 @@ def run_physical_mcmc_analysis(run, directory=DIR, run_sample=False, run_median=
         # Add metadata
         for key, value in dictionary.iteritems(): qd.attrs[key] = value
 
+    if run_model_data:
+
+        # Create directory
+        plot_dir = os.path.join(MCMC_DIR, "model_data_compare/")
+        try:
+            os.mkdir(plot_dir)
+            print "Created directory:", plot_dir
+        except OSError:
+            print plot_dir, "already exists."
+
+        plot_model_data(model_ij, Obs_ij, Obsnoise_ij, n_all, iburn=iburn,
+                        directory=plot_dir)
+
     # Close HDF5 file stream
     f.close()
 
@@ -557,10 +677,15 @@ if __name__ == "__main__":
     if "area-alb" in str(sys.argv):
         run_area_alb = True
 
+    #
+    run_model_data = False
+    if "model-data" in str(sys.argv):
+        run_model_data = True
+
     # Call analysis function
     run_physical_mcmc_analysis(run, run_sample=run_sample, run_median=run_median,
                                run_corner=run_corner, run_posterior=run_posterior,
-                               run_area_alb=run_area_alb, iburn=iburn,
+                               run_area_alb=run_area_alb, run_model_data=run_model_data, iburn=iburn,
                                which=which, eyecolors=eyecolors, epoxi=epoxi)
 
     ##################################
