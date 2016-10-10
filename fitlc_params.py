@@ -31,5 +31,7 @@ INFILE = "data/raddata_2_norm"
 #INFILE = "mockdata/mock_simple_3types_1_data"
 # INFILE = 'mockdata/mock_simple_1_scattered0.01_data_with_noise'
 
+HDF5_COMPRESSION = 'lzf'
+
 def calculate_walkers(n_dim):
     return 10*n_dim

@@ -16,8 +16,8 @@ MONTH = 'June'
 
 NOISELEVEL = 0.01
 
-NUM_MCMC = 2000
-NUM_MCMC_BURNIN = 10000
+NUM_MCMC = 100
+NUM_MCMC_BURNIN = 0
 SEED_AMP = 0.1
 
 N_side_seed = 2
@@ -25,6 +25,8 @@ N_SIDE  = 2*2**N_side_seed
 
 Pspin = 24.0
 OMEGA = ( 2. * np.pi / Pspin )
+
+HDF5_COMPRESSION = 'lzf'
 
 def calculate_walkers(n_dim):
     return 10*n_dim#**2

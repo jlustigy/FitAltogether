@@ -23,7 +23,7 @@ from map_utils import generate_tex_names, save2hdf5
 
 from map_EPOXI_params import N_TYPE, N_SLICE, MONTH, NOISELEVEL, \
     NUM_MCMC, NUM_MCMC_BURNIN, SEED_AMP, N_SIDE, OMEGA, REGULARIZATION, \
-    calculate_walkers
+    calculate_walkers, HDF5_COMPRESSION
 
 NCPU = multiprocessing.cpu_count()
 
@@ -120,15 +120,15 @@ def lnprob(Y_array, *args):
     # ---Tikhonov Regularization
     if REGULARIZATION is not None:
         if ( REGULARIZATION == 'Tikhonov' ):
-            regparam = Y_array[-1*N_REGPARAM]
+            regparam = Y_array[-1*n_regparam]
             regterm_area = prior.regularize_area_tikhonov( X_area_lk, regparam )
     # ---Gaussian Process
         elif ( REGULARIZATION == 'GP' ):
-            regparam = ( Y_array[-1*N_REGPARAM], Y_array[-1*N_REGPARAM+1], Y_array[-1*N_REGPARAM+2] )
+            regparam = ( Y_array[-1*n_regparam], Y_array[-1*n_regparam+1], Y_array[-1*n_regparam+2] )
             regterm_area = prior.regularize_area_GP( X_area_lk, regparam )
     # ---Gaussian Process without constraint
         elif ( REGULARIZATION == 'GP2' ):
-            regparam = ( Y_array[-1*N_REGPARAM], Y_array[-1*N_REGPARAM+1] )
+            regparam = ( Y_array[-1*n_regparam], Y_array[-1*n_regparam+1] )
             regterm_area = prior.regularize_area_GP2( X_area_lk, regparam )
     # ---Others
     else :
@@ -148,9 +148,7 @@ def lnprob(Y_array, *args):
     if flip :
         return -1. * answer
     else :
-         return answer
-
-
+         return answer, Model_ij
 
 #===================================================
 if __name__ == "__main__":
@@ -161,16 +159,16 @@ if __name__ == "__main__":
 
     # Create directory for this run
     startstr = now.strftime("%Y-%m-%d--%H-%M")
-    run_dir = "mcmc_output/" + startstr + "/"
+    run_dir = os.path.join("mcmc_output", startstr)
     os.mkdir(run_dir)
     print "Created directory:", run_dir
 
     # Save THIS file and the param file for reproducibility!
     thisfile = os.path.basename(__file__)
     paramfile = "map_EPOXI_params.py"
-    newfile = run_dir + thisfile
+    newfile = os.path.join(run_dir, thisfile)
     commandString1 = "cp " + thisfile + " " + newfile
-    commandString2 = "cp "+paramfile+" " + run_dir+paramfile
+    commandString2 = "cp "+paramfile+" " + os.path.join(run_dir,paramfile)
     os.system(commandString1)
     os.system(commandString2)
     print "Saved :", thisfile, " &", paramfile
@@ -216,6 +214,10 @@ if __name__ == "__main__":
     data = (Obs_ij, Obsnoise_ij, Kernel_il, N_REGPARAM, True, False)
     lnprob_bestfit = lnprob( output['x'], *data )
 
+    # compute BIC
+    BIC = 2.0 * lnprob_bestfit + len( output['x'] ) * np.log( len(Obs_ij.flatten()) )
+    print 'BIC: ', BIC
+
     # best-fit values for physical parameters
     if N_REGPARAM > 0:
         X_albd_kj, X_area_lk =  transform_Y2X(output["x"][:-1*N_REGPARAM], N_TYPE, n_band, N_SLICE)
@@ -236,13 +238,15 @@ if __name__ == "__main__":
             print 'overall_amp', best_fit[-2]
             print 'lambda _angular', best_fit[-1]* ( 180. / np.pi )
 
+    # Flatten best-fitting physical parameters
+    bestfit = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
+
     # Create dictionaries of initial results to convert to hdf5
     # datasets and attributes
     init_dict_datasets = {
         "best_fity" : best_fit,
         "X_area_lk" : X_area_lk,
         "X_albd_kj_T" : X_albd_kj_T,
-        "residuals" : residuals,
         "best_fitx" : bestfit
     }
     init_dict_attrs = {
@@ -298,14 +302,19 @@ if __name__ == "__main__":
     # Extract chain from sampler
     original_samples = sampler.chain
 
+    # Get model evaluations
+    blobs = sampler.blobs
+    shape = (len(blobs), len(blobs[0]), len(blobs[0][0]), len(blobs[0][0][0]))
+    model_ij = np.reshape(blobs, shape)
+
     ############ Save HDF5 File ############
 
     # Specify hdf5 save file and group names
-    hfile = run_dir + "samurai_out.hdf5"
+    hfile = os.path.join(run_dir, "samurai_out.hdf5")
     grp_init_name = "initial_optimization"
     grp_mcmc_name = "mcmc"
     grp_data_name = "data"
-    compression='lzf'
+    compression = HDF5_COMPRESSION
 
     # print
     print "Saving:", hfile
@@ -313,13 +322,14 @@ if __name__ == "__main__":
     # dictionary for global run metadata
     hfile_attrs = {
         "N_TYPE" : N_TYPE,
-        "N_SLICE" : n_slice,
+        "N_SLICE" : N_SLICE,
         "N_REGPARAM" : N_REGPARAM
     }
 
     # Create dictionaries for mcmc data and metadata
     mcmc_dict_datasets = {
         "samples" : original_samples,
+        "model_ij" : model_ij,
         "p0" : p0
     }
     mcmc_dict_attrs = {
@@ -329,9 +339,9 @@ if __name__ == "__main__":
 
     # Create dictionaries for observation data and metadata
     data_dict_datasets = {
-    "Obs_ij" : Obs_ij,
-    "Obsnoise_ij" : Obsnoise_ij,
-    "Kernel_il" : Kernel_il,
+        "Obs_ij" : Obs_ij,
+        "Obsnoise_ij" : Obsnoise_ij,
+        "Kernel_il" : Kernel_il,
     }
     data_dict_attrs = {
         "datafile" : INFILE
