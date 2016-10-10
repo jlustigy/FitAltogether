@@ -4,7 +4,7 @@ import numpy as np
 # Parameters
 #--------------------------------------------------------------------
 
-NUM_MCMC = 100
+NUM_MCMC = 10000
 NUM_MCMC_BURNIN = 0
 SEED_AMP = 0.5
 
