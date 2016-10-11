@@ -8,10 +8,10 @@ NUM_MCMC = 10000
 NUM_MCMC_BURNIN = 0
 SEED_AMP = 0.5
 
-REGULARIZATION = None
+#REGULARIZATION = None
 #REGULARIZATION = 'GP'
 #REGULARIZATION = 'GP2'
-#REGULARIZATION = 'Tikhonov'
+REGULARIZATION = 'Tikhonov'
 
 SIGMA_Y  = 3.0
 NOISELEVEL = 0.01
@@ -26,10 +26,11 @@ deg2rad = np.pi/180.
 
 N_SIDE   = 32
 #INFILE = "data/raddata_12_norm"
-INFILE = "data/raddata_2_norm"
+##INFILE = "data/raddata_2_norm"
 #INFILE = "mockdata/mock_simple_1_data"
 #INFILE = "mockdata/mock_simple_3types_1_data"
 # INFILE = 'mockdata/mock_simple_1_scattered0.01_data_with_noise'
+INFILE = 'mockdata/simpleIGBP_quadrature_lc'
 
 HDF5_COMPRESSION = 'lzf'
 

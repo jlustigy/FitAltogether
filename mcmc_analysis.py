@@ -45,7 +45,7 @@ def estimate_burnin1(samples):
     # Now return the index of the last walker to cross its median
     return np.amax(first_median_crossing)
 
-def plot_trace(samples, directory="", X_names=None, which=None):
+def plot_trace(samples, directory="", names=None, which=None):
 
     print "Plotting Trace..."
 
@@ -64,10 +64,13 @@ def plot_trace(samples, directory="", X_names=None, which=None):
             i = which
         sys.stdout.write("\r{0}/{1}".format(i+1,nparam))
         sys.stdout.flush()
-        if X_names is None:
+        if names is None:
             pname = ""
         else:
-            pname = X_names[i]
+            if i > len(names) - 1:
+                pname = r"Reg$_{%s}$" %(str(i-(len(names)-1)))
+            else:
+                pname = names[i]
         fig = plt.figure(figsize=(13,5))
         gs = gridspec.GridSpec(1,1)
         ax0 = plt.subplot(gs[0])
@@ -133,7 +136,7 @@ def run_mcmc_analysis(run, directory=DIR, iburn=DEFAULT_BURN_INDEX, which=DEFAUL
             print trace_dir, "already exists."
 
         # Make trace plots
-        plot_trace(samples, X_names=Y_names, directory=trace_dir, which=which)
+        plot_trace(samples, names=Y_names, directory=trace_dir, which=which)
 
     if run_corner:
 

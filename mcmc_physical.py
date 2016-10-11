@@ -552,7 +552,7 @@ def run_physical_mcmc_analysis(run, directory=DIR, run_sample=False, run_median=
         print "Making Physical Corner Plot..."
 
         # Make corner plot
-        fig = corner.corner(xs, plot_datapoints=True, plot_contours=False, plot_density=False,
+        fig = corner.corner(xs.value, plot_datapoints=False, plot_contours=True, plot_density=False,
             labels=X_names, show_titles=True)
         fig.savefig(os.path.join(MCMC_DIR, "xcorner.png"))
 
