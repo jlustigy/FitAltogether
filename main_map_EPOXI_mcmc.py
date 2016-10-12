@@ -69,6 +69,14 @@ elif ( MONTH == 'test' ):
     INFILE = "mockdata/mock_simple_3types_JuneKernel_scattered0.01_data_with_noise"
     Time_i = np.arange(25)*1.
 
+elif ( MONTH == 'simpleIGBP' ):
+    LON_S = 90.0
+    LAT_S = 0.0
+    LON_O = 0.0
+    LAT_O = 0.0
+    INFILE = 'mockdata/simpleIGBP_quadrature_lc'
+    Time_i = np.arange(7)/7.*24.
+
 else :
     print 'ERROR: Invalid MONTH'
     sys.exit()

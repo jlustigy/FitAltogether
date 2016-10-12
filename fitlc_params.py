@@ -9,9 +9,9 @@ NUM_MCMC_BURNIN = 0
 SEED_AMP = 0.5
 
 #REGULARIZATION = None
-#REGULARIZATION = 'GP'
+REGULARIZATION = 'GP'
 #REGULARIZATION = 'GP2'
-REGULARIZATION = 'Tikhonov'
+#REGULARIZATION = 'Tikhonov'
 
 SIGMA_Y  = 3.0
 NOISELEVEL = 0.01
@@ -24,7 +24,7 @@ N_TYPE  = 3
 
 deg2rad = np.pi/180.
 
-N_SIDE   = 32
+N_SIDE   = 128
 #INFILE = "data/raddata_12_norm"
 ##INFILE = "data/raddata_2_norm"
 #INFILE = "mockdata/mock_simple_1_data"

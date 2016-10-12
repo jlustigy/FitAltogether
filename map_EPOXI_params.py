@@ -10,15 +10,15 @@ REGULARIZATION = None
 #REGULARIZATION = 'Tikhonov'
 
 N_TYPE  = 3
-N_SLICE = 13
+N_SLICE = 7
 
 MONTH = 'June'
 
 NOISELEVEL = 0.01
 
-NUM_MCMC = 100
+NUM_MCMC = 10000
 NUM_MCMC_BURNIN = 0
-SEED_AMP = 0.1
+SEED_AMP = 0.5
 
 N_side_seed = 2
 N_SIDE  = 2*2**N_side_seed

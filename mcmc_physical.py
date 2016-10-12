@@ -151,7 +151,6 @@ def plot_area_alb(samples, n_all, directory="", savetxt=True, intvls=[0.16, 0.5,
     gs = gridspec.GridSpec(1,2)
     ax0 = plt.subplot(gs[0])
     ax1 = plt.subplot(gs[1])
-    ax0.set_ylabel("Area Fraction")
     ax0.set_xlabel("Slice #")
     ax1.set_ylabel("Albedo")
 
@@ -160,9 +159,11 @@ def plot_area_alb(samples, n_all, directory="", savetxt=True, intvls=[0.16, 0.5,
 
     if n_all["nslice"] == n_all["ntimes"]:
         ax0.set_xlabel("Time [hrs]")
+        ax0.set_ylabel("Contribution Factor")
         ax0.set_xlim([np.min(xarea)-0.05, np.max(xarea)+0.05])
     else:
         ax0.set_xlabel("Slice Longitude [deg]")
+        ax0.set_ylabel("Area Fraction")
         xarea = np.array([-180. + (360. / n_all["nslice"]) * (i + 0.5) for i in range(n_all["nslice"])])
         ax0.set_xlim([-185, 185])
         ax0.set_xticks([-180, -90, 0, 90, 180])
