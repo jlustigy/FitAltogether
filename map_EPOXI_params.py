@@ -4,15 +4,15 @@ import numpy as np
 # Parameters
 #--------------------------------------------------------------------
 
-REGULARIZATION = None
-#REGULARIZATION = 'GP'
+#REGULARIZATION = None
+REGULARIZATION = 'GP'
 #REGULARIZATION = 'GP2'
 #REGULARIZATION = 'Tikhonov'
 
 N_TYPE  = 3
-N_SLICE = 7
+N_SLICE = 9
 
-MONTH = 'June'
+MONTH = 'simpleIGBP'
 
 NOISELEVEL = 0.01
 
@@ -20,7 +20,7 @@ NUM_MCMC = 10000
 NUM_MCMC_BURNIN = 0
 SEED_AMP = 0.5
 
-N_side_seed = 2
+N_side_seed = 4
 N_SIDE  = 2*2**N_side_seed
 
 Pspin = 24.0
