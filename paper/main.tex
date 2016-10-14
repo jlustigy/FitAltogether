@@ -306,7 +306,35 @@ Suppose there are $K$ number of vertices in that space, $\vec x_1,\,\vec x_2,\,.
 Mathematically, any points (say, $\vec y_1$, $\vec y_2$, ..., $\vec y_I$) that are {\it enclosed} in the hyperplane defined by these vertices may be represented by $\vec y_i=\sum _k^K p_{ik} \vec x_k $ where $\sum _k^K p_{ik} = 1$ for any $i$. 
 %In the matrix form, $Y_{ij} = P_{ik} X_{kj}$. 
 This is essentially same as the situation described by equation (\ref{eq:d_f_ast_s}). 
-In other words, any set of vertices in $J$-dimensional space that can enclose the observed data, $\vec d_i$, if any, can be the solutions for equation (\ref{eq:d_f_ast_s}), as long as all of the element in $x_{kj}$ satisfy $0<x_{kj}<1$. 
+
+In other words, any set of vertices in $J$-dimensional space that can enclose all of the observed data, $\vec d_i$ can be the solutions for equation (\ref{eq:d_f_ast_s}), as long as all of the element in $x_{kj}$ satisfy $0<x_{kj}<1$. 
+The condition $0<x_{kj}<1$ generally constrains the outer boundary of the possible locations for the vertices. 
+Therefore, the ``answer'' vertices allowed by the observations are somewhere outside the polygon that tightly encloses the observed data and inside the outer boundary defined by the condition $0<x_{kj}<1$ (see \S\ref{ss:shrinkwrap} below). 
+
+Note that in an exceptional case where the apparent covering fractions of all of the surface type come close to unity to different epochs, the allowed region for the vertices would be narrow, i.e., better estimation can be expected. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Prior: Gaussian Processes}
+\label{ss:gp}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\memoYF{This is just a quick draft and will need to be updated significantly.}
+
+As seen above, the solution is highly degenerate, and in general we cannot reduce to a unique solution. 
+Therefore, we may want to give a prior in estimating the area fractions. 
+What kind of assumptions can we make?
+
+In general, the large time/longitude variations in apparent area fractions corresponds to spectrally similar surface types, because such solution correspond to the proximity of the inner boundary in the $J$-dimensional space discussed above. 
+On the contrary, the spectrally separated surface types correspond to the small time/longitude variations in the apparent area fractions. 
+In the real world, we might expect that the latter is more likely, i.e., covering area fraction of any surface type would not change significantly along the longitude (or in time). 
+This would be a reasonable assumption for the estimation of $\{s, \fast \}$, since the illuminated and visible area is usually broad and tend to change the averaged area fraction of each surface type only gently. 
+Although there is no physical proof for this assumption...
+
+The assumption of the smoothness and the small variation of covering area fraction may be imposed using the concept of Gaussian Process \citep{Rasmussen2005}. 
+
+Essentially, the probability of the 
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -333,6 +361,7 @@ g_{lk} = \displaystyle \ln \left[ \frac{ f_{lk} }{1 - \sum _{m=0}^{k} f_{lm} } \
 %%%
 Note that there is a 1-to-1 correspondence between $t$ and $s$ or $g$ and $f$ where $s$ and $f$ always satisfy our constraints. 
 
+\newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Test with idealized mock data}
@@ -409,13 +438,14 @@ The corresponding principal components are shown in Figure \ref{fig:PCs}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{figure}[!bpth]
+\begin{figure*}[!bpth]
     \begin{center}
-\includegraphics[width=\hsize]{PCA_projected.pdf}
+%\includegraphics[width=\hsize]{PCA_projected.pdf}
+\includegraphics[width=\hsize]{mockdata_quadrature_PCplane.pdf}
     \end{center}
     \caption{Colors of 3 surface types and the light curves projected to the plane of 1st and 2nd principal components. }
 \label{fig:shrinkwrap}
-\end{figure}
+\end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
