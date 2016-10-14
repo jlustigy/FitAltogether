@@ -10,7 +10,7 @@ REGULARIZATION = 'GP'
 #REGULARIZATION = 'Tikhonov'
 
 N_TYPE  = 3
-N_SLICE = 9
+N_SLICE = 13
 
 MONTH = 'simpleIGBP'
 
@@ -20,7 +20,7 @@ NUM_MCMC = 10000
 NUM_MCMC_BURNIN = 0
 SEED_AMP = 0.5
 
-N_side_seed = 4
+N_side_seed = 5
 N_SIDE  = 2*2**N_side_seed
 
 Pspin = 24.0
