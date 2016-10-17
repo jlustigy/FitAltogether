@@ -387,13 +387,13 @@ where $\Sigma $ is the kernel representing the property of the gaussian processe
 In this paper, we assume squared exponential covariance function, i.e., 
 %%%
 \begin{equation}
-\tilde \Sigma _{ii'} = \exp \left( - \frac{|t_i- t_i'|^2}{2 (\Delta t_0) ^2} \right)
+\tilde \Sigma _{ii'} = \lambda \exp \left( - \frac{|t_i- t_i'|^2}{2 (\Delta t_0) ^2} \right)
 \end{equation}
 %%%
 where $t_i$ is the time of $i$-th observation and $(\Delta t_0)$ is characteristic time scale over which $\fast $ is supposedly correlated, or 
 %%%
 \begin{equation}
-\Sigma _{ll'} = \exp \left( - \frac{|\phi_l- \phi_{l'}|^2}{2 \phi_0^2} \right)
+\Sigma _{ll'} = \lambda \exp \left( - \frac{|\phi_l- \phi_{l'}|^2}{2 \phi_0^2} \right)
 \end{equation}
 %%%
 where $\phi_l$ is the longitude of $l$-th slice, and $\phi_0$ is the characteristic longitudes over which $f$ is correlated.  
@@ -458,14 +458,16 @@ The mock lightcurves created through the above-mentioned procedure is presented 
 \label{ss:shrinkwrap}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 Now, we analyze the mock data created in the preceding section (Figure \ref{fig:mockdata}). 
 In this section, the result of PCA and shrink-wrapping are presented and discussed. 
 
 PCA on the mock data indicated one dominant component (contribution: $\sim $98\%) and one minor component (contribution: $\sim $2\%). The residual is virtually zero, leaving 2 components in total, consistent with the assumption of 3 surface types. 
 The corresponding principal components are shown in Figure \ref{fig:PCs}. 
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{figure}[!bpth]
+\begin{figure}[h]
     \begin{center}
 \includegraphics[width=\hsize]{PCA_V_jn.pdf}
     \end{center}
@@ -476,17 +478,15 @@ The corresponding principal components are shown in Figure \ref{fig:PCs}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{figure*}[!bpth]
+\begin{figure*}[b]
     \begin{center}
 %\includegraphics[width=\hsize]{PCA_projected.pdf}
-\includegraphics[width=\hsize]{mockdata_quadrature_PCplane_reduced.pdf}
+\includegraphics[width=\hsize]{mockdata_quadrature_PCplane.pdf}
     \end{center}
     \caption{Colors of 3 surface types and the light curves projected to the plane of 1st and 2nd principal components. }
 \label{fig:shrinkwrap}
 \end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\clearpage
 
 Then, we performed simplex shrink-wrapping analysis in the plane defined by these two principal components, based on the algorithm described in \citet{Fuhrmann1999}. 
 The result are presented in Figure \ref{fig:shrinkwrap}. 
@@ -496,19 +496,97 @@ For reference, the locations of the assumed three surface colors projected onto 
 As can be seen, the light curves the minimum-volume enclosure does not match the colors of physical surfaces, except for ocean. 
 This is a natural consequence from the fact that the soil and vegetation are minor components and never dominate the surface in the illuminated and visible area, while the apparent covering fraction of ocean comes close to unity. 
 
+
+
+\clearpage
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}[!htbp]
     \begin{center}
-\includegraphics[width=\hsize]{xmed_std_time.pdf}
-\includegraphics[width=\hsize]{xmed_std_longitude.pdf}
+\includegraphics[width=\hsize]{xmed_std_regtime_s1e-2.pdf}
     \end{center}
-    \caption{Left: result of estimation for $\{ \fast,\,s\}$. Right: result of estimation for $\{ f,\,s\}$}
+    \caption{Result of estimation for $\{ \fast,\,s\}$ with $\lambda = 0.01$}
 \label{fig:shrinkwrap}
 \end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[!htbp]
+    \begin{center}
+\includegraphics[width=\hsize]{xmed_std_regtime_s1e-4.pdf}
+    \end{center}
+    \caption{Result of estimation for $\{ \fast,\,s\}$ with $\lambda = 0.0001$}
+\label{fig:shrinkwrap}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[!htbp]
+    \begin{center}
+\includegraphics[width=\hsize]{xmed_std_reglong_s1e-2.pdf}
+    \end{center}
+    \caption{Result of estimation for $\{ f,\,s\}$ with $\lambda = 0.01$}
+\label{fig:shrinkwrap}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[!htbp]
+    \begin{center}
+\includegraphics[width=\hsize]{xmed_std_reglong_s1e-4.pdf}
+    \end{center}
+    \caption{Result of estimation for $\{ f,\,s\}$ with $\lambda = 0.0001$}
+\label{fig:shrinkwrap}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{figure*}[!htbp]
+%    \begin{center}
+%\includegraphics[width=\hsize]{xmed_std_time.pdf}
+%\includegraphics[width=\hsize]{xmed_std_longitude.pdf}
+%    \end{center}
+%    \caption{Left: result of estimation for $\{ \fast,\,s\}$. Right: result of estimation for $\{ f,\,s\}$}
+%\label{fig:shrinkwrap}
+%\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 \clearpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discussion}
+\label{s:discussion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Uncertainty in Radius}
+\label{ss:radius}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Summary}
+\label{s:summary}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\clearpage
+
+\acknowledgments
+
+\bibliography{ref}
+
+\newpage
+
+\appendix
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Application to 4 EPOXI observations of the Earth}
@@ -521,7 +599,7 @@ This is a natural consequence from the fact that the soil and vegetation are min
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{figure*}[!tb]
+\begin{figure*}[b!]
     \begin{center}
 \includegraphics[width=\hsize]{EPOXI_vislightcurve_4obs.pdf}
     \end{center}
@@ -566,44 +644,6 @@ initial sub-observer longitude & $210.1^{\circ }$ & $210.5^{\circ }$ & $210.1^{\
 \label{tab:EPOXI}
 \end{table*}%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Retrieval using equation (\ref{eq:}) }
-\label{ss:retrieval}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-First, each series of data is analyzed separately. 
-Without regularization and with regularization
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Discussion}
-\label{s:discussion}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Uncertainty in Radius}
-\label{ss:radius}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Sensitivity to Initial Condition}
-\label{ss:initialcondition}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Summary}
-\label{s:summary}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-
-\acknowledgments
-
-\bibliography{ref}
-
 
 
 \end{document}
