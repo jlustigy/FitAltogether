@@ -81,7 +81,7 @@ Yuka Fujii\altaffilmark{1,2}
 %
 Jacob Lustig-Yaeger\altaffilmark{3} 
 %
-Nicolas Cowan ?\altaffilmark{4} 
+Nicolas Cowan\altaffilmark{4} 
 %
 }
 
@@ -281,8 +281,6 @@ Therefore, although either $\{ \fast, s \}$ or $\{ f, s \}$ could be fitting par
 In that sense, $\{ f, s \}$ is not likely to return a better solution than $\{ \fast, s \}$ does. 
 Rather, it could return less reasonable results because of the approximation adopted in equation (\ref{eq:discretize}). 
 
-\memoYF{\citet{Cowan2013} found a more reasonable answer for $s$ when they fitted with $\{ f, s \}$, but I think this is a coincidence. }
-
 \newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -414,7 +412,7 @@ where $\phi_l$ is the longitude of $l$-th slice, and $\phi_0$ is the characteris
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{figure*}[hb!]
+\begin{figure*}[bth!]
     \begin{minipage}{0.5\hsize}
     \begin{center}
 \includegraphics[width=\hsize]{IGBP_simplemap.pdf}
@@ -451,7 +449,7 @@ Specifically, we fix the sub-observer latitude at $0^{\circ }$, sub-observer at 
 Using $s_{kj}$ and $f^{\ast }_{ik}$, we compute the apparent albedo at each observation frame, on the assumption that the surfaces are ``Lambert'' scatterers. The effect of atmosphere is completely ignored. 
 The mock lightcurves created through the above-mentioned procedure is presented in the lower right panel of Figure \ref{fig:mockdata}. 
 
-\clearpage
+\newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{PCA and Shrink-Wrapping}
@@ -467,9 +465,9 @@ The corresponding principal components are shown in Figure \ref{fig:PCs}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{figure}[h]
+\begin{figure}[th]
     \begin{center}
-\includegraphics[width=\hsize]{PCA_V_jn.pdf}
+\includegraphics[width=0.9\hsize]{PCA_V_jn.pdf}
     \end{center}
     \caption{Principal Components. }
 \label{fig:PCs}
@@ -498,15 +496,13 @@ This is a natural consequence from the fact that the soil and vegetation are min
 
 
 
-\clearpage
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}[!htbp]
     \begin{center}
 \includegraphics[width=\hsize]{xmed_std_regtime_l1e-2.pdf}
     \end{center}
     \caption{Result of estimation for $\{ \fast,\,s\}$ with $\lambda = 0.01$. \memoYF{MC chains do not fully converge in 5000 steps. The evolution of the chains are very weird.}}
-\label{fig:shrinkwrap}
+    \label{fig:shrinkwrap}
 \end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -523,13 +519,26 @@ This is a natural consequence from the fact that the soil and vegetation are min
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\begin{figure*}[!htbp]
-%    \begin{center}
-%\includegraphics[width=\hsize]{xmed_std_reglong_l1e-2.pdf}
-%    \end{center}
-%    \caption{Result of estimation for $\{ f,\,s\}$ with $\lambda = 0.01$. \memoYF{MC chains do not fully converge in 5000 steps.}}
-%\label{fig:shrinkwrap}
-%\end{figure*}
+\begin{figure*}[!htbp]
+    \begin{center}
+\includegraphics[width=\hsize]{xmed_std_reglong_l1e-2.pdf}
+    \end{center}
+    \caption{Result of estimation for $\{ f,\,s\}$ with $\lambda = 0.01$. \memoYF{MC chains do not fully converge in 5000 steps, and it is not a single peak!!}}
+\label{fig:xmed_std_reglong_l1e-2}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[!htbp]
+    \begin{center}
+\includegraphics[width=\hsize]{reglong_l1e-2_trace0.png}
+\includegraphics[width=\hsize]{reglong_l1e-2_trace8.png}
+\includegraphics[width=\hsize]{reglong_l1e-2_trace13.png}
+    \end{center}
+    \caption{Examples of MC chains in estimating $\{ f,\,s\}$ with $\lambda = 0.01$, corresponding to Figure \ref{fig:xmed_std_reglong_l1e-2}. }
+\label{fig:shrinkwrap}
+\end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -555,26 +564,6 @@ This is a natural consequence from the fact that the soil and vegetation are min
 %\end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-\clearpage
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Discussion}
-\label{s:discussion}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Uncertainty in Radius}
-\label{ss:radius}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Summary}
-\label{s:summary}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
