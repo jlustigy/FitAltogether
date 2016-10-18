@@ -273,9 +273,6 @@ Therefore, although either $\{ \fast, s \}$ or $\{ f, s \}$ could be fitting par
 In that sense, $\{ f, s \}$ is not likely to return a better solution than $\{ \fast, s \}$ does. 
 Rather, it could return less reasonable results because of the approximation adopted in equation (\ref{eq:discretize}). 
 
-\memoYF{\citet{Cowan2013} found a more reasonable answer for $s$ when they fitted with $\{ f, s \}$, but I think this is a coincidence. }
-
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Degeneracy}
@@ -441,7 +438,7 @@ The corresponding principal components are shown in Figure \ref{fig:PCs}.
 \begin{figure*}[!bpth]
     \begin{center}
 %\includegraphics[width=\hsize]{PCA_projected.pdf}
-\includegraphics[width=\hsize]{mockdata_quadrature_PCplane_reduced.pdf}
+\includegraphics[width=\hsize]{mockdata_quadrature_PCplane.pdf}
     \end{center}
     \caption{Colors of 3 surface types and the light curves projected to the plane of 1st and 2nd principal components. }
 \label{fig:shrinkwrap}
@@ -457,18 +454,31 @@ For reference, the locations of the assumed three surface colors projected onto 
 As can be seen, the light curves the minimum-volume enclosure does not match the colors of physical surfaces, except for ocean. 
 This is a natural consequence from the fact that the soil and vegetation are minor components and never dominate the surface in the illuminated and visible area, while the apparent covering fraction of ocean comes close to unity. 
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}[!bpth]
     \begin{center}
-\includegraphics[width=\hsize]{xmed_std_time.pdf}
-\includegraphics[width=\hsize]{xmed_std_longitude.pdf}
+\includegraphics[width=\hsize]{xmed_std_regtime_s1e-2.pdf}
+\includegraphics[width=\hsize]{xmed_std_regtime_s1e-4.pdf}
     \end{center}
-    \caption{Left: result of estimation for $\{ \fast,\,s\}$. Right: result of estimation for $\{ f,\,s\}$}
+    \caption{Regularization in terms of time. Upper: $\sigma = 0.01$. Lower: $\sigma = 0.0001$}
 \label{fig:shrinkwrap}
 \end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[!bpth]
+    \begin{center}
+\includegraphics[width=\hsize]{xmed_std_reglong_s1e-2.pdf}
+\includegraphics[width=\hsize]{xmed_std_reglong_s1e-4.pdf}
+    \end{center}
+    \caption{Regularization in terms of longitude. Upper: $\sigma = 0.01$. Lower: $\sigma = 0.0001$}
+
+\label{fig:shrinkwrap}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \newpage
