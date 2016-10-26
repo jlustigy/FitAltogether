@@ -12,7 +12,8 @@ import pdb
 import h5py
 
 from fitlc_params import NUM_MCMC, NUM_MCMC_BURNIN, SEED_AMP, SIGMA_Y, NOISELEVEL, \
-    REGULARIZATION, N_TYPE, deg2rad, N_SIDE, INFILE, calculate_walkers, HDF5_COMPRESSION
+    REGULARIZATION, N_TYPE, deg2rad, N_SIDE, INFILE, calculate_walkers, HDF5_COMPRESSION, \
+    WAVEBAND_CENTERS, WAVEBAND_WIDTHS
 
 import prior
 import reparameterize
@@ -334,6 +335,8 @@ if __name__ == "__main__":
         "Obs_ij" : Obs_ij,
         "Obsnoise_ij" : Obsnoise_ij,
         "Kernel_il" : Kernel_il,
+        "lam_j" : WAVEBAND_CENTERS,
+        "dlam_j" : WAVEBAND_WIDTHS
     }
     data_dict_attrs = {
         "datafile" : INFILE
