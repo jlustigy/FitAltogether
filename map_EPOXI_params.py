@@ -12,15 +12,17 @@ REGULARIZATION = 'GP'
 N_TYPE  = 3
 N_SLICE = 9
 
-MONTH = 'simpleIGBP'
+MONTH = 'March'
+WAVEBAND_CENTERS = np.array([350., 450., 550., 650., 750., 850., 950.])
+WAVEBAND_WIDTHS = np.array([100., 100., 100., 100., 100., 100., 100.])
 
 NOISELEVEL = 0.01
 
-NUM_MCMC = 10000
+NUM_MCMC = 20000
 NUM_MCMC_BURNIN = 0
 SEED_AMP = 0.5
 
-N_side_seed = 4
+N_side_seed = 5
 N_SIDE  = 2*2**N_side_seed
 
 Pspin = 24.0

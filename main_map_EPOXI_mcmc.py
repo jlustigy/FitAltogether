@@ -23,7 +23,7 @@ from map_utils import generate_tex_names, save2hdf5
 
 from map_EPOXI_params import N_TYPE, N_SLICE, MONTH, NOISELEVEL, \
     NUM_MCMC, NUM_MCMC_BURNIN, SEED_AMP, N_SIDE, OMEGA, REGULARIZATION, \
-    calculate_walkers, HDF5_COMPRESSION
+    calculate_walkers, HDF5_COMPRESSION, WAVEBAND_CENTERS, WAVEBAND_WIDTHS
 
 NCPU = multiprocessing.cpu_count()
 
@@ -350,9 +350,16 @@ if __name__ == "__main__":
         "Obs_ij" : Obs_ij,
         "Obsnoise_ij" : Obsnoise_ij,
         "Kernel_il" : Kernel_il,
+        "lam_j" : WAVEBAND_CENTERS,
+        "dlam_j" : WAVEBAND_WIDTHS,
+        "Time_i" : Time_i
     }
     data_dict_attrs = {
-        "datafile" : INFILE
+        "datafile" : INFILE,
+        "LON_S" : LON_S,
+        "LAT_S" : LAT_S,
+        "LON_O" : LON_O,
+        "LAT_O" : LAT_O
     }
 
     # Create hdf5 file
