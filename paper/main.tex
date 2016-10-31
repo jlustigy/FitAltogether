@@ -122,25 +122,25 @@ yuka.fujii.ebihara@gmail.com
 \label{sec:intro}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Future direct imaging observations of terrestrial exoplanets is expected to play a vital role in characterizing Earth analogs in habitable zones and beyond. 
-A substantial number of work have seeked detectable features in disk-integrated spectra of the Earth and other planets, as they are observed from an astronomical distance. 
-It has been pointed out that not only some of atmospheric molecules are identifiable through spectral absorption features \citep[e.g.,][]{DesMarais2002} but also surface reflectance spectra affect the continuum of the spectra, which could be measured through low-resolution spectra, or multi-band photometry (color) \citep[e.g.,][]{Ford2001}. 
+Future direct imaging of terrestrial exoplanets is expected to play a vital role in characterizing Earth analogs in habitable zones and beyond. 
+Substantial work has gone into prediciting detectable features in disk-integrated spectra of the Earth and other planets, as they are observed from an astronomical distance. 
+Atmospheric molecules are identifiable through spectral absorption features \citep[e.g.,][]{DesMarais2002} but surface reflectance spectra also affect the spectra, which could be measured through low-resolution spectra, or multi-band photometry \citep[e.g.,][]{Ford2001}. 
 
-However, interpretation of disk-integrated colors is not trivial. 
-This is particularly true for Earth-like planets that harbor diverse atmospheric and surface characteristics including liquid water, partial cloud cover, continents, and possible biological surfaces, e.g. vegetation. 
-Disentangling specific features from the mixed disk-integrated colors can be very challenging. 
+However, interpreting of disk-integrated colors is not trivial. 
+This is particularly true for Earth-like planets that harbor diverse atmospheric and surface characteristics including liquid water, partial cloud cover, continents, and possibly vegetation. 
+Disentangling specific features from the disk-integrated colors can be very challenging. 
 
-A key here is to use time variation of the spectra; because the surface area that contributes to the scattered light changes due to the planetary spin rotation and the orbital revolution, the time variability can in principle be translated to the heterogeneity of the surface environment.  
-\citet{Cowan2009, Cowan2011} performed Principal Component Analysis (PCA) on the observed multi-band photometry of the Earth, and found that number of surface types can be inferred from the number of dominant principle components; (\# of surface types) $\ge $ (\# of principal componentes) $+ 1$. %) and that the variation pattern is indicative of the surface properties. 
-\citet{Fujii2010, Fujii2011} decomposed multi-band photometric data of the Earth as a linear inverse problem, assuming the template reflectance spectra of the known major surface types, and they found that the relative abundance and the longitudinal variation of these surface types are reasonably recovered. 
-Moreover, by coupling the time variation due to spin rotation and that due to orbital revolution, 2-dimensional information of the surface may be retrieved with sufficient quality of data \citep{Kawahara2010, Kawahara2011, Fujii2012}. 
+A key here is to leverage the time variation of the spectrum: the regions that contributes to the scattered light change due to the planetary rotation and  orbital revolution, the time variability can in principle be translated to the heterogeneity of the surface environment.  
+\citet{Cowan2009, Cowan2011} performed Principal Component Analysis (PCA) on the observed multi-band photometry of Earth. They found that number of surface types can be inferred from the number of dominant principle components; (\# of surface types) $\ge $ (\# of principal components) $+ 1$. %) and that the variation pattern is indicative of the surface properties. 
+\citet{Fujii2010, Fujii2011} decomposed multi-band photometric data of the Earth as a linear inverse problem, assuming the template reflectance spectra of the known major surface types, and they found that the relative abundance and the longitudinal variation of these surface types are approximately recovered. 
+Moreover, by coupling the time variation due to rotation and orbital revolution, a 2-dimensional information of the surface may be retrieved \citep{Kawahara2010, Kawahara2011, Fujii2012}. 
 
 \citet{Cowan2013} took another approach to the same inverse problem. 
-Their strategy is to try to estimate the physically meaningful reflectance spectra and their distribution across the globe simultaneously, by making all of them fitting parameters and letting them fit the data. 
-The result appeared successful to the extent that the obtained reflectance spectra roughly match the typical spectra of clouds, ocean, and continents. 
+Their strategy is to try to estimate the physically meaningful reflectance spectra and their distribution across the globe simultaneously, by making all of them fitting parameters. 
+The result appeared successful to the extent that the obtained reflectance spectra roughly match the average spectra of clouds, ocean, and continents. 
 However, the longitudinal map of these components do not match the reality sufficiently well. 
 
-We were motivated by this unsatisfactory result and decided to revisit their analysis with some updates. 
+We were motivated by this unsatisfactory result to revisit their analysis. 
 Specifically, the updates include:
 \begin{itemize}
 \item Revisiting the formulation and point out the inherit degeneracy. 
@@ -167,19 +167,26 @@ Section \ref{s:frame} revisits the problem, ....
 Assuming that the planetary surface is Lambertian scatterer everywhere, with a certain number $K$ of spectrally distinct surface types, 
 the disk-integrated scattered light can be written as a weighted summation of the reflectance spectra of different surface types. 
 
-For the moment, let us suppose that the planetary radius and the observational geometry (latitude/longitude of the sub-stellar/sub-observer points, and the distance between the star and the planet) are fully known. (This will be relaxed in \S\ref{s:discussion}.) 
-In this case, we can straightforwardly translate the observed planetary intensity to albedo (or reflectivity) using the stellar flux. 
-A useful normalization for albedo in exoplanet observations is {\it apparent albedo}, which is the planetary intensity normalized by that of a loss-less Lambert sphere with the same radius and at the same phase \citep{Qiu2003, Seager2010}; in this paper we will consistently use apparent albedo for our study unless otherwise noted. 
+For the moment, let us suppose that the planetary radius and the observational geometry are completely known: latitude/longitude of the sub-stellar/sub-observer points, and the distance between the star and the planet (This will be relaxed in \S\ref{s:discussion}.) 
+In this case, we can straightforwardly translate the observed planetary intensity to apparent albedo. 
+{\it Apparent albedo} is the planetary intensity normalized by that of a loss-less Lambert sphere with the same radius and at the same phase \citep{Qiu2003, Seager2010}; in this paper we will use apparent albedo unless otherwise noted. 
 
-The observed apparent albedo, $d_{ij}$ (``$d$'' for data), can be written as \citep[see][]{Fujii2010}: 
+The observed apparent albedo, $d_{ij}$ (``$d$'' for data), can be written using the zenith angle of the insolation, $\theta _0$, and the zenith angle of the observer $\theta _1$, (both defined at each surface point) as follows \citep[see][]{Fujii2010}: 
 %%%
 \begin{eqnarray}
 d_{i} (\lambda_j) &=& \displaystyle \frac{ \int_{{\rm IV}_i} s_{\vec \Omega }(\lambda_j) \cdot \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega } \\
 &=& \sum _{k} s_k (\lambda_j) \; \displaystyle \frac{ \int_{{\rm IV}_{i}} f_k (\vec \Omega ) \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega } \\
-&\equiv & \sum _{i,k} \fast_{ik} \, s_{kj} \label{eq:d_f_ast_s}
+&=& \sum _{i,k} \fast_{ik} \, s_{kj} \label{eq:d_f_ast_s}
 \end{eqnarray}
 %%%
-where $i$, $j$, and $k$ are indices for the observation epochs, bands, and the surface types, respectively, ${\rm IV }_i$ denotes the illuminated and visible area over the planetary surface at $i$-th observation, and $f (\vec \Omega )$ is the area fraction of $k$-th surface type in $d\vec \Omega$. 
+where
+%%%
+\begin{eqnarray}
+s _{kj} &\equiv & s_k (\lambda _j) \\
+\tilde f_{ik} &\equiv & \frac{ \int_{{\rm IV}_{i}} f_k (\vec \Omega ) \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }
+\end{eqnarray}
+%%%
+and $i$, $j$, and $k$ are indices for the observation epochs, bands, and the surface types, respectively, ${\rm IV }_i$ denotes the illuminated and visible area over the planetary surface at $i$-th observation, and $f (\vec \Omega )$ is the area fraction of $k$-th surface type in $d\vec \Omega$. 
 In the last expression, $\fast_{lk}$ represents the apparent covering fraction of the $k$-th surface type at $i$-th observational epoch, and 
 $s_{kj}$ is the reflectance spectra of $k$-th surface type at $j$-th band. 
 The maximum number of $i$, $j$ and $k$ will be denoted by $I$, $J$, and $K$, below, as summarized in Table \ref{tab:index}. 
@@ -188,8 +195,8 @@ By definition, the area fraction $\fast $ and reflectance spectra $s$ are subjec
 %%%
 \begin{eqnarray}
 \begin{cases}
-\;\; 0 < s_{kj} < 1 \;\;\; & \mbox{for any $k$, $j$} \\
-\;\; 0 < \fast_{lk} < 1 \;\;\; & \mbox{for any $l$, $k$} \label{eq:cond_f_ast}\\
+\;\; 0 \leq s_{kj} \leq 1 \;\;\; & \mbox{for any $k$, $j$} \\
+\;\; 0 \leq \fast_{lk} \leq 1 \;\;\; & \mbox{for any $l$, $k$} \label{eq:cond_f_ast}\\
 \;\; \sum_k \fast_{lk} = 1 & \mbox{for any $l$} 
 \end{cases}
 \end{eqnarray}
@@ -217,8 +224,8 @@ The time variability of the apparent covering fraction $\fast $ due to spin rota
 \begin{eqnarray}
 \fast _{ik} &=& \frac{ \int_{{\rm IV}_{i}} f_k (\vec \Omega ) \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }  \\
 &=& \sum_l \frac{ \int_{{\rm IV}_{il}}  f_k (\vec \Omega ) W (\vec \Omega  ) \cdot d\vec \Omega }{ \int_{{\rm IV}}  W (\vec \Omega ) \cdot d\vec \Omega } \\
-&\sim & \sum_l f_{lk} \frac{ \int_{{\rm IV}_{il}} W (\vec \Omega ) \cdot d\vec \Omega }{ \int_{{\rm IV}}  W (\vec \Omega ) \cdot d\vec \Omega } \label{eq:discretize}\\
-&\equiv & \sum_l  W_{il} f_{lk} \label{eq:Wf}
+&\approx & \sum_l f_{lk} \frac{ \int_{{\rm IV}_{il}} W (\vec \Omega ) \cdot d\vec \Omega }{ \int_{{\rm IV}}  W (\vec \Omega ) \cdot d\vec \Omega } \label{eq:discretize}\\
+&\equiv & \sum_l  W_{il} f_{lk} \label{eq:Wf}, 
 \end{eqnarray}
 %%%
 where $l$ is the index for longitudinal slices, $f_{lk}$ is the area fraction of the $k$-th surface type in the $l$-th longitudinal slice. 
@@ -227,15 +234,15 @@ In the last equation, $W_{il}$ is the weight function for $i$-th epoch and $l$-t
 As a result,
 %%%
 \begin{equation}
-d_{ij} = R_p^2 \sum _{l,k} W_{il} \, f_{lk} \, s_{kj} \label{eq:d_f_s}
+d_{ij} = \sum _{l,k} W_{il} \, f_{lk} \, s_{kj} \label{eq:d_f_s}
 \end{equation}
 %%%
 with the following condition similar to equation (\ref{eq:cond_f_ast}):
 %%%
 \begin{eqnarray}
 \begin{cases}
-\;\; 0 < s_{kj} < 1 \;\;\; & \mbox{for any $k$, $j$} \\
-\;\; 0 < f_{lk} < 1 \;\;\; & \mbox{for any $l$, $k$} \label{eq:cond_f} \\
+\;\; 0 \leq s_{kj} \leq 1 \;\;\; & \mbox{for any $k$, $j$} \\
+\;\; 0 \leq f_{lk} \leq 1 \;\;\; & \mbox{for any $l$, $k$} \label{eq:cond_f} \\
 \;\; \sum_k f_{lk} = 1 & \mbox{for any $l$} 
 \end{cases}
 \label{eq:constraints}
@@ -244,13 +251,13 @@ with the following condition similar to equation (\ref{eq:cond_f_ast}):
 Now, the relevant problem is, given $d$, estimate $\{f, s\}$ subject to the constraints of equation (\ref{eq:constraints})---this is where \citet{Cowan2013} stood. 
 
 
-\citet{Cowan2013} suggested the specific procedure to find the solution for $\{f, s\}$. 
+\citet{Cowan2013} proposed the specific procedure to find the solution for $\{f, s\}$. 
 Namely, 
 (1) perform PCA on the data to reduce the dimensionality as needed, 
 (2) perform simplex shrink-wrapping analysis to find the first guess for $s$, 
 and 
 (3) find the maximum posterior values for $\{f, s\}$ using MCMC algorithm  and setting the first guess for $s$ as the initial condition. 
-(In the last step, the initial value for $f$ is fixed at 1/(\# of surface types).)
+(The initial value for $f$ is fixed at 1/(\# of surface types).)
 
 \newpage
 
@@ -267,7 +274,7 @@ One reason comes from the approximation adopted in equation (\ref{eq:discretize}
 Otherwise, fitting data with $f$ by equation (\ref{eq:Wf}) produces some errors by design. 
 
 %Suppose the above approximation is justified. 
-In essence, $f^{\ast }_{ik}$ and $f_{lk}$ contains the same information, where they are related through a fixed $W_{il}$ (eq. \ref{eq:Wf}). 
+In essence, $\fast_{ik}$ and $f_{lk}$ contains the same information, where they are related through a fixed $W_{il}$ (eq. \ref{eq:Wf}). 
 %
 If $L=I$, in general there is a one-to-one relationship between $\fast_{ik}$ and $f_{lk}$ through $W_{il}$ as far as ${\rm rank}(W)=L(=I)$. 
 In this case, clearly, equations (\ref{eq:cond_f_ast}) and (\ref{eq:cond_f}) are equivalent, given $W_{il}>0$ (for any $i$ and $j$) and $\sum _l W_{il} = 1$. 
@@ -495,10 +502,12 @@ This is a natural consequence from the fact that the soil and vegetation are min
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}[!htbp]
     \begin{center}
-\includegraphics[width=\hsize]{xmed_std_regtime_s1e-2.pdf}
-\includegraphics[width=\hsize]{xmed_std_regtime_s1e-4.pdf}
+%\includegraphics[width=\hsize]{xmed_std_regtime_s1e-2.pdf}
+%\includegraphics[width=\hsize]{xmed_std_regtime_s1e-4.pdf}
+\includegraphics[width=\hsize]{xmed_std_regtime_l1e-2.pdf}
+\includegraphics[width=\hsize]{xmed_std_regtime_l1e-4.pdf}
     \end{center}
-    \caption{Regularization in terms of time. Upper: $\sigma = 0.01$. Lower: $\sigma = 0.0001$}
+    \caption{Regularization in terms of time. Upper: $\lambda = 0.01$. Lower: $\lambda = 0.0001$. \memoYF{But the MC chains do not converge after 5000 steps!}}
 \label{fig:shrinkwrap}
 \end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -507,10 +516,10 @@ This is a natural consequence from the fact that the soil and vegetation are min
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}[!bpth]
     \begin{center}
-\includegraphics[width=\hsize]{xmed_std_reglong_s1e-2.pdf}
-\includegraphics[width=\hsize]{xmed_std_reglong_s1e-4.pdf}
+\includegraphics[width=\hsize]{xmed_std_reglong_l1e-2.pdf}
+%\includegraphics[width=\hsize]{xmed_std_reglong_l1e-4.pdf}
     \end{center}
-    \caption{Regularization in terms of longitude. Upper: $\sigma = 0.01$. Lower: $\sigma = 0.0001$}
+    \caption{Regularization in terms of longitude. Upper: $\sigma = 0.01$. Lower: $\sigma = 0.0001$. \memoYF{But the MC chains do not converge after 5000 steps!}}
 
 \label{fig:shrinkwrap}
 \end{figure*}
@@ -518,6 +527,33 @@ This is a natural consequence from the fact that the soil and vegetation are min
 
 
 \clearpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discussion}
+\label{s:discussion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Uncertainty in Radius}
+\label{ss:radius}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Summary}
+\label{s:summary}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+\acknowledgments
+
+\bibliography{ref}
+
+\appendix
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Application to 4 EPOXI observations of the Earth}
@@ -575,44 +611,6 @@ initial sub-observer longitude & $210.1^{\circ }$ & $210.5^{\circ }$ & $210.1^{\
 \label{tab:EPOXI}
 \end{table*}%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Retrieval using equation (\ref{eq:}) }
-\label{ss:retrieval}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-First, each series of data is analyzed separately. 
-Without regularization and with regularization
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Discussion}
-\label{s:discussion}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Uncertainty in Radius}
-\label{ss:radius}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Sensitivity to Initial Condition}
-\label{ss:initialcondition}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Summary}
-\label{s:summary}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-
-\acknowledgments
-
-\bibliography{ref}
-
 
 
 \end{document}
