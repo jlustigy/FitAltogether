@@ -1,4 +1,61 @@
 import numpy as np
+import h5py
+
+#---------------------------------------------------
+def save2hdf5(f, dataset, name="dataset", dictionary=None, compression='lzf', close=True):
+    """
+    Saves a dataset (e.g. numpy array) to a new or existing hdf5 file with ability to save a
+    dictionary as attributes to that dataset.
+
+    Parameters
+    ----------
+    f : str OR h5py._hl.files.File
+        Name of new hdf5 file OR existing h5py file object
+    dataset : numpy array
+        Data to be saved
+    name : str
+        Name of new dataset to be saved
+    dictionary : dict
+        Dictionary of attributes for dataset
+    compression : str
+        h5py compression algorithm
+    close : bool
+        If False returns new h5py._hl.files.File
+    """
+
+    # Hack for interactive use with iPython notebook:
+    try:
+        f.close()
+    except (NameError, ValueError, AttributeError):
+        pass
+
+    # Create new hdf5 file
+    if type(f) is str:
+        filename = f
+        f = h5py.File(filename, 'w')
+    elif type(f) is h5py._hl.files.File:
+        pass
+    else:
+        print "Invalid type(f)"
+        return None
+
+    # Create dataset for mcmc chain samples
+    s = f.create_dataset(name, data=dataset, compression=compression)
+
+    # Save dictionary to attributes
+    if dictionary is not None:
+        # Loop through python dictionary, saving each item as an hdf5 attribute
+        # under the same name
+        for key, value in dictionary.iteritems(): s.attrs[key] = value
+
+    if close:
+        # Close the file stream
+        f.close()
+        return None
+    else:
+        # Return the file stream
+        return f
+#---------------------------------------------------
 
 #---------------------------------------------------
 def generate_tex_names(n_type, n_band, n_slice):
@@ -36,3 +93,4 @@ def generate_tex_names(n_type, n_band, n_slice):
     X_names = np.concatenate([np.array(Atmp), np.array(Ftmp)])
 
     return Y_names, X_names
+#---------------------------------------------------
