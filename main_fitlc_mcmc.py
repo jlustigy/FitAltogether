@@ -255,7 +255,7 @@ if __name__ == "__main__":
 
         # PCA
         print 'Performing PCA...'
-        n_pc, V_nj, U_in, M_j = PCA.do_PCA( Obs_ij, run_dir, E_cutoff=1e-2 )
+        n_pc, V_nj, U_in, M_j = PCA.do_PCA( Obs_ij, E_cutoff=1e-2, run_dir=run_dir )
         n_type = n_pc + 1
 
         # shrinkwrap

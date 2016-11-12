@@ -29,14 +29,15 @@ WL_AMP  = 0.
 LAMBDA_CORR_DEG = 120
 LAMBDA_CORR = LAMBDA_CORR_DEG * ( np.pi/180. )
 
-RESOLUTION=1000
-# RESOLUTION=100
+# RESOLUTION=1000
+RESOLUTION=100
 
 # March 2008
 #LAT_S = -0.5857506  # sub-solar latitude
 #LON_S = 267.6066184  # sub-solar longitude
 #LAT_O = 1.6808370  # sub-observer longitude
 #LON_O = 210.1242232 # sub-observer longitude
+
 
 
 #===================================================
@@ -195,7 +196,7 @@ if __name__ == "__main__":
 
     # PCA
     print 'Performing PCA...'
-    n_pc, V_nj, U_in, M_j = PCA.do_PCA( Obs_ij, run_dir, E_cutoff=1e-2 )
+    n_pc, V_nj, U_in, M_j = PCA.do_PCA( Obs_ij, E_cutoff=1e-2, output=False )
     n_type = n_pc + 1
     if n_type != 3 :
         print 'ERROR: This code is only applicable for 3 surface types!'
@@ -293,12 +294,17 @@ if __name__ == "__main__":
 
     # loop end
 
+
+
     # spider graph (?)
     ax1 = plt.subplot(adjustable='box', aspect=1.0)
     ax1.set_xlim([-0.4,0.2])
     ax1.set_ylim([-0.2,0.4])
     ax1.set_xticks([ -0.4, -0.2, 0.0, 0.2 ])
     ax1.set_yticks([ -0.2, 0.0, 0.2, 0.4 ])
+
+    plt.xlabel('PC 1')
+    plt.ylabel('PC 2')
 
     print 'np.array( regterm1_list )', np.array( regterm1_list )
     print 'np.array( regterm2_list )', np.array( regterm2_list )
@@ -316,6 +322,21 @@ if __name__ == "__main__":
         points_kn = np.vstack( [ points_kn, points_kn[0] ] )
         plt.plot( points_kn.T[0], points_kn.T[1], color=cm.hot(colorlevel_sorted[ii]) )
 
+    # data
+    plt.plot( U_in.T[0], U_in.T[1], 'k' )
+    plt.plot( U_in.T[0], U_in.T[1], marker='.', c="black", label='data' )
+
+    # answer
+    # projection of 'answer' onto PC plane
+    albd_answer_kj  = np.loadtxt( ALBDFILE ).T
+    dalbd_answer_kj = albd_answer_kj - M_j
+#    coeff_kn = np.dot( dalbd_kj, np.linalg.inv( V ) )
+    coeff_kn = np.dot( dalbd_answer_kj, V_nj.T )
+    answer_x, answer_y = coeff_kn[:,0:2].T
+
+    plt.scatter( answer_x[0], answer_y[0], marker='o', c='blue' )
+    plt.scatter( answer_x[1], answer_y[1], marker='s', c='red' )
+    plt.scatter( answer_x[2], answer_y[2], marker='^', c='green' )
 
     # allowed region
     x_grid, y_grid, prohibited_grid = allowed_region( V_nj, M_j )
@@ -323,8 +344,5 @@ if __name__ == "__main__":
     cm = generate_cmap(['white', 'gray'])
     plt.pcolor( x_grid, y_grid, prohibited_grid, cmap=cm )
 
-    # data
-    plt.plot( U_in.T[0], U_in.T[1], 'k' )
-    plt.plot( U_in.T[0], U_in.T[1], marker='.', c="black", label='data' )
-
+    # save
     plt.savefig( INFILE+'_PCplane.pdf' )
