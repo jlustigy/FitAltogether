@@ -11,7 +11,7 @@ def get_ln_prior_albd( y_albd_kj ):
 
 
 #---------------------------------------------------
-def get_ln_prior_area_new( y_area_lk, x_area_lk ):
+def get_ln_prior_area_new( y_area_lk ):
 
 #    x_area_lk is a dummy
     prior_lk = np.exp( y_area_lk ) / ( 1 + np.exp( y_area_lk ) )**2

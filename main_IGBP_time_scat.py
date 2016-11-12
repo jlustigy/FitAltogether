@@ -20,7 +20,7 @@ target_indx_list = [[ 17 ], # ocean
 # MODE = 'March'
 # MODE = 'June'
 MODE= 'specify'
-TAG='90deg'
+TAG='90deg_13time'
 SIGMA=0.01
 # vegetation
 # target_indx = [1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 14]
@@ -38,9 +38,8 @@ target_indx = [17]
 
 cldoptd_crit = 5.
 
-TIME_END = 24.0
 TSTEP = 1.0
-Pspin = 24.0
+Pspin = 1.0
 OMEGA = ( 2. * np.pi / Pspin )
 
 # HealPix
@@ -49,8 +48,7 @@ N_SIDE  = 2*2**N_side_seed
 
 N_pixel = 12*N_SIDE**2
 
-print '# N_pixel', N_pixel
-
+SEED_in  = 11943
 
 #--------------------------------------------------------------------
 # set-up
@@ -65,7 +63,7 @@ if ( MODE == 'March' ):
     LAT_O = 1.678  # sub-observer latitude
     LON_O = 205.423 # sub-observer longitude
     INFILE = "data/raddata_1_norm"
-    Time_i = np.arange(25)*1.
+    Time_i = np.arange(25)*1./24.
     cldfile_frac = "data/cldfrac_EPOXI_March_6.dat"
     cldfile_optd = "data/clddpth_EPOXI_March_6.dat"
 elif ( MODE == 'June' ):
@@ -83,7 +81,7 @@ elif ( MODE == 'June' ):
     cldfile_frac = "data/cldfrac_EPOXI_June_6.dat"
     cldfile_optd = "data/clddpth_EPOXI_June_6.dat"
     INFILE = "data/raddata_2_norm"
-    Time_i = np.arange(25)*1.
+    Time_i = np.arange(25)*1./24.
 
 elif ( MODE == 'specify' ):
     LON_S = 90.
@@ -96,7 +94,8 @@ elif ( MODE == 'specify' ):
 #    LAT_S = 21.6159766
     cldfile_frac = "data/cldfrac_EPOXI_June_6.dat"
     cldfile_optd = "data/clddpth_EPOXI_June_6.dat"
-    Time_i = np.arange(7)*1./7.*24.
+    N_TIME = 13
+    Time_i = np.arange( N_TIME + 1 ) / ( N_TIME*1. )
 else:
     print 'ERROR: Invalid MODE'
     sys.exit()
@@ -230,6 +229,9 @@ for ii in xrange( len(Time_i) ) :
 
 #    print 'contribution_factor', contribution_factor
 sp = np.dot( contribution_factor, band_sp )
+
+
+np.random.seed(SEED_in)
 
 sp_scat = np.random.normal( sp, sp*SIGMA )
 
