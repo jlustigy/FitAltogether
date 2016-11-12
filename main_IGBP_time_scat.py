@@ -95,7 +95,7 @@ elif ( MODE == 'specify' ):
     cldfile_frac = "data/cldfrac_EPOXI_June_6.dat"
     cldfile_optd = "data/clddpth_EPOXI_June_6.dat"
     N_TIME = 13
-    Time_i = np.arange( N_TIME + 1 ) / ( N_TIME*1. )
+    Time_i = np.arange( N_TIME ) / ( N_TIME*1. )
 else:
     print 'ERROR: Invalid MODE'
     sys.exit()
@@ -208,7 +208,7 @@ contribution_factor = np.zeros( [ len(Time_i),  len( target_indx_list ) ] )
 for ii in xrange( len(Time_i) ) :
 
     time = Time_i[ii]
-    weight_array0 = geometry.weight( time, N_SIDE, param_geometry )
+    weight_array0 = geometry.weight_2( time, N_SIDE, param_geometry )
     norm = np.sum( weight_array0 )
 
     for kk in xrange( len( target_indx_list ) ):

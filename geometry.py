@@ -27,6 +27,20 @@ def weight(time, n_side, param_geometry):
 
 
 #---------------------------------------------------
+def weight_2(time, n_side, param_geometry):
+    """
+    Weight of pixel at (lat_r, lon_r) assuming Lambertian surface
+    """
+    lat_o, lon_o, lat_s, lon_s, omega = param_geometry
+    EO_vec = latlon2cart(lat_o, lon_o-omega*time/deg2rad)[0]
+    ES_vec = latlon2cart(lat_s, lon_s-omega*time/deg2rad)[0]
+    ER_vec_array = np.array(hp.pix2vec(n_side, np.arange(hp.nside2npix(n_side))))
+    cosTH0_array = np.dot(ES_vec, ER_vec_array)
+    cosTH1_array = np.dot(EO_vec, ER_vec_array)
+    return np.clip(cosTH0_array, 0., 1.)*np.clip(cosTH1_array, 0., 1.)
+
+
+#---------------------------------------------------
 #def weight(time, n_side, nn, param_geometry):
 #    """
 #    Weight of pixel at (lat_r, lon_r) assuming Lambertian surface
