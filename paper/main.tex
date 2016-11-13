@@ -491,7 +491,7 @@ The corresponding principal components are shown in Figure \ref{fig:PCs}.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{figure*}[b]
+\begin{figure*}[bht]
     \begin{center}
 %\includegraphics[width=\hsize]{PCA_projected.pdf}
 \includegraphics[width=\hsize]{mockdata_quadrature_PCplane.pdf}
@@ -510,6 +510,102 @@ As can be seen, the light curves the minimum-volume enclosure does not match the
 This is a natural consequence from the fact that the soil and vegetation are minor components and never dominate the surface in the illuminated and visible area, while the apparent covering fraction of ocean comes close to unity. 
 
 
+\clearpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{[NEW] Effect of Regularization Term}
+\label{ss:shrinkwrap}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%
+\begin{eqnarray}
+\mathcal{P}_{\fast} &=& \prod _k \left[ \frac{1}{(\sqrt{ 2 \pi })^{I} \sqrt{| \tilde \Sigma |} } \right. \\
+&& \left. \times \exp \left\{ - \sum _{i,\,i'} (\fast ^{T})_{ki} \tilde \Sigma_{ii'} ^{-1} \fast_{i'k} \right\} \right] \\
+\tilde \Sigma _{ii'} (\lambda,  \Delta_t ) &=& \exp \left( - \frac{|t_i- t_i'|^2}{2 \Delta_t^2} \right)
+\end{eqnarray}
+%%%
+
+%%%
+\begin{eqnarray}
+- \log \mathcal{P}_{\fast} &\propto & \frac{1}{2} | \tilde \Sigma | + \mathcal{F}(\lambda, \Delta_t; f) \\
+\mathcal{F}(\lambda, \Delta_t; f)&\equiv & \sum _k \sum_{i,\,i'} (\fast ^{T})_{ki} \tilde \Sigma_{ii'} ^{-1} \fast_{i'k}
+\end{eqnarray}
+%%%
+
+...I think $\fast $ here should be zero mean for each $k$. 
+%%%
+\begin{equation}
+\fast_{ik} \rightarrow ( \fast_{ik} - \fast^{(ave)}_k )
+\end{equation}
+%%%
+In the following figures, the vertices of each triangle indicates the sample combination of the colors projected onto the principal component plane, and the colors is scaled by $\mathcal{F}^{\ast } (\Delta_t; f) = \lambda ^2 \mathcal{F}$. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[b]
+    \begin{minipage}{0.33\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_regf_PCplane_l90deg_2013.pdf}
+    \end{center}
+    \end{minipage}
+    \begin{minipage}{0.33\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_regf_PCplane_l90deg_2017.pdf}
+    \end{center}
+    \end{minipage}
+    \begin{minipage}{0.33\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_regf_PCplane_l90deg_2019.pdf}
+    \end{center}
+    \end{minipage}    
+    \caption{The difference between the three panels is just the seed for \url{np.randam.uniform}}
+\label{fig:regterm}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[b]
+    \begin{minipage}{0.33\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_regf_PCplane_l120deg_2013.pdf}
+    \end{center}
+    \end{minipage}
+    \begin{minipage}{0.33\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_regf_PCplane_l120deg_2017.pdf}
+    \end{center}
+    \end{minipage}
+    \begin{minipage}{0.33\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_regf_PCplane_l120deg_2019.pdf}
+    \end{center}
+    \end{minipage}
+    \caption{The difference between the three panels is just the seed for \url{np.randam.uniform}}
+\label{fig:regterm}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[b]
+    \begin{minipage}{0.5\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_l120deg_2013_X_albd_jk_best.pdf}
+    \end{center}
+    \end{minipage}
+    \begin{minipage}{0.5\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_l120deg_2013_X_area_ik_best.pdf}
+    \end{center}
+    \end{minipage}
+    \caption{Solution with smallest regularization term. }
+\label{fig:regterm}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\clearpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}[!htbp]
@@ -523,6 +619,11 @@ This is a natural consequence from the fact that the soil and vegetation are min
 \label{fig:shrinkwrap}
 \end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
