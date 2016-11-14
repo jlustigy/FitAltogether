@@ -34,8 +34,8 @@ INFILE = 'mockdata/simpleIGBP_quadrature_lc'
 # INFILE = 'mockdata_90deg_lc'
 
 KNOWN_ANSWER=False
-ALBDFILE = '/Users/yuka/Dropbox/Project/11_RotationalUnmixing/simpleIGBP_quadrature_bandsp'
-AREAFILE = '/Users/yuka/Dropbox/Project/11_RotationalUnmixing/simpleIGBP_quadrature_factor'
+ALBDFILE = 'mockdata/simpleIGBP_quadrature_bandsp'
+AREAFILE = 'mockdata/simpleIGBP_quadrature_factor'
 #INFILE = "data/raddata_12_norm"
 #INFILE = "data/raddata_2_norm"
 #INFILE = "data/raddata_2_norm"

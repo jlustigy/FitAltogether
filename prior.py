@@ -140,8 +140,8 @@ def get_cov( sigma, wn_rel_amp, lambda_angular, l_dim, periodic=True):
     else :
         dif_lon_ll = abs( dif_lon_ll )
 
-#    Sigma_ll = np.exp( - 0.5 * dif_lon_ll**2 / ( lambda_angular**2 ) )
-    Sigma_ll = np.exp( - dif_lon_ll / ( lambda_angular**2 ) )
+    Sigma_ll = np.exp( - 0.5 * dif_lon_ll**2 / ( lambda_angular**2 ) )
+#    Sigma_ll = np.exp( - dif_lon_ll / ( lambda_angular**2 ) )
 
     cov = Sigma_ll * ( 1 - wn_rel_amp )
     cov[np.diag_indices(l_dim)] += wn_rel_amp

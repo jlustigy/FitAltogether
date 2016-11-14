@@ -6,10 +6,11 @@ import os
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.colors import LinearSegmentedColormap
 
-from fitlc_params import NUM_MCMC, NUM_MCMC_BURNIN, SEED_AMP, SIGMA_Y, NOISELEVEL, \
-    REGULARIZATION, deg2rad, N_SIDE, INFILE, calculate_walkers, \
+from PCplane2D_params import NOISELEVEL, \
+    deg2rad, N_SIDE, INFILE_DIR, INFILE, OUTFILE_DIR, \
     ALBDFILE, AREAFILE, SLICE_TYPE, N_SLICE_LONGITUDE, GEOM
 
 import prior
@@ -46,7 +47,6 @@ RESOLUTION=100
 
 np.random.seed(SEED_in)
 
-
 #---------------------------------------------------
 def regularize_area_GP( x_area_lk, regparam ):
 
@@ -58,7 +58,6 @@ def regularize_area_GP( x_area_lk, regparam ):
     l_dim = len( x_area_lk )
     cov = prior.get_cov( sigma, wn_rel_amp, lambda_angular, l_dim )
 
-#    print 'cov', cov
     inv_cov = np.linalg.inv( cov )
     det_cov = np.linalg.det( cov )
     if ( det_cov == 0. ):
@@ -78,7 +77,7 @@ def regularize_area_GP( x_area_lk, regparam ):
     return term1, term2, prior_wn_rel_amp
 
 #---------------------------------------------------
-def regularize_area_GP_new( x_area_lk, regparam ):
+def regularize_area_GP_2( x_area_lk, regparam ):
 
     sigma, wn_rel_amp, lambda_angular = regparam
 
@@ -87,7 +86,6 @@ def regularize_area_GP_new( x_area_lk, regparam ):
     l_dim = len( x_area_lk )
     cov = prior.get_cov( sigma, wn_rel_amp, lambda_angular, l_dim )
 
-#    print 'cov', cov
     inv_cov = np.linalg.inv( cov )
     det_cov = np.linalg.det( cov )
     if ( det_cov == 0. ):
@@ -95,9 +93,38 @@ def regularize_area_GP_new( x_area_lk, regparam ):
         print 'cov', cov
 
 #    print 'inv_cov', inv_cov
-    x_area_ave = 1./len(x_area_lk.T)
-    dx_area_lk = x_area_lk[:,:-1] - x_area_ave
+    x_area_ave = np.average( x_area_lk, axis=0 )
+#    dx_area_lk = x_area_lk[:,:-1] - x_area_ave
+    dx_area_lk = x_area_lk - x_area_ave
     term1_all = np.dot( dx_area_lk.T, np.dot( inv_cov, dx_area_lk ) )
+#    term1_all = np.dot( x_area_lk.T, np.dot( inv_cov, x_area_lk ) )
+    term1 = -0.5 * np.sum( term1_all.diagonal() )
+    term2 = -0.5 * np.log( det_cov )
+#    print 'term1, term2', term1, term2
+
+    return term1, term2
+
+
+#---------------------------------------------------
+def regularize_area_GP_3( X_ij, regparam ):
+
+    sigma, wn_rel_amp, lambda_angular = regparam
+
+#    print 'wn_rel_amp', wn_rel_amp
+#    print 'lambda_angular', lambda_angular
+    l_dim = len( X_ij )
+    cov = prior.get_cov( sigma, wn_rel_amp, lambda_angular, l_dim )
+
+    inv_cov = np.linalg.inv( cov )
+    det_cov = np.linalg.det( cov )
+    if ( det_cov == 0. ):
+        print 'det_cov', det_cov
+        print 'cov', cov
+
+#    print 'inv_cov', inv_cov
+    X_j = np.average( X_ij, axis=0 )
+    dX_ij = X_ij - X_j 
+    term1_all = np.dot( dX_ij.T, np.dot( inv_cov, dX_ij ) )
     term1 = -0.5 * np.sum( term1_all.diagonal() )
     term2 = -0.5 * np.log( det_cov )
 #    print 'term1, term2', term1, term2
@@ -152,28 +179,28 @@ def generate_cmap(colors):
 if __name__ == "__main__":
 
 
-    # Create directory for this run
-    now = datetime.datetime.now()
-    startstr = now.strftime("%Y-%m-%d--%H-%M")
-    run_dir = "output/" + startstr + "/"
-    os.mkdir(run_dir)
-    print "Created directory:", run_dir
-
-    # Save THIS file and the param file for reproducibility!
-    thisfile = os.path.basename(__file__)
-    paramfile = "fitlc_params.py"
-    priorfile = "prior.py"
-    newfile = run_dir + thisfile
-    commandString1 = "cp " + thisfile + " " + newfile
-    commandString2 = "cp "+paramfile+" " + run_dir+paramfile
-    commandString3 = "cp "+priorfile+" " + run_dir+priorfile
-    os.system(commandString1)
-    os.system(commandString2)
-    os.system(commandString3)
-    print "Saved :", thisfile, " &", paramfile
+#    # Create directory for this run
+#    now = datetime.datetime.now()
+#    startstr = now.strftime("%Y-%m-%d--%H-%M")
+#    run_dir = "output/" + startstr + "/"
+#    os.mkdir(run_dir)
+#    print "Created directory:", run_dir
+#
+#    # Save THIS file and the param file for reproducibility!
+#    thisfile = os.path.basename(__file__)
+#    paramfile = "fitlc_params.py"
+#    priorfile = "prior.py"
+#    newfile = run_dir + thisfile
+#    commandString1 = "cp " + thisfile + " " + newfile
+#    commandString2 = "cp "+paramfile+" " + run_dir+paramfile
+#    commandString3 = "cp "+priorfile+" " + run_dir+priorfile
+#    os.system(commandString1)
+#    os.system(commandString2)
+#    os.system(commandString3)
+#    print "Saved :", thisfile, " &", paramfile
 
     # Load input data
-    Obs_ij = np.loadtxt(INFILE)
+    Obs_ij = np.loadtxt( INFILE_DIR + INFILE )
     Obsnoise_ij = ( NOISELEVEL * Obs_ij )
     Time_i  = np.arange( len( Obs_ij ) ) / ( 1.0 * len( Obs_ij ) )
     n_band = len( Obs_ij.T )
@@ -201,22 +228,6 @@ if __name__ == "__main__":
     if n_type != 3 :
         print 'ERROR: This code is only applicable for 3 surface types!'
         sys.exit()
-
-    # shrinkwrap
-    print 'Perfoming shrink-wrapping...'
-    # N ( = n_PC ): number of principle components
-    # M ( = n_PC + 1 ) : number of vertices
-    A_mn, P_im   = shrinkwrap.do_shrinkwrap( U_in, n_pc, run_dir )
-    X0_albd_kj   = np.dot( A_mn, V_nj )
-    X0_albd_kj   = X0_albd_kj + M_j
-    if ( SLICE_TYPE=='time' ) :
-        X0_area_lk   = P_im
-    else :
-        X0_area_lk = np.ones( n_slice*n_type ).reshape([n_slice, n_type])/(n_type*1.0)
-
-    # Save initial condutions
-    np.savetxt( run_dir+'X0_albd_jk', X0_albd_kj.T )
-    np.savetxt( run_dir+'X0_area_lk', X0_area_lk )
 
     U_iq = np.c_[ U_in, np.ones( len( U_in ) ) ]
 
@@ -257,6 +268,7 @@ if __name__ == "__main__":
             # otherwise, proceed
             if not( np.any( X_area_ik < 0. ) or np.any( X_area_ik > 1. ) ):
 
+                points_kn = np.vstack( [ points_kn, points_kn[0] ] )
                 points_kn_list.append( points_kn )
                 X_area_ik_list.append( X_area_ik )
                 X_albd_kj_list.append( X_albd_kj )
@@ -265,7 +277,8 @@ if __name__ == "__main__":
                 Obs_estimate_ij = np.dot( X_area_ik , X_albd_kj )
                 chi2 = np.sum( ( Obs_ij - Obs_estimate_ij )**2 )
                 chi2_list.append( chi2 )
-                
+                print chi2
+
                 Y_array = reparameterize.transform_X2Y(X_albd_kj, X_area_ik)
 
                 # flat prior for area fraction
@@ -280,7 +293,8 @@ if __name__ == "__main__":
 
                 # regularization ?
                 regparam     = ( SIGMA_Y, WL_AMP, LAMBDA_CORR )
-                term1, term2 = regularize_area_GP_new( X_area_ik, regparam )
+                term1, term2 = regularize_area_GP_2( X_area_ik, regparam )
+                # term1, term2 = regularize_area_GP_3( Obs_estimate_ij, regparam )
                 regterm1_list.append( term1 )
                 regterm2_list.append( term2 )
 
@@ -295,8 +309,9 @@ if __name__ == "__main__":
     # loop end
 
 
-
-    # spider graph (?)
+    #--------------------------------------------------------------------------
+    # set up
+    fig = plt.figure(figsize=(3,3)) 
     ax1 = plt.subplot(adjustable='box', aspect=1.0)
     ax1.set_xlim([-0.4,0.2])
     ax1.set_ylim([-0.2,0.4])
@@ -305,32 +320,50 @@ if __name__ == "__main__":
 
     plt.xlabel('PC 1')
     plt.ylabel('PC 2')
+    dtime = len( Obs_ij ) * ( LAMBDA_CORR_DEG / 360. )
+    plt.title(r'$\Delta _t =$'+str(dtime) +  " ($\Delta \phi =$" + str(LAMBDA_CORR_DEG) + '$deg$)' )
+    #--------------------------------------------------------------------------
+    # allowed region
+    x_grid, y_grid, prohibited_grid = allowed_region( V_nj, M_j )
+    print 'prohibited_grid.shape', prohibited_grid.shape
+    mycm = generate_cmap(['white', 'gray'])
+    plt.pcolor( x_grid, y_grid, prohibited_grid, cmap=mycm )
+
+    #--------------------------------------------------------------------------
+    # spider graph (?)
 
     print 'np.array( regterm1_list )', np.array( regterm1_list )
     print 'np.array( regterm2_list )', np.array( regterm2_list )
 
-    colorterm = np.array( regterm1_list ) + np.array( regterm2_list )
+#    colorterm = np.array( regterm1_list ) + np.array( regterm2_list )
+    colorterm = np.array( regterm1_list )
     print 'colorterm', colorterm
-    colorrange = ( np.max( colorterm ) - np.min( colorterm ) ) * 1.5
+    colorrange = ( np.max( colorterm ) - np.min( colorterm ) )
     colorlevel = ( colorterm - np.min( colorterm ) ) / colorrange
+
+    print ''
+    print 'MINIMUM:', np.min( colorterm )
+    print 'MAXIMUM:', np.max( colorterm )
+    print ''
+
 
     colorlevel_sorted = colorlevel[np.argsort( colorlevel )][::-1]
     points_kn_array = np.array( points_kn_list )
     points_kn_array_sorted  = points_kn_array[np.argsort( colorlevel )][::-1]
     for ii in xrange( count ) :
         points_kn = points_kn_array_sorted[ii]
-        points_kn = np.vstack( [ points_kn, points_kn[0] ] )
-        plt.plot( points_kn.T[0], points_kn.T[1], color=cm.hot(colorlevel_sorted[ii]) )
+        plt.plot( points_kn.T[0], points_kn.T[1], color=cm.afmhot( colorlevel_sorted[ii] ) )
 
+    #--------------------------------------------------------------------------
     # data
     plt.plot( U_in.T[0], U_in.T[1], 'k' )
-    plt.plot( U_in.T[0], U_in.T[1], marker='.', c="black", label='data' )
+#    plt.plot( U_in.T[0], U_in.T[1], marker='.', c="black", label='data' )
 
+    #--------------------------------------------------------------------------
     # answer
     # projection of 'answer' onto PC plane
     albd_answer_kj  = np.loadtxt( ALBDFILE ).T
     dalbd_answer_kj = albd_answer_kj - M_j
-#    coeff_kn = np.dot( dalbd_kj, np.linalg.inv( V ) )
     coeff_kn = np.dot( dalbd_answer_kj, V_nj.T )
     answer_x, answer_y = coeff_kn[:,0:2].T
 
@@ -338,11 +371,37 @@ if __name__ == "__main__":
     plt.scatter( answer_x[1], answer_y[1], marker='s', c='red' )
     plt.scatter( answer_x[2], answer_y[2], marker='^', c='green' )
 
-    # allowed region
-    x_grid, y_grid, prohibited_grid = allowed_region( V_nj, M_j )
-    print 'prohibited_grid.shape', prohibited_grid.shape
-    cm = generate_cmap(['white', 'gray'])
-    plt.pcolor( x_grid, y_grid, prohibited_grid, cmap=cm )
 
+    dummy_x = np.zeros( len( colorlevel ) ) + 100.
+    dummy_y = np.zeros( len( colorlevel ) ) + 100.
+    SC = plt.scatter( dummy_x, dummy_y, c=colorterm, cmap=cm.afmhot )
+#    plt.colorbar(SC)
+    divider = make_axes_locatable(ax1)
+    ax_cb = divider.new_horizontal(size="2%", pad=0.05)
+    fig.add_axes(ax_cb)
+    plt.colorbar(SC, cax=ax_cb)
+#    plt.colorbar()
+
+
+    #--------------------------------------------------------------------------
     # save
-    plt.savefig( INFILE+'_PCplane.pdf' )
+    filename = OUTFILE_DIR+INFILE+'_regf_PCplane_l' + str(LAMBDA_CORR_DEG) + 'deg_' + str(SEED_in) + '.pdf'
+    plt.savefig( filename, bbox_inches='tight' )
+
+
+    #--------------------------------------------------------------------------
+    # best
+
+    points_kn_best = points_kn_array[ np.argmin( colorterm ) ][:-1,:]
+    
+    print 'points_kn_best', points_kn_best
+    # reconstruct albedo
+    X_albd_kj_best = np.dot( points_kn_best, V_nj ) + M_j
+
+    points_kq = np.c_[ points_kn_best, np.ones( len( points_kn_best ) ) ]
+    X_area_ik_best  = np.dot( U_iq, np.linalg.inv( points_kq ) )
+
+    np.savetxt( OUTFILE_DIR+INFILE+'_l' + str(LAMBDA_CORR_DEG) + 'deg_' + str(SEED_in) + '_X_albd_jk_best', X_albd_kj_best.T )
+    np.savetxt( OUTFILE_DIR+INFILE+'_l' + str(LAMBDA_CORR_DEG) + 'deg_' + str(SEED_in) + '_X_area_ik_best', X_area_ik_best )
+
+

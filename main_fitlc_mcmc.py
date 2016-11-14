@@ -262,7 +262,7 @@ if __name__ == "__main__":
         print 'Perfoming shrink-wrapping...'
         # N ( = n_PC ): number of principle components
         # M ( = n_PC + 1 ) : number of vertices
-        A_mn, P_im   = shrinkwrap.do_shrinkwrap( U_in, n_pc, run_dir )
+        A_mn, P_im   = shrinkwrap.do_shrinkwrap( U_in, n_pc, run_dir=run_dir )
         X0_albd_kj   = np.dot( A_mn, V_nj )
         X0_albd_kj   = X0_albd_kj + M_j
         if ( SLICE_TYPE=='time' ) :
