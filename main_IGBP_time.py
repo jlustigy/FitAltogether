@@ -20,7 +20,7 @@ target_indx_list = [[ 17 ], # ocean
 # MODE = 'March'
 # MODE = 'June'
 MODE= 'specify'
-TAG='90deg_time9'
+TAG='90deg_time19'
 # vegetation
 # target_indx = [1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 14]
  #target_indx = [1, 2, 3, 4, 5, 6, 10, 14]
@@ -62,7 +62,7 @@ if ( MODE == 'March' ):
     LAT_O = 1.678  # sub-observer latitude
     LON_O = 205.423 # sub-observer longitude
     INFILE = "data/raddata_1_norm"
-    Time_i = np.arange(25)*1.
+#    Time_i = np.arange(25)*1.
     Time_i = np.arange(25)/24.
     cldfile_frac = "data/cldfrac_EPOXI_March_6.dat"
     cldfile_optd = "data/clddpth_EPOXI_March_6.dat"
@@ -81,7 +81,7 @@ elif ( MODE == 'June' ):
     cldfile_frac = "data/cldfrac_EPOXI_June_6.dat"
     cldfile_optd = "data/clddpth_EPOXI_June_6.dat"
     INFILE = "data/raddata_2_norm"
-    Time_i = np.arange(25)*24.
+    Time_i = np.arange(25)/24.
 
 elif ( MODE == 'specify' ):
     LON_S = 90.
@@ -94,7 +94,7 @@ elif ( MODE == 'specify' ):
 #    LAT_S = 21.6159766
     cldfile_frac = "data/cldfrac_EPOXI_June_6.dat"
     cldfile_optd = "data/clddpth_EPOXI_June_6.dat"
-    Time_i = np.arange(9)/9.
+    Time_i = np.arange(19)/19.
 else:
     print 'ERROR: Invalid MODE'
     sys.exit()
@@ -229,5 +229,5 @@ for ii in xrange( len(Time_i) ) :
 #    print 'contribution_factor', contribution_factor
 sp = np.dot( contribution_factor, band_sp )
 
-np.savetxt( 'mockdata.'+TAG+'_factor', contribution_factor )
-np.savetxt( 'mockdata.'+TAG+'_lc', sp )
+np.savetxt( 'mockdata_'+TAG+'_factor', contribution_factor )
+np.savetxt( 'mockdata_'+TAG+'_lc', sp )
