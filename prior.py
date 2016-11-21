@@ -136,9 +136,36 @@ def get_cov( sigma, wn_rel_amp, lambda_angular, l_dim, periodic=True):
     lon_l = 2.0 * np.pi * np.arange( l_dim ) / ( l_dim * 1. )
     dif_lon_ll = lon_l[:,np.newaxis] - lon_l[np.newaxis,:]
     if periodic :
+        dif_lon_ll = np.minimum( abs( dif_lon_ll ), 2. * np.pi - abs( dif_lon_ll ) )
+    else :
+        dif_lon_ll = abs( dif_lon_ll )
+
+    Sigma_ll = np.exp( - 0.5 * dif_lon_ll**2 / ( lambda_angular**2 ) )
+#    Sigma_ll = np.exp( - dif_lon_ll / ( lambda_angular**2 ) )
+
+    cov = Sigma_ll * ( 1 - wn_rel_amp )
+    cov[np.diag_indices(l_dim)] += wn_rel_amp
+    cov /= (1.0 +  wn_rel_amp)
+    cov = cov * sigma
+
+    return cov
+
+
+#---------------------------------------------------
+def get_cov_old( sigma, wn_rel_amp, lambda_angular, l_dim, periodic=True):
+
+#    kappa0 = np.log(output["x"][-1]) - np.log(360.0 - output["x"][-1])
+    Sigma_ll = np.zeros([l_dim, l_dim])
+    lon_l = 2.0 * np.pi * np.arange( l_dim ) / ( l_dim * 1. )
+    print 'lon_l', lon_l
+    dif_lon_ll = lon_l[:,np.newaxis] - lon_l[np.newaxis,:]
+    print 'dif_lon_ll', dif_lon_ll
+    if periodic :
+        print 'periodic'
         dif_lon_ll = np.minimum( abs( dif_lon_ll ), abs( 2. * np.pi - dif_lon_ll ) )
     else :
         dif_lon_ll = abs( dif_lon_ll )
+    print 'dif_lon_ll', dif_lon_ll
 
     Sigma_ll = np.exp( - 0.5 * dif_lon_ll**2 / ( lambda_angular**2 ) )
 #    Sigma_ll = np.exp( - dif_lon_ll / ( lambda_angular**2 ) )

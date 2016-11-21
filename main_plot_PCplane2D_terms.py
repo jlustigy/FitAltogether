@@ -6,12 +6,8 @@ import os
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.colors import LinearSegmentedColormap
-
-from PCplane2D_params import NOISELEVEL, \
-    deg2rad, N_SIDE, INFILE_DIR, INFILE, OUTFILE_DIR, \
-    ALBDFILE, AREAFILE, SLICE_TYPE, N_SLICE_LONGITUDE, GEOM
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import prior
 import reparameterize
@@ -23,23 +19,26 @@ import geometry
 
 LOOP_MAX  = 10000
 COUNT_MAX = 100
+# COUNT_MAX = 10
 SEED_in  = 2013
 
-SIGMA_Y = 100.
-WL_AMP  = 0.
 LAMBDA_CORR_DEG = 90
 LAMBDA_CORR = LAMBDA_CORR_DEG * ( np.pi/180. )
 
-# RESOLUTION=1000
 RESOLUTION=100
 
-# March 2008
-#LAT_S = -0.5857506  # sub-solar latitude
-#LON_S = 267.6066184  # sub-solar longitude
-#LAT_O = 1.6808370  # sub-observer longitude
-#LON_O = 210.1242232 # sub-observer longitude
+# GEOM = ( lat_o, lon_o, lat_s, lon_s, omega )
+GEOM = ( 0., 0., 0.,  90., 2.*np.pi )
 
+N_SIDE   = 32
+INFILE_DIR = 'mockdata/'
+INFILE = 'mockdata_90deg_time7_lc'
+OUTFILE_DIR = 'PCplane/'
 
+ALBDFILE = 'mockdata/simpleIGBP_quadrature_bandsp'
+AREAFILE = 'mockdata/simpleIGBP_quadrature_factor'
+
+deg2rad = np.pi/180.
 
 #===================================================
 # basic functions
@@ -47,44 +46,16 @@ RESOLUTION=100
 
 np.random.seed(SEED_in)
 
+
 #---------------------------------------------------
 def regularize_area_GP( x_area_lk, regparam ):
 
-    sigma, wn_rel_amp_seed, lambda_angular = regparam
-
-    wn_rel_amp = np.exp( wn_rel_amp_seed ) / ( 1. + np.exp( wn_rel_amp_seed ) )
-#    print 'wn_rel_amp', wn_rel_amp
-#    print 'lambda_angular', lambda_angular
-    l_dim = len( x_area_lk )
-    cov = prior.get_cov( sigma, wn_rel_amp, lambda_angular, l_dim )
-
-    inv_cov = np.linalg.inv( cov )
-    det_cov = np.linalg.det( cov )
-    if ( det_cov == 0. ):
-        print 'det_cov', det_cov
-        print 'cov', cov
-
-#    print 'inv_cov', inv_cov
-    x_area_ave = 1./len(x_area_lk.T)
-    dx_area_lk = x_area_lk[:,:-1] - x_area_ave
-    term1_all = np.dot( dx_area_lk.T, np.dot( inv_cov, dx_area_lk ) )
-    term1 = -0.5 * np.sum( term1_all.diagonal() )
-    term2 = -0.5 * np.log( det_cov )
-#    print 'term1, term2', term1, term2
-
-    prior_wn_rel_amp = np.log( wn_rel_amp / ( 1. + np.exp( wn_rel_amp_seed ) )**2 )
-
-    return term1, term2, prior_wn_rel_amp
-
-#---------------------------------------------------
-def regularize_area_GP_2( x_area_lk, regparam ):
-
-    sigma, wn_rel_amp, lambda_angular = regparam
+    lambda_angular = regparam
 
 #    print 'wn_rel_amp', wn_rel_amp
 #    print 'lambda_angular', lambda_angular
     l_dim = len( x_area_lk )
-    cov = prior.get_cov( sigma, wn_rel_amp, lambda_angular, l_dim )
+    cov = prior.get_cov( 1.0, 0.0, lambda_angular, l_dim )
 
     inv_cov = np.linalg.inv( cov )
     det_cov = np.linalg.det( cov )
@@ -100,20 +71,21 @@ def regularize_area_GP_2( x_area_lk, regparam ):
 #    term1_all = np.dot( x_area_lk.T, np.dot( inv_cov, x_area_lk ) )
     term1 = -0.5 * np.sum( term1_all.diagonal() )
     term2 = -0.5 * np.log( det_cov )
+
 #    print 'term1, term2', term1, term2
 
     return term1, term2
 
 
 #---------------------------------------------------
-def regularize_area_GP_3( X_ij, regparam ):
+def regularize_area_GP_2( x_area_lk, regparam ):
 
-    sigma, wn_rel_amp, lambda_angular = regparam
+    lambda_angular = regparam
 
 #    print 'wn_rel_amp', wn_rel_amp
 #    print 'lambda_angular', lambda_angular
-    l_dim = len( X_ij )
-    cov = prior.get_cov( sigma, wn_rel_amp, lambda_angular, l_dim )
+    l_dim = len( x_area_lk )
+    cov = prior.get_cov( 1.0, 0.0, lambda_angular, l_dim )
 
     inv_cov = np.linalg.inv( cov )
     det_cov = np.linalg.det( cov )
@@ -122,14 +94,82 @@ def regularize_area_GP_3( X_ij, regparam ):
         print 'cov', cov
 
 #    print 'inv_cov', inv_cov
-    X_j = np.average( X_ij, axis=0 )
-    dX_ij = X_ij - X_j 
-    term1_all = np.dot( dX_ij.T, np.dot( inv_cov, dX_ij ) )
+    x_area_ave = np.average( x_area_lk, axis=0 )
+#    dx_area_lk = x_area_lk[:,:-1] - x_area_ave
+    dx_area_lk = ( x_area_lk - x_area_ave ) / x_area_ave
+    term1_all = np.dot( dx_area_lk.T, np.dot( inv_cov, dx_area_lk ) )
+#    term1_all = np.dot( x_area_lk.T, np.dot( inv_cov, x_area_lk ) )
     term1 = -0.5 * np.sum( term1_all.diagonal() )
     term2 = -0.5 * np.log( det_cov )
+
 #    print 'term1, term2', term1, term2
 
     return term1, term2
+
+
+
+#---------------------------------------------------
+def regularize_area_GP_g( x_area_lk, regparam ):
+
+    lambda_angular = regparam
+
+
+    # 'area' part
+    sumx_area_lk = np.cumsum( x_area_lk, axis=1 )
+    y_area_lk = np.log( x_area_lk[:,:-1] / ( 1. - sumx_area_lk[:,:-1] ) )
+
+#    print 'wn_rel_amp', wn_rel_amp
+#    print 'lambda_angular', lambda_angular
+    l_dim = len( x_area_lk )
+    cov = prior.get_cov( 1.0, 0.0, lambda_angular, l_dim )
+
+    inv_cov = np.linalg.inv( cov )
+    det_cov = np.linalg.det( cov )
+    if ( det_cov == 0. ):
+        print 'det_cov', det_cov
+        print 'cov', cov
+
+#    print 'inv_cov', inv_cov
+    y_area_ave = np.average( y_area_lk, axis=0 )
+#    dx_area_lk = x_area_lk[:,:-1] - x_area_ave
+    dy_area_lk = y_area_lk - y_area_ave
+    term1_all = np.dot( dy_area_lk.T, np.dot( inv_cov, dy_area_lk ) )
+#    term1_all = np.dot( x_area_lk.T, np.dot( inv_cov, x_area_lk ) )
+    term1 = -0.5 * np.sum( term1_all.diagonal() )
+    term2 = -0.5 * np.log( det_cov )
+
+#    print 'term1, term2', term1, term2
+    return term1, term2
+
+
+#---------------------------------------------------
+def regularize_area_GP_old( x_area_lk, regparam ):
+
+    lambda_angular = regparam
+
+#    print 'wn_rel_amp', wn_rel_amp
+#    print 'lambda_angular', lambda_angular
+    l_dim = len( x_area_lk )
+    cov = prior.get_cov_old( 1.0, 0.0, lambda_angular, l_dim )
+
+    inv_cov = np.linalg.inv( cov )
+    det_cov = np.linalg.det( cov )
+    if ( det_cov == 0. ):
+        print 'det_cov', det_cov
+        print 'cov', cov
+
+#    print 'inv_cov', inv_cov
+    x_area_ave = np.average( x_area_lk, axis=0 )
+#    dx_area_lk = x_area_lk[:,:-1] - x_area_ave
+    dx_area_lk = x_area_lk - x_area_ave
+    term1_all = np.dot( dx_area_lk.T, np.dot( inv_cov, dx_area_lk ) )
+#    term1_all = np.dot( x_area_lk.T, np.dot( inv_cov, x_area_lk ) )
+    term1 = -0.5 * np.sum( term1_all.diagonal() )
+    term2 = -0.5 * np.log( det_cov )
+
+    return term1, term2
+
+
 
 #--------------------------------------------------
 def allowed_region( V_nj, ave_j ):
@@ -201,25 +241,13 @@ if __name__ == "__main__":
 
     # Load input data
     Obs_ij = np.loadtxt( INFILE_DIR + INFILE )
-    Obsnoise_ij = ( NOISELEVEL * Obs_ij )
     Time_i  = np.arange( len( Obs_ij ) ) / ( 1.0 * len( Obs_ij ) )
     n_band = len( Obs_ij.T )
 
     # Initialization of Kernel
-    if SLICE_TYPE == 'time' :
-        print 'Decomposition into time slices...'
-        n_slice = len( Time_i )
-        Kernel_il = np.identity( n_slice )
-
-    elif SLICE_TYPE == 'longitude' :
-        print 'Decomposition into longitudinal slices...'
-        n_slice = N_SLICE_LONGITUDE
-        # (Time_i, n_slice, n_side, param_geometry):
-        Kernel_il = geometry.kernel( Time_i, n_slice, N_SIDE, GEOM )
-
-    else : 
-        print '\nERROR : Unknown slice type\n'
-        sys.exit()
+    print 'Decomposition into time slices...'
+    n_slice = len( Time_i )
+    Kernel_il = np.identity( n_slice )
 
     # PCA
     print 'Performing PCA...'
@@ -292,7 +320,7 @@ if __name__ == "__main__":
                 ln_prior_albd_list.append( ln_prior_albd )
 
                 # regularization ?
-                regparam     = ( SIGMA_Y, WL_AMP, LAMBDA_CORR )
+                regparam     = ( LAMBDA_CORR )
                 term1, term2 = regularize_area_GP_2( X_area_ik, regparam )
                 # term1, term2 = regularize_area_GP_3( Obs_estimate_ij, regparam )
                 regterm1_list.append( term1 )
@@ -385,7 +413,7 @@ if __name__ == "__main__":
 
     #--------------------------------------------------------------------------
     # save
-    filename = OUTFILE_DIR+INFILE+'_regf_PCplane_l' + str(LAMBDA_CORR_DEG) + 'deg_' + str(SEED_in) + '.pdf'
+    filename = OUTFILE_DIR+INFILE+'_2_regf_PCplane_l' + str(LAMBDA_CORR_DEG) + 'deg_' + str(SEED_in) + '.pdf'
     plt.savefig( filename, bbox_inches='tight' )
 
 
@@ -401,7 +429,7 @@ if __name__ == "__main__":
     points_kq = np.c_[ points_kn_best, np.ones( len( points_kn_best ) ) ]
     X_area_ik_best  = np.dot( U_iq, np.linalg.inv( points_kq ) )
 
-    np.savetxt( OUTFILE_DIR+INFILE+'_l' + str(LAMBDA_CORR_DEG) + 'deg_' + str(SEED_in) + '_X_albd_jk_best', X_albd_kj_best.T )
-    np.savetxt( OUTFILE_DIR+INFILE+'_l' + str(LAMBDA_CORR_DEG) + 'deg_' + str(SEED_in) + '_X_area_ik_best', X_area_ik_best )
+    np.savetxt( OUTFILE_DIR+INFILE+'_2_l' + str(LAMBDA_CORR_DEG) + 'deg_' + str(SEED_in) + '_X_albd_jk_best', X_albd_kj_best.T )
+    np.savetxt( OUTFILE_DIR+INFILE+'_2_l' + str(LAMBDA_CORR_DEG) + 'deg_' + str(SEED_in) + '_X_area_ik_best', X_area_ik_best )
 
 
