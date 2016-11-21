@@ -20,7 +20,7 @@ target_indx_list = [[ 17 ], # ocean
 # MODE = 'March'
 # MODE = 'June'
 MODE= 'specify'
-TAG='45deg'
+TAG='90deg_time9'
 # vegetation
 # target_indx = [1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 14]
  #target_indx = [1, 2, 3, 4, 5, 6, 10, 14]
@@ -29,7 +29,7 @@ TAG='45deg'
 #target_indx = [7,8,9,11,12,13,16]
 
 # ocean
-target_indx = [17]
+# target_indx = [17]
 
 # all
 # target_indx = range(1,18)
@@ -37,9 +37,7 @@ target_indx = [17]
 
 cldoptd_crit = 5.
 
-TIME_END = 24.0
-TSTEP = 1.0
-Pspin = 24.0
+Pspin = 1.0
 OMEGA = ( 2. * np.pi / Pspin )
 
 # HealPix
@@ -65,6 +63,7 @@ if ( MODE == 'March' ):
     LON_O = 205.423 # sub-observer longitude
     INFILE = "data/raddata_1_norm"
     Time_i = np.arange(25)*1.
+    Time_i = np.arange(25)/24.
     cldfile_frac = "data/cldfrac_EPOXI_March_6.dat"
     cldfile_optd = "data/clddpth_EPOXI_March_6.dat"
 elif ( MODE == 'June' ):
@@ -82,10 +81,10 @@ elif ( MODE == 'June' ):
     cldfile_frac = "data/cldfrac_EPOXI_June_6.dat"
     cldfile_optd = "data/clddpth_EPOXI_June_6.dat"
     INFILE = "data/raddata_2_norm"
-    Time_i = np.arange(25)*1.
+    Time_i = np.arange(25)*24.
 
 elif ( MODE == 'specify' ):
-    LON_S = 45.
+    LON_S = 90.
     LAT_S = 0.
     LON_O = 0.
     LAT_O = 0.
@@ -95,7 +94,7 @@ elif ( MODE == 'specify' ):
 #    LAT_S = 21.6159766
     cldfile_frac = "data/cldfrac_EPOXI_June_6.dat"
     cldfile_optd = "data/clddpth_EPOXI_June_6.dat"
-    Time_i = np.arange(7)*1./7.*24.
+    Time_i = np.arange(9)/9.
 else:
     print 'ERROR: Invalid MODE'
     sys.exit()
@@ -180,13 +179,13 @@ def band_ave( wl_array, sp_array ):
         sp_ave[bb] = np.average( sp_array[ np.where( ( bands[bb][0] < wl_array ) * ( bands[bb][1] > wl_array ) ) ] )
     return sp_ave
 
-wl_ocean, sp_ocean = np.loadtxt( '/Users/yuka/data/ASTER/ocean.alb.short', unpack=True )
-wl_soil, sp_soil = np.loadtxt( '/Users/yuka/data/ASTER/jhu.becknic.soil.entisol.quartzipsamment.coarse.87P706.spectrum.txt', unpack=True )
+wl_ocean, sp_ocean = np.loadtxt( 'ocean.alb.short', unpack=True )
+wl_soil, sp_soil = np.loadtxt( 'jhu.becknic.soil.entisol.quartzipsamment.coarse.87P706.spectrum.txt', unpack=True )
 wl_soil = wl_soil
 sp_soil = sp_soil*0.01
-wl_vege, sp_vege = np.loadtxt( '/Users/yuka/data/ASTER/grass', unpack=True )
-wl_vege = wl_vege[::-1]
-sp_vege = sp_vege[::-1]*0.01
+wl_vege, sp_vege = np.loadtxt( 'jhu.becknic.vegetation.grass.green.solid.gras.spectrum.txt', unpack=True )
+wl_vege = wl_vege
+sp_vege = sp_vege*0.01
 
 band_sp = np.zeros( [ 3, len(bands) ] )
 band_sp[0] = band_ave( wl_ocean, sp_ocean )
@@ -208,7 +207,7 @@ contribution_factor = np.zeros( [ len(Time_i),  len( target_indx_list ) ] )
 for ii in xrange( len(Time_i) ) :
 
     time = Time_i[ii]
-    weight_array0 = geometry.weight( time, N_SIDE, param_geometry )
+    weight_array0 = geometry.weight_2( time, N_SIDE, param_geometry )
     norm = np.sum( weight_array0 )
 
     for kk in xrange( len( target_indx_list ) ):

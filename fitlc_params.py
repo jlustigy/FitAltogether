@@ -29,8 +29,8 @@ deg2rad = np.pi/180.
 N_SIDE   = 32
 # INFILE = '/Users/yuka/Dropbox/Project/11_RotationalUnmixing/mockdata_quadrature_lc'
 # INFILE = 'data/raddata_1_norm'
-INFILE = 'mockdata/simpleIGBP_quadrature_lc'
-# INFILE = 'mockdata_90deg_13time_lcscat'
+# INFILE = 'mockdata/simpleIGBP_quadrature_lc'
+INFILE = 'mockdata_90deg_13time_lcscat'
 # INFILE = 'mockdata_90deg_lc'
 
 KNOWN_ANSWER=False

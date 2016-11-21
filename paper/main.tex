@@ -518,6 +518,8 @@ This is a natural consequence from the fact that the soil and vegetation are min
 \label{ss:shrinkwrap}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\subsubsection{Fitting with $\fast$}
+
 %%%
 \begin{eqnarray}
 \mathcal{P}_{\fast} &=& \prod _k \left[ \frac{1}{(\sqrt{ 2 \pi })^{I} \sqrt{| \tilde \Sigma |} } \right. \\
@@ -528,8 +530,8 @@ This is a natural consequence from the fact that the soil and vegetation are min
 
 %%%
 \begin{eqnarray}
-- \log \mathcal{P}_{\fast} &\propto & \frac{1}{2} | \tilde \Sigma | + \mathcal{F}(\lambda, \Delta_t; f) \\
-\mathcal{F}(\lambda, \Delta_t; f)&\equiv & \sum _k \sum_{i,\,i'} (\fast ^{T})_{ki} \tilde \Sigma_{ii'} ^{-1} \fast_{i'k}
+- \log \mathcal{P}_{\fast} &\propto & \frac{1}{2} | \tilde \Sigma | + \mathcal{F}(\lambda, \Delta_t; \fast) \\
+\mathcal{\tilde F}(\lambda, \Delta_t; \fast)&\equiv & \sum _k \sum_{i,\,i'} (\fast ^{T})_{ki} \tilde \Sigma_{ii'} ^{-1} \fast_{i'k}
 \end{eqnarray}
 %%%
 
@@ -539,17 +541,19 @@ This is a natural consequence from the fact that the soil and vegetation are min
 \fast_{ik} \rightarrow ( \fast_{ik} - \fast^{(ave)}_k )
 \end{equation}
 %%%
-In the following figures, the vertices of each triangle indicates the sample combination of the colors projected onto the principal component plane, and the colors is scaled by $\mathcal{F}^{\ast } (\Delta_t; f) = \lambda ^2 \mathcal{F}$. 
+In the following figures, the vertices of each triangle indicates the sample combination of the colors projected onto the principal component plane, and the colors is scaled by $\mathcal{\tilde F}^{\ast } (\Delta_t; \fast) = \lambda ^2 \mathcal{\tilde F}$. 
 
-\vspace{3\baselineskip}
+
+\subsubsection{Concerns}
 
 %%%
-Concerns:
 \begin{itemize}
-\item $f_{lk}$'s are not mutually independent. 
-\item Same regulariation 
+\item $\fast_{lk}$'s or $f_{lk}$'s are not mutually independent. (Sum is unity.) 
+\item Same regularization 
 \end{itemize}
 %%%
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}[b]
@@ -568,7 +572,7 @@ Concerns:
 \includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_regf_PCplane_l90deg_2019.pdf}
     \end{center}
     \end{minipage}    
-    \caption{The difference between the three panels is just the seed for \url{np.randam.uniform}}
+    \caption{The vertices of each triangle indicates the sample combination of the colors projected onto the principal component plane, and the colors is scaled by $\mathcal{\tilde F}^{\ast }$ with $\Delta_t=1.75$.The difference between the three panels is just the seed for \url{np.randam.uniform}}
 \label{fig:regterm}
 \end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -591,7 +595,7 @@ Concerns:
 \includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_regf_PCplane_l120deg_2019.pdf}
     \end{center}
     \end{minipage}
-    \caption{The difference between the three panels is just the seed for \url{np.randam.uniform}}
+    \caption{The vertices of each triangle indicates the sample combination of the colors projected onto the principal component plane, and the colors is scaled by $\mathcal{\tilde F}^{\ast }$ with $\Delta_t\sim 2.3$. The difference between the three panels is just the seed for \url{np.randam.uniform}}
 \label{fig:regterm}
 \end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -601,19 +605,105 @@ Concerns:
 \begin{figure*}[b]
     \begin{minipage}{0.5\hsize}
     \begin{center}
-\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_l120deg_2013_X_albd_jk_best.pdf}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_l90deg_2013_X_albd_jk_best.pdf}
     \end{center}
     \end{minipage}
     \begin{minipage}{0.5\hsize}
     \begin{center}
-\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_l120deg_2013_X_area_ik_best.pdf}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_l90deg_2013_X_area_ik_best.pdf}
     \end{center}
     \end{minipage}
-    \caption{Solution with smallest regularization term. }
+    \caption{Solution with smallest regularization term when $\Delta_t=1.75$ ($\Delta \phi = 90^{\circ }$).}
 \label{fig:regterm}
 \end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{figure*}[b]
+%    \begin{minipage}{0.5\hsize}
+%    \begin{center}
+%\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_l120deg_2013_X_albd_jk_best.pdf}
+%    \end{center}
+%    \end{minipage}
+%    \begin{minipage}{0.5\hsize}
+%    \begin{center}
+%\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_l120deg_2013_X_area_ik_best.pdf}
+%    \end{center}
+%    \end{minipage}
+%    \caption{Solution with smallest regularization term. }
+%\label{fig:regterm}
+%\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+\clearpage
+
+\subsubsection{Fitting with $f$}
+
+What if $f$ is used instead of $\fast$ in fitting?
+
+From equation (\ref{eq:d_f_s}), the solution for $f_{lk} s_{kj}$ that is found through the least-square method is
+%%%
+\begin{equation}
+\sum_i (W^{+})_{li} d_{ij} = \sum_k f_{lk} s_{kj}
+\end{equation}
+%%%
+So, with an analogy to equation (\ref{eq:d_f_ast_s}), we could make similar plots of the principal components plane (with the principal components found from $\sum_i (W^{+})_{li} d_{ij}$ instead of $d_{ij}$). 
+
+Then, the regularization term would be $\mathcal{F}^{\ast } (\Delta_{\phi }; f) = \lambda ^2 \mathcal{F}$ will be used where
+%%%
+\begin{equation}
+\mathcal{F}(\lambda, \Delta_{\phi }; f)\equiv  \sum _k \sum_{i,\,i'} (f^{T})_{ki} \Sigma_{ii'} ^{-1} f_{i'k}. 
+\end{equation}
+%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[h]
+    \begin{minipage}{0.33\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_fitmap_regf_PCplane_l90deg_2013.pdf}
+    \end{center}
+    \end{minipage}
+    \begin{minipage}{0.33\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_fitmap_regf_PCplane_l90deg_2017.pdf}
+    \end{center}
+    \end{minipage}
+    \begin{minipage}{0.33\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_fitmap_regf_PCplane_l90deg_2019.pdf}
+    \end{center}
+    \end{minipage}
+    \caption{The vertices of each triangle indicates the sample combination of the colors projected onto the principal component plane, and the colors is scaled by $\mathcal{F}^{\ast }$ with $\Delta_t\sim 1.25$. The difference between the three panels is just the seed for \url{np.randam.uniform}.}
+\label{fig:regterm}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure*}[h]
+    \begin{minipage}{0.5\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_fitmap_l90deg_2013_X_albd_jk_best.pdf}
+    \end{center}
+    \end{minipage}
+    \begin{minipage}{0.5\hsize}
+    \begin{center}
+\includegraphics[width=\hsize]{simpleIGBP_quadrature_lc_fitmap_l90deg_2013_X_area_ik_best.pdf}
+    \end{center}
+    \end{minipage}
+    \caption{Solution with smallest regularization term when $\Delta \phi = 90^{\circ }$. }
+\label{fig:regterm}
+\end{figure*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+\end{document}
 
 \clearpage
 
