@@ -251,7 +251,7 @@ if __name__ == "__main__":
 
     # PCA
     print 'Performing PCA...'
-    n_pc, V_nj, U_in, M_j = PCA.do_PCA( Obs_ij, E_cutoff=1e-2, output=False )
+    n_pc, V_nj, U_in, M_j = PCA.do_PCA( Obs_ij, E_cutoff=1e-2, output=True )
     n_type = n_pc + 1
     if n_type != 3 :
         print 'ERROR: This code is only applicable for 3 surface types!'
