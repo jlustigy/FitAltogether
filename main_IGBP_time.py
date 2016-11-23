@@ -20,7 +20,7 @@ target_indx_list = [[ 17 ], # ocean
 # MODE = 'March'
 # MODE = 'June'
 MODE= 'specify'
-TAG='90deg_time19'
+TAG='90deg_time23'
 # vegetation
 # target_indx = [1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 14]
  #target_indx = [1, 2, 3, 4, 5, 6, 10, 14]
@@ -94,7 +94,7 @@ elif ( MODE == 'specify' ):
 #    LAT_S = 21.6159766
     cldfile_frac = "data/cldfrac_EPOXI_June_6.dat"
     cldfile_optd = "data/clddpth_EPOXI_June_6.dat"
-    Time_i = np.arange(19)/19.
+    Time_i = np.arange(23)/23.
 else:
     print 'ERROR: Invalid MODE'
     sys.exit()
