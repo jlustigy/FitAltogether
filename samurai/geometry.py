@@ -2,6 +2,8 @@ import numpy as np
 import healpy as hp
 import pdb
 
+__all__ = ["latlon2cart", "weight", "kernel"]
+
 deg2rad = (np.pi/180.)
 
 #---------------------------------------------------
@@ -53,9 +55,9 @@ def kernel(Time_i, n_slice, n_side, param_geometry):
     phi_n[ phi_n < np.pi ]  = phi_n[ phi_n < np.pi ] + 2. * np.pi
     assignedL_float_n = np.trunc(( phi_n - np.pi)/(2.*np.pi/n_slice))
     assignedL_n = assignedL_float_n.astype(np.int64)
-    LN_nl = np.zeros([n_pix, n_slice]) 
+    LN_nl = np.zeros([n_pix, n_slice])
     LN_nl[ np.arange(n_pix), assignedL_n ] = 1
-    Kernel_il = np.dot( Weight_in, LN_nl ) 
+    Kernel_il = np.dot( Weight_in, LN_nl )
     Kernel_il = Kernel_il / np.tile( np.sum( Kernel_il, axis=1 ), [ n_slice, 1 ] ).T
 
     return Kernel_il

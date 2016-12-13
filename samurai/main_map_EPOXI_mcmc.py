@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as pl
 import sys
 import datetime
 import multiprocessing
@@ -9,7 +8,6 @@ from pdb import set_trace as stop
 
 import healpy as hp
 import emcee
-import corner
 import h5py
 
 import geometry

@@ -1,10 +1,8 @@
 import numpy as np
 import healpy as hp
 import emcee
-import matplotlib.pyplot as pl
 from scipy.optimize import minimize
 import sys
-import corner
 import datetime
 import multiprocessing
 import os

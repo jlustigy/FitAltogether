@@ -1,5 +1,16 @@
 import numpy as np
 
+__all__ = [
+    "get_ln_prior_ordering",
+    "get_ln_prior_albd",
+    "get_ln_prior_area_new",
+    "get_ln_prior_area",
+    "get_cov",
+    "regularize_area_GP2",
+    "get_cov2",
+    "regularize_area_tikhonov"
+]
+
 def get_ln_prior_ordering(x_albd_kj, x_area_lk):
     # Calculate "detectability" metric
     dm = np.mean(x_albd_kj, axis=1) * np.mean(x_area_lk, axis=0)
