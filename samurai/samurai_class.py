@@ -29,22 +29,189 @@ RELPATH = os.path.dirname(__file__)
 
 ################################################################################
 
+class Data(object):
+    """
+    """
+    def __init__(self, Time_i=None, Obs_ij=None, Obsnoise_ij=None, wlc_i=None, wlw_i=None,
+                 lat_s=None, lon_s=None, lat_o=None, lon_o=None, period=None):
+        """
+        ``samurai`` Data object
+
+        Parameters
+        ----------
+        Time_i : numpy.ndarray
+            Observational time grid [hours]
+        Obs_ij : numpy.ndarray
+            Observed multi-wavelength, lightcurve data
+        Obsnoise_ij : numpy.ndarray
+            Observational errors
+        wlc_i : numpy.ndarray
+            Wavelength grid band centers [nm]
+        wlw_i : numpy.ndarray
+            Wavelength grid bandwidths [nm]
+        lat_s : float
+            Sub-stellar latitude [deg]
+        lon_s : float
+            Sub-stellar longitude [deg]
+        lat_o : float
+            sub-observer latitude [deg]
+        lon_o : float
+            Sub-observer longitude [deg]
+        period : float
+            Planet rotational period [hours]
+        """
+        self.Time_i=Time_i
+        self.Obs_ij=Obs_ij
+        self.Obsnoise_ij=Obsnoise_ij
+        self.wlc_i=wlc_i
+        self.wlw_i=wlw_i
+        self.lat_s=lat_s
+        self.lon_s=lon_s
+        self.lat_o=lat_o
+        self.lon_o=lon_o
+        self._period=period
+        if self._period is None:
+            self._omega = None
+        else:
+            self._omega= ( 2. * np.pi / self.period )
+
+    def get_dict(self):
+        d = {}
+        for key, value in self.__dict__.iteritems():
+            if key.startswith("_"):
+                nkey = key[1:]
+            else:
+                nkey = key
+            d[nkey] = value
+        return d
+
+    @property
+    def period(self):
+        return self._period
+
+    @period.setter
+    def period(self, value):
+        self._period = value
+        self._omega = ( 2. * np.pi / value )
+
+    @property
+    def omega(self):
+        return self._omega
+
+    @omega.setter
+    def omega(self, value):
+        self._omega = value
+
+    #
+
+    @classmethod
+    def from_EPOXI_march(cls):
+        """
+        Initialize Data using March 2008 EPOXI observations
+        """
+        infile = "../data/raddata_1_norm"
+        period = 24.0
+        lat_s = -0.581   # sub-solar latitude
+        lon_s = 262.909  # sub-solar longitude
+        lat_o = 1.678    # sub-observer latitude
+        lon_o = 205.423  # sub-observer longitude
+        Time_i = np.arange(25)*1.
+        Obs_ij = np.loadtxt(os.path.join(RELPATH, infile))
+        wlc_i = np.array([350., 450., 550., 650., 750., 850., 950.])
+        wlw_i = np.array([100., 100., 100., 100., 100., 100., 100.])
+        Obsnoise_ij = None
+        # Return new class instance
+        return cls(Time_i=Time_i, Obs_ij=Obs_ij, Obsnoise_ij=Obsnoise_ij,
+                   wlc_i=wlc_i, wlw_i=wlw_i, lat_s=lat_s, lon_s=lon_s, lat_o=lat_o,
+                   lon_o=lon_o, period=period)
+
+    @classmethod
+    def from_EPOXI_june(cls):
+        """
+        Initialize Data using June 2008 EPOXI observations
+        """
+        infile = "../data/raddata_2_norm"
+        period = 24.0
+        lat_s = 22.531  # sub-solar latitude
+        lon_s = 280.977 # sub-solar longitude
+        lat_o = 0.264   # sub-observer latitude
+        lon_o = 205.465 # sub-observer longitude
+        Time_i = np.arange(25)*1.
+        Obs_ij = np.loadtxt(os.path.join(RELPATH, infile))
+        wlc_i = np.array([350., 450., 550., 650., 750., 850., 950.])
+        wlw_i = np.array([100., 100., 100., 100., 100., 100., 100.])
+        Obsnoise_ij = None
+        # Return new class instance
+        return cls(Time_i=Time_i, Obs_ij=Obs_ij, Obsnoise_ij=Obsnoise_ij,
+                   wlc_i=wlc_i, wlw_i=wlw_i, lat_s=lat_s, lon_s=lon_s, lat_o=lat_o,
+                   lon_o=lon_o, period=period)
+
+    @classmethod
+    def from_test_simpleIGBP(cls):
+        """
+        Initialize Data using the simple IGBP map
+        """
+        infile = '../mockdata/simpleIGBP_quadrature_lc'
+        period = 7.0
+        lat_s = 0.0  # sub-solar latitude
+        lon_s = 90.0 # sub-solar longitude
+        lat_o = 0.0  # sub-observer latitude
+        lon_o = 0.0  # sub-observer longitude
+        Time_i = np.arange(7)/7.*24.
+        Obs_ij = np.loadtxt(os.path.join(RELPATH, infile))
+        wlc_i = np.array([550., 650., 750., 850.])
+        wlw_i = np.array([100., 100., 100., 100.])
+        Obsnoise_ij = None
+        # Return new class instance
+        return cls(Time_i=Time_i, Obs_ij=Obs_ij, Obsnoise_ij=Obsnoise_ij,
+                   wlc_i=wlc_i, wlw_i=wlw_i, lat_s=lat_s, lon_s=lon_s, lat_o=lat_o,
+                   lon_o=lon_o, period=period)
+
+################################################################################
+
 class Mapper(object):
     """
     """
     def __init__(self, fmodel="map", imodel="emcee", data=None,
                  ntype=3, nsideseed=4, regularization=None, reg_area=False, reg_albd=False,
                  sigmay=3.0, noiselevel=0.01, Nmcmc=10000, Nmcmc_b=0, mcmc_seedamp=0.5,
-                 hdf5_compression='lzf', nslice=9, ncpu=None
+                 hdf5_compression='lzf', nslice=9, ncpu=None, output=None
                  ):
         """
         Samurai mapping object
 
         Parameters
         ----------
-
-        Returns
-        -------
+        fmodel : str
+            Forward model ("map" or "lightcurve")
+        imodel : str
+            Inverse model ("emcee" or "emcee3")
+        data : samurai.Data
+            Data object
+        ntype : int
+            Number of surface types
+        nsideseed : int
+            ``nside = 2 * 2 ** nsideseed``
+        regularization : str
+            Type of regularization term1
+        reg_area : bool
+        reg_alnd : bool
+        sigmay : float
+        noiselevel : float
+        Nmcmc : int
+            Number of MCMC iterations
+        Nmcmc_b : int
+            Number of MCMC burn-in iterations
+        mcmc_seedamp : float
+            Amplitude of gaussian ball for starting state
+        hdf5_compression : str
+            Compression algorithm for HDF5 datasets
+        nslice : int
+            Number of longitudinal slices in map ``fmodel``
+        ncpu : int
+            Number of CPUs to use for multithreading MCMC
+        output : str
+            Location/name of output HDF5 file
         """
         self.fmodel=fmodel
         self.imodel=imodel
@@ -63,6 +230,7 @@ class Mapper(object):
         self.ncpu=None
         if self.ncpu is None:
             self.ncpu = multiprocessing.cpu_count()
+        self.output=output
 
         # Params unique to map model
         self.nslice=nslice
@@ -99,20 +267,98 @@ class Mapper(object):
     def nregparam(self, value):
         self._nregparam = value
 
-    #
-
-    def run_mcmc(self, verbose=True):
+    @classmethod
+    def from_hdf5(cls, path):
         """
-        Run Mapper object with ``emcee`` MCMC code.
+        Initialize Mapper object using previously saved HDF5 file
+
+        Parameters
+        ----------
+        path : str
+            Path to ``samurai`` output HDF5 file
+
+        Returns
+        -------
+        Mapper object
         """
 
-        # print start time
+        # List of items to skip in initialization
+        skip_list = ["nregparam", "omega", "Kernel_il"]
+
+        # Load MCMC samples
+        try:
+            # Open the file stream
+            f = h5py.File(path, 'r')
+        except IOError:
+            print("Error: HDF5 does not exist as suggested")
+            return None
+
+        # Create dictonary of Mapper attrs
+        sdic = {}
+        for key, value in f.attrs.iteritems():
+            v = value
+            if hasattr(value, "__len__"):
+                if len(value) == 0:
+                    v = None
+            if key not in skip_list:
+                sdic[key] = v
+
+        # Create dictionary of Data
+        ddic = {}
+        for key, value in f["data"].attrs.iteritems():
+            v = value
+            if hasattr(value, "__len__"):
+                if len(value) == 0:
+                    v = None
+            if key not in skip_list:
+                ddic[key] = v
+        for key, value in f["data"].iteritems():
+            v = value.value
+            if hasattr(value, "__len__"):
+                if len(value) == 0:
+                    v = None
+            if key not in skip_list:
+                ddic[key] = v
+
+        # Return new class instance
+        return cls(output=path, data=Data(**ddic), **sdic)
+
+    def run_mcmc(self, savedir="mcmc_output", tag=None, verbose=True):
+        """
+        Run Mapper object simulation
+
+        Parameters
+        ----------
+        savedir : str, optional
+            Relative directory to save output files
+        tag : str, optional
+            Specify saving tag for output (default is the time)
+        verbose : bool, optional
+            Set to print status updates
+        """
+
+        # Get start time
         now = datetime.datetime.now()
         if verbose: print(now.strftime("%Y-%m-%d %H:%M:%S"))
 
         # Create directory for this run
-        startstr = now.strftime("%Y-%m-%d--%H-%M")
-        run_dir = os.path.join("mcmc_output", startstr)
+        if tag is None:
+            startstr = now.strftime("%Y-%m-%d--%H-%M")
+        else:
+            startstr = tag
+
+        # Create savedir directory, if necessary
+        if savedir is not None:
+            run_dir = os.path.join(savedir, startstr)
+            try:
+                os.mkdir(savedir)
+                if verbose: print("Created directory:", savedir)
+            except OSError:
+                if verbose: print(savedir, "already exists.")
+        else:
+            run_dir = os.path.join("", startstr)
+
+        # Create unique run_dir directory
         os.mkdir(run_dir)
         if verbose: print("Created directory:", run_dir)
 
@@ -329,6 +575,7 @@ class Mapper(object):
 
         # Specify hdf5 save file and group names
         hfile = os.path.join(run_dir, "samurai_out.hdf5")
+        self.output = hfile
         grp_init_name = "initial_optimization"
         grp_mcmc_name = "mcmc"
         grp_data_name = "data"
@@ -437,117 +684,3 @@ class Mapper(object):
 
         # Close hdf5 file stream
         f.close()
-
-################################################################################
-
-class Data(object):
-    """
-    """
-    def __init__(self, Time_i=None, Obs_ij=None, Obsnoise_ij=None, wlc_i=None, wlw_i=None,
-                 lat_s=None, lon_s=None, lat_o=None, lon_o=None, period=None):
-        self.Time_i=Time_i
-        self.Obs_ij=Obs_ij
-        self.Obsnoise_ij=Obsnoise_ij
-        self.wlc_i=wlc_i
-        self.wlw_i=wlw_i
-        self.lat_s=lat_s
-        self.lon_s=lon_s
-        self.lat_o=lat_o
-        self.lon_o=lon_o
-        self._period=period
-        if self._period is None:
-            self._omega = None
-        else:
-            self._omega= ( 2. * np.pi / self.period )
-
-    def get_dict(self):
-        d = {}
-        for key, value in self.__dict__.iteritems():
-            if key.startswith("_"):
-                nkey = key[1:]
-            else:
-                nkey = key
-            d[nkey] = value
-        return d
-
-    @property
-    def period(self):
-        return self._period
-
-    @period.setter
-    def period(self, value):
-        self._period = value
-        self._omega = ( 2. * np.pi / value )
-
-    @property
-    def omega(self):
-        return self._omega
-
-    @omega.setter
-    def omega(self, value):
-        self._omega = value
-
-    #
-
-    @classmethod
-    def from_EPOXI_march(cls):
-        """
-        Initialize Data using March 2008 EPOXI observations
-        """
-        infile = "../data/raddata_1_norm"
-        period = 24.0
-        lat_s = -0.581   # sub-solar latitude
-        lon_s = 262.909  # sub-solar longitude
-        lat_o = 1.678    # sub-observer latitude
-        lon_o = 205.423  # sub-observer longitude
-        Time_i = np.arange(25)*1.
-        Obs_ij = np.loadtxt(os.path.join(RELPATH, infile))
-        wlc_i = np.array([350., 450., 550., 650., 750., 850., 950.])
-        wlw_i = np.array([100., 100., 100., 100., 100., 100., 100.])
-        Obsnoise_ij = None
-        # Return new class instance
-        return cls(Time_i=Time_i, Obs_ij=Obs_ij, Obsnoise_ij=Obsnoise_ij,
-                   wlc_i=wlc_i, wlw_i=wlw_i, lat_s=lat_s, lon_s=lon_s, lat_o=lat_o,
-                   lon_o=lon_o, period=period)
-
-    @classmethod
-    def from_EPOXI_june(cls):
-        """
-        Initialize Data using June 2008 EPOXI observations
-        """
-        infile = "../data/raddata_2_norm"
-        period = 24.0
-        lat_s = 22.531  # sub-solar latitude
-        lon_s = 280.977 # sub-solar longitude
-        lat_o = 0.264   # sub-observer latitude
-        lon_o = 205.465 # sub-observer longitude
-        Time_i = np.arange(25)*1.
-        Obs_ij = np.loadtxt(os.path.join(RELPATH, infile))
-        wlc_i = np.array([350., 450., 550., 650., 750., 850., 950.])
-        wlw_i = np.array([100., 100., 100., 100., 100., 100., 100.])
-        Obsnoise_ij = None
-        # Return new class instance
-        return cls(Time_i=Time_i, Obs_ij=Obs_ij, Obsnoise_ij=Obsnoise_ij,
-                   wlc_i=wlc_i, wlw_i=wlw_i, lat_s=lat_s, lon_s=lon_s, lat_o=lat_o,
-                   lon_o=lon_o, period=period)
-
-    @classmethod
-    def from_test_simpleIGBP(cls):
-        """
-        Initialize Data using the simple IGBP map
-        """
-        infile = '../mockdata/simpleIGBP_quadrature_lc'
-        period = 7.0
-        lat_s = 0.0  # sub-solar latitude
-        lon_s = 90.0 # sub-solar longitude
-        lat_o = 0.0  # sub-observer latitude
-        lon_o = 0.0  # sub-observer longitude
-        Time_i = np.arange(7)/7.*24.
-        Obs_ij = np.loadtxt(os.path.join(RELPATH, infile))
-        wlc_i = np.array([550., 650., 750., 850.])
-        wlw_i = np.array([100., 100., 100., 100.])
-        Obsnoise_ij = None
-        # Return new class instance
-        return cls(Time_i=Time_i, Obs_ij=Obs_ij, Obsnoise_ij=Obsnoise_ij,
-                   wlc_i=wlc_i, wlw_i=wlw_i, lat_s=lat_s, lon_s=lon_s, lat_o=lat_o,
-                   lon_o=lon_o, period=period)
