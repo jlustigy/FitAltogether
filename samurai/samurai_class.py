@@ -21,12 +21,85 @@ import prior
 import reparameterize
 from .likelihood import lnprob, lnlike, lnprior
 from .map_utils import generate_tex_names, save2hdf5, calculate_walkers, set_nreg
+from .mcmc_physical import plot_area_alb, plot_model_data, plot_posteriors
+from .mcmc_analysis import plot_trace
 
-__all__ = ["Mapper", "Data"]
+__all__ = ["Mapper", "Data", "Output"]
 
 # The location to *this* file
 RELPATH = os.path.dirname(__file__)
 
+################################################################################
+# Output
+################################################################################
+
+class Output(object):
+    """
+    ``samurai`` simulation data are stored in this object which interfaces with the
+    HDF5 file
+    """
+    def __init__(self, hpath=None):
+        """
+        Initialize a ``samurai`` Output object using the name of an HDF5 file
+
+        Parameters
+        ----------
+        hfile : str
+            Location of output HDF5 file
+        """
+        self.hpath=hpath
+        self.open=self._open
+
+    def _open(self, verbose=True):
+        """Open HDF5 output file stream for file locatation stored in ``hpath``
+        """
+        # Try to open HDF5 file
+        try:
+            # Open the file stream
+            f = h5py.File(self.hpath, 'r+')
+            # Create new attribute for file stream
+            self.hfile=f
+            # Allow access to methods
+            self.close=self._close
+            self.plot_trace=self._plot_trace
+            # Restrict access to open
+            del self.open
+            if verbose: print("HDF5 file opened")
+        except IOError:
+            print("Error: HDF5 file does not exist as %s" %self.hpath)
+
+    def _close(self, verbose=True):
+        """Close HDF5 output file stream for file locatation stored in ``hpath``
+        """
+        if hasattr(self, "hfile"):
+            # Close HDF5 file stream
+            self.hfile.close()
+            # Delete file stream attribute
+            del self.hfile
+            # Delete close method attribute
+            del self.close
+            del self.plot_trace
+            # Allow access to open
+            self.open=self._open
+            if verbose: print("HDF5 file closed")
+
+    def _plot_trace(self, verbose=True, which=None, newdir="trace_plots/"):
+        """Plot MCMC trace plots
+        """
+        mdir = os.path.split(self.hpath)[0]
+        # Create directory for trace plots
+        trace_dir = os.path.join(mdir, newdir)
+        try:
+            os.mkdir(trace_dir)
+            if verbose: print("Created directory:", trace_dir)
+        except OSError:
+            if verbose: print(trace_dir, "already exists.")
+        # Make trace plots
+        samples = self.hfile["mcmc/samples"]
+        Y_names = self.hfile["mcmc"].attrs["Y_names"]
+        plot_trace(samples, names=Y_names, directory=trace_dir, which=which)
+################################################################################
+# Data
 ################################################################################
 
 class Data(object):
@@ -168,14 +241,21 @@ class Data(object):
                    lon_o=lon_o, period=period)
 
 ################################################################################
+# Mapper
+################################################################################
 
 class Mapper(object):
     """
+    An interface to the Surface Albedo Mapping Using RotAtional Inversion (``samurai``) model.
+
+    Attributes
+    ----------
+
     """
     def __init__(self, fmodel="map", imodel="emcee", data=None,
                  ntype=3, nsideseed=4, regularization=None, reg_area=False, reg_albd=False,
                  sigmay=3.0, noiselevel=0.01, Nmcmc=10000, Nmcmc_b=0, mcmc_seedamp=0.5,
-                 hdf5_compression='lzf', nslice=9, ncpu=None, output=None
+                 hdf5_compression='lzf', nslice=9, ncpu=None, output=Output()
                  ):
         """
         Samurai mapping object
@@ -210,8 +290,8 @@ class Mapper(object):
             Number of longitudinal slices in map ``fmodel``
         ncpu : int
             Number of CPUs to use for multithreading MCMC
-        output : str
-            Location/name of output HDF5 file
+        output : samurai.Output
+            Object containing location and opened HDF5 file
         """
         self.fmodel=fmodel
         self.imodel=imodel
@@ -321,7 +401,7 @@ class Mapper(object):
                 ddic[key] = v
 
         # Return new class instance
-        return cls(output=path, data=Data(**ddic), **sdic)
+        return cls(output=Output(hpath=path), data=Data(**ddic), **sdic)
 
     def run_mcmc(self, savedir="mcmc_output", tag=None, verbose=True):
         """
@@ -556,8 +636,9 @@ class Mapper(object):
             # Run MCMC
             ensemble = sampler.run(ensemble, num_mcmc, progress=verbose)
 
-            # Extract chains
-            original_samples = sampler.get_coords()
+            # Extract chains, reshape so emcee compatible
+            original_samples = sampler.get_coords().reshape([n_walkers, num_mcmc, n_dim])
+
             #model_ij = None
 
             # Create dictionaries for mcmc data and metadata
@@ -575,7 +656,6 @@ class Mapper(object):
 
         # Specify hdf5 save file and group names
         hfile = os.path.join(run_dir, "samurai_out.hdf5")
-        self.output = hfile
         grp_init_name = "initial_optimization"
         grp_mcmc_name = "mcmc"
         grp_data_name = "data"
@@ -679,8 +759,14 @@ class Mapper(object):
             else:
                 grp_mcmc.create_dataset(key, data=value, compression=compression)
         # Save mcmc run metadata
-        #for key, value in mcmc_dict_attrs.iteritems():
-        #    grp_mcmc.attrs[key] = value
+        for key, value in mcmc_dict_attrs.iteritems():
+            if value is None:
+                grp_mcmc.attrs[key] = ()
+            else:
+                grp_mcmc.attrs[key] = value
 
         # Close hdf5 file stream
         f.close()
+
+        # Save path to HDF5 file in output object
+        self.output.hpath = hfile
