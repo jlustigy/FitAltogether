@@ -255,7 +255,7 @@ class Mapper(object):
     def __init__(self, fmodel="map", imodel="emcee", data=None,
                  ntype=3, nsideseed=4, regularization=None, reg_area=False, reg_albd=False,
                  sigmay=3.0, noiselevel=0.01, Nmcmc=10000, Nmcmc_b=0, mcmc_seedamp=0.5,
-                 hdf5_compression='lzf', nslice=9, ncpu=None, output=Output()
+                 hdf5_compression='lzf', nslice=9, ncpu=None, output=None
                  ):
         """
         Samurai mapping object
@@ -318,13 +318,14 @@ class Mapper(object):
         self._nregparam=set_nreg(self.regularization)
 
     def get_dict(self):
+        skip_list = ["data", "output"]
         d = {}
         for key, value in self.__dict__.iteritems():
             if key.startswith("_"):
                 nkey = key[1:]
             else:
                 nkey = key
-            if nkey != "data":
+            if key not in skip_list:
                 d[nkey] = value
         return d
 
@@ -769,4 +770,4 @@ class Mapper(object):
         f.close()
 
         # Save path to HDF5 file in output object
-        self.output.hpath = hfile
+        self.output = Output(hpath=hfile)
