@@ -57,11 +57,37 @@ class Output(object):
         try:
             # Open the file stream
             f = h5py.File(self.hpath, 'r+')
+            # Extract info from HDF5 file
+            samples = f["mcmc/samples"]
+            N_TYPE = f.attrs["N_TYPE"]
+            n_slice = f.attrs["N_SLICE"]
+            nwalkers = samples.shape[0]
+            nsteps = samples.shape[1]
+            nparam = samples.shape[2]
+            n_times = len(f["data/Obs_ij"])
+            n_band = len(f["data/Obs_ij"][0])
+            N_REGPARAM = f.attrs["N_REGPARAM"]
+            # Put all the n's in a dictionary for easy access
+            N = {
+                "ntype" : N_TYPE,
+                "nslice" : n_slice,
+                "nwalkers" : nwalkers,
+                "nsteps" : nsteps,
+                "nparam" : nparam,
+                "ntimes" : n_times,
+                "nband" : n_band,
+                "nregparam" : N_REGPARAM
+            }
+            self.N=N
             # Create new attribute for file stream
             self.hfile=f
             # Allow access to methods
             self.close=self._close
             self.plot_trace=self._plot_trace
+            self.transform_samples=self._transform_samples
+            self.plot_posteriors=self._plot_posteriors
+            self.plot_area_alb=self._plot_area_alb
+            self.plot_model_data=self._plot_model_data
             # Restrict access to open
             del self.open
             if verbose: print("HDF5 file opened")
@@ -76,9 +102,13 @@ class Output(object):
             self.hfile.close()
             # Delete file stream attribute
             del self.hfile
-            # Delete close method attribute
+            # Delete close method attributes
             del self.close
             del self.plot_trace
+            del self.transform_samples
+            del self.plot_posteriors
+            del self.plot_area_alb
+            del self.plot_model_data
             # Allow access to open
             self.open=self._open
             if verbose: print("HDF5 file closed")
@@ -102,22 +132,152 @@ class Output(object):
     def _transform_samples(self, iburn, verbose=True, newname="physical_samples"):
         """Transform re-parameterized samples to physically meaningful units
         """
-        raise NotImplementedError
 
-    def _plot_posteriors(self, which=None):
+        f = self.hfile
+        samples = self.hfile["mcmc/samples"]
+        n_type = f.attrs["N_TYPE"]
+        n_slice = f.attrs["N_SLICE"]
+        nwalkers = samples.shape[0]
+        nsteps = samples.shape[1]
+        nparam = samples.shape[2]
+        Obs_ij = f["data/Obs_ij"]
+        n_times = len(Obs_ij)
+        n_band = len(Obs_ij[0])
+        n_regparam = f.attrs["N_REGPARAM"]
+
+        # Throw assertion error if burn-in index exceeds number of steps
+        assert iburn < samples.shape[1]
+
+        # If the xsamples are already in the hdf5 file
+        if newname in f["mcmc/"].keys():
+            # load physical samples
+            xs = f["mcmc/"+newname]
+            if (xs.attrs["iburn"] == iburn) and (int(np.sum(xs[0,:])) != 0):
+                # This is the exact same file or it has been loaded with 0's
+                if verbose: print(newname + " loaded from file!")
+                rerun = False
+            else:
+                # Must re-run xsamples with new burnin, overwrite
+                if verbose: print("Different burn-in index here. Must reflatten and convert...")
+                rerun = True
+
+        # If the xsamples are not in the hdf5 file,
+        # or if they need to be re-run
+        if newname not in f["mcmc/"].keys() or rerun:
+
+            # Determine shape of new dataset
+            nxparam = len(reparameterize.transform_Y2X(samples[0,0,:], n_type, n_band, n_slice, flatten=True))
+            new_shape = (nwalkers*(nsteps-iburn), nxparam)
+
+            # Construct attrs dictionary
+            adic = {"iburn" : iburn}
+
+            # Delete existing dataset if it already exists
+            if newname in f["mcmc/"].keys():
+                del f["mcmc/"+newname]
+
+            # Flatten chains
+            if verbose: print("Flattening chains beyond burn-in (slow, especially if low burn-in index)...")
+            flat_samples = samples[:,iburn:,:].reshape((-1, nparam))
+
+            # Different approach if there are regularization params
+            if (n_regparam > 0):
+                if verbose: print("Filling xsample dataset...")
+                sys.stdout.flush()
+                # Loop over walkers
+                # Exclude regularization parameters from albedo, area samples
+                xsam = np.array([reparameterize.transform_Y2X(flat_samples[i,:-1*n_regparam],
+                                n_type, n_band, n_slice, flatten=True)
+                                for i in range(len(flat_samples))]
+                                )
+            else:
+                # Use all parameters
+                xsam = np.array([reparameterize.transform_Y2X(flat_samples[i], n_type, n_band,
+                                n_slice, flatten=True)
+                                for i in range(len(flat_samples))]
+                                )
+
+            # Create new dataset in existing hdf5 file
+            xs = f.create_dataset("mcmc/"+newname, data=xsam, compression='lzf')
+            # Add attributes to dataset
+            for key, value in adic.iteritems(): xs.attrs[key] = value
+
+    def _plot_posteriors(self, xsname="physical_samples", newdir="physical_posteriors/", which=None):
         """Plot physical posteriors
         """
-        raise NotImplementedError
+        f = self.hfile
+        mdir = os.path.split(self.hpath)[0]
+        # Create directory for plots
+        ndir = os.path.join(mdir, newdir)
+        try:
+            os.mkdir(ndir)
+            if verbose: print("Created directory:", ndir)
+        except OSError:
+            if verbose: print(ndir, "already exists.")
+        # Are xsamples in the hdf5 file already?
+        if xsname in f["mcmc/"].keys():
+            # load physical samples
+            xs = f["mcmc/"+newname]
+            # Plot posteriors
+            plot_posteriors(xs, X_names=f["mcmc"].attrs["X_names"], directory=ndir, which=which)
+        else:
+            print("Error: '%s' not in hdf5 file! Try running transform_samples first." %xsname)
 
-    def _plot_area_alb(self):
+
+    def _plot_area_alb(self, xsname="physical_samples", epoxi=False):
         """Plot area covering fractions and albedos
         """
-        raise NotImplementedError
+        # Define quantile intervals (1-sigma)
+        intvls=[0.16, 0.5, 0.84]
+        # Simplifying assignments
+        f = self.hfile
+        mdir = os.path.split(self.hpath)[0]
+        # Are xsamples in the hdf5 file already?
+        if xsname in f["mcmc/"].keys():
+            # load physical samples
+            xs = f["mcmc/"+newname]
+        else:
+            print("Error: '%s' not in hdf5 file! Try running transform_samples first." %xsname)
+            return
+        # Plot and save
+        quantiles = plot_area_alb(xs, self.N, directory=mdir, savetxt=True,
+                                  intvls=intvls, epoxi=epoxi, eyecolors=False)
+        # Delete save, if already exists
+        if "quantiles" in f["mcmc/"].keys():
+            del f["mcmc/quantiles"]
+            print("Overwritting 'mcmc/quantiles' in hdf5 file")
+        # Create new dataset
+        qd = f["mcmc/"].create_dataset("quantiles", data=quantiles)
+        # Create metadata dict
+        dictionary = {
+            "q_low" : 0,
+            "q_50" : 1,
+            "q_high" : 2,
+            "q_minus" : 3,
+            "q_plus" : 4,
+            "intervals" : intvls
+        }
+        # Add metadata
+        for key, value in dictionary.iteritems(): qd.attrs[key] = value
 
-    def _plot_model_data(self, newdir="model_data_compare/"):
+    def _plot_model_data(self, iburn, newdir="model_data_compare/"):
         """Plot the model vs data
         """
-        raise NotImplementedError
+        f = self.hfile
+        model_ij = f["mcmc/model_ij"]
+        Obs_ij = f["data/Obs_ij"]
+        Obsnoise_ij = f["data/Obsnoise_ij"]
+        mdir = os.path.split(self.hpath)[0]
+        # Create directory for plots
+        ndir = os.path.join(mdir, newdir)
+        try:
+            os.mkdir(ndir)
+            if verbose: print("Created directory:", ndir)
+        except OSError:
+            if verbose: print(ndir, "already exists.")
+        # Plot model vs data
+        plot_model_data(model_ij, Obs_ij, Obsnoise_ij, self.N, iburn=iburn,
+                        directory=ndir)
 ################################################################################
 # Data
 ################################################################################
