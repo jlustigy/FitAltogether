@@ -59,24 +59,24 @@ class Output(object):
             f = h5py.File(self.hpath, 'r+')
             # Extract info from HDF5 file
             samples = f["mcmc/samples"]
-            N_TYPE = f.attrs["N_TYPE"]
-            n_slice = f.attrs["N_SLICE"]
+            n_type = f.attrs["ntype"]
+            n_slice = f.attrs["nslice"]
             nwalkers = samples.shape[0]
             nsteps = samples.shape[1]
             nparam = samples.shape[2]
             n_times = len(f["data/Obs_ij"])
             n_band = len(f["data/Obs_ij"][0])
-            N_REGPARAM = f.attrs["N_REGPARAM"]
+            n_regparam = f.attrs["nregparam"]
             # Put all the n's in a dictionary for easy access
             N = {
-                "ntype" : N_TYPE,
+                "ntype" : n_type,
                 "nslice" : n_slice,
                 "nwalkers" : nwalkers,
                 "nsteps" : nsteps,
                 "nparam" : nparam,
                 "ntimes" : n_times,
                 "nband" : n_band,
-                "nregparam" : N_REGPARAM
+                "nregparam" : n_regparam
             }
             self.N=N
             # Create new attribute for file stream
@@ -131,19 +131,28 @@ class Output(object):
 
     def _transform_samples(self, iburn, verbose=True, newname="physical_samples"):
         """Transform re-parameterized samples to physically meaningful units
+
+        Parameters
+        ----------
+        iburn : int
+            Burn-in index
+        verbose : bool, optional
+            Set to print status updates
+        newname : str, optional
+            Name of physical samples dataset in hdf5 file
         """
 
         f = self.hfile
         samples = self.hfile["mcmc/samples"]
-        n_type = f.attrs["N_TYPE"]
-        n_slice = f.attrs["N_SLICE"]
+        n_type = f.attrs["ntype"]
+        n_slice = f.attrs["nslice"]
         nwalkers = samples.shape[0]
         nsteps = samples.shape[1]
         nparam = samples.shape[2]
         Obs_ij = f["data/Obs_ij"]
         n_times = len(Obs_ij)
         n_band = len(Obs_ij[0])
-        n_regparam = f.attrs["N_REGPARAM"]
+        n_regparam = f.attrs["nregparam"]
 
         # Throw assertion error if burn-in index exceeds number of steps
         assert iburn < samples.shape[1]
@@ -202,8 +211,20 @@ class Output(object):
             # Add attributes to dataset
             for key, value in adic.iteritems(): xs.attrs[key] = value
 
-    def _plot_posteriors(self, xsname="physical_samples", newdir="physical_posteriors/", which=None):
+    def _plot_posteriors(self, xsname="physical_samples", newdir="physical_posteriors/",
+                         which=None, verbose=True):
         """Plot physical posteriors
+
+        Parameters
+        ----------
+        xsname : str, optional
+            Name of physical samples dataset in hdf5 file
+        newdir : str, optional
+            Name of new directory to hold posterior plots
+        which : int, optional
+            Index of parameter to plot individually, default `None` will plot all
+        verbose : bool, optional
+            Set to print status updates
         """
         f = self.hfile
         mdir = os.path.split(self.hpath)[0]
@@ -217,7 +238,7 @@ class Output(object):
         # Are xsamples in the hdf5 file already?
         if xsname in f["mcmc/"].keys():
             # load physical samples
-            xs = f["mcmc/"+newname]
+            xs = f["mcmc/"+xsname]
             # Plot posteriors
             plot_posteriors(xs, X_names=f["mcmc"].attrs["X_names"], directory=ndir, which=which)
         else:
@@ -226,6 +247,11 @@ class Output(object):
 
     def _plot_area_alb(self, xsname="physical_samples", epoxi=False):
         """Plot area covering fractions and albedos
+
+        Parameters
+        ----------
+        xsname : str, optional
+            Name of physical samples dataset in hdf5 file
         """
         # Define quantile intervals (1-sigma)
         intvls=[0.16, 0.5, 0.84]
@@ -235,7 +261,7 @@ class Output(object):
         # Are xsamples in the hdf5 file already?
         if xsname in f["mcmc/"].keys():
             # load physical samples
-            xs = f["mcmc/"+newname]
+            xs = f["mcmc/"+xsname]
         else:
             print("Error: '%s' not in hdf5 file! Try running transform_samples first." %xsname)
             return
@@ -260,8 +286,17 @@ class Output(object):
         # Add metadata
         for key, value in dictionary.iteritems(): qd.attrs[key] = value
 
-    def _plot_model_data(self, iburn, newdir="model_data_compare/"):
-        """Plot the model vs data
+    def _plot_model_data(self, iburn, newdir="model_data_compare/", verbose=True):
+        """Plot the model vs data. Plots will be saved in `newdir` directory.
+
+        Parameters
+        ----------
+        iburn : int
+            Burn-in index
+        newdir : str, optional
+            Name of new directory that will hold model-data plots
+        verbose : bool, optional
+            Set to print status updates
         """
         f = self.hfile
         model_ij = f["mcmc/model_ij"]
