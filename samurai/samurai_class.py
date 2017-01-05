@@ -98,6 +98,26 @@ class Output(object):
         samples = self.hfile["mcmc/samples"]
         Y_names = self.hfile["mcmc"].attrs["Y_names"]
         plot_trace(samples, names=Y_names, directory=trace_dir, which=which)
+
+    def _transform_samples(self, iburn, verbose=True, newname="physical_samples"):
+        """Transform re-parameterized samples to physically meaningful units
+        """
+        raise NotImplementedError
+
+    def _plot_posteriors(self, which=None):
+        """Plot physical posteriors
+        """
+        raise NotImplementedError
+
+    def _plot_area_alb(self):
+        """Plot area covering fractions and albedos
+        """
+        raise NotImplementedError
+
+    def _plot_model_data(self, newdir="model_data_compare/"):
+        """Plot the model vs data
+        """
+        raise NotImplementedError
 ################################################################################
 # Data
 ################################################################################
