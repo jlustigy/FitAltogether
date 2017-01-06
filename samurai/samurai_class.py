@@ -44,7 +44,7 @@ class Output(object):
 
         Parameters
         ----------
-        hfile : str
+        hpath : str
             Location of output HDF5 file
         """
         self.hpath=hpath
@@ -57,26 +57,16 @@ class Output(object):
         try:
             # Open the file stream
             f = h5py.File(self.hpath, 'r+')
-            # Extract info from HDF5 file
-            samples = f["mcmc/samples"]
-            n_type = f.attrs["ntype"]
-            n_slice = f.attrs["nslice"]
-            nwalkers = samples.shape[0]
-            nsteps = samples.shape[1]
-            nparam = samples.shape[2]
-            n_times = len(f["data/Obs_ij"])
-            n_band = len(f["data/Obs_ij"][0])
-            n_regparam = f.attrs["nregparam"]
             # Put all the n's in a dictionary for easy access
             N = {
-                "ntype" : n_type,
-                "nslice" : n_slice,
-                "nwalkers" : nwalkers,
-                "nsteps" : nsteps,
-                "nparam" : nparam,
-                "ntimes" : n_times,
-                "nband" : n_band,
-                "nregparam" : n_regparam
+                "ntype" : f.attrs["ntype"],
+                "nslice" : f.attrs["nslice"],
+                "nwalkers" : f["mcmc/samples"].shape[0],
+                "nsteps" : f["mcmc/samples"].shape[1],
+                "nparam" : f["mcmc/samples"].shape[2],
+                "ntimes" : len(f["data/Obs_ij"]),
+                "nband" : len(f["data/Obs_ij"][0]),
+                "nregparam" : f.attrs["nregparam"]
             }
             self.N=N
             # Create new attribute for file stream
