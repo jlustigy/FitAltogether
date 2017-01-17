@@ -2,6 +2,27 @@ import numpy as np
 import h5py
 
 #---------------------------------------------------
+
+def set_nreg(reg):
+    """
+    Set number of extra parameters due to regularization
+    """
+    if reg is not None:
+        if reg == 'Tikhonov':
+            N = 1
+        elif reg == 'GP':
+            N = 3
+        elif reg == 'GP2':
+            N = 2
+        else:
+            print("%s is not a valid regularization method. Using no regularization." %reg)
+            N = 0
+    else:
+        N = 0
+    return N
+
+#---------------------------------------------------
+
 def save2hdf5(f, dataset, name="dataset", dictionary=None, compression='lzf', close=True):
     """
     Saves a dataset (e.g. numpy array) to a new or existing hdf5 file with ability to save a
