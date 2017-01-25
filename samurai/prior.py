@@ -133,19 +133,20 @@ def regularize_area_GP( x_area_lk, regparam ):
     cov = get_cov( sigma, wn_rel_amp, lambda_angular, l_dim )
 
 #    print 'cov', cov
-    inv_cov = np.linalg.inv( cov )
+    #inv_cov = np.linalg.inv( cov )
     det_cov = np.linalg.det( cov )
-    if ( det_cov == 0. ):
-        print 'det_cov', det_cov
-        print 'cov', cov
+    #if ( det_cov == 0. ):
+    #    print 'det_cov', det_cov
+    #    print 'cov', cov
 
-#    print 'inv_cov', inv_cov
     x_area_ave = 1./len(x_area_lk.T)
     dx_area_lk = x_area_lk[:,:-1] - x_area_ave
-    term1_all = np.dot( dx_area_lk.T, np.dot( inv_cov, dx_area_lk ) )
-    term1 = -0.5 * np.sum( term1_all.diagonal() )
+    try:
+        term1_all = np.dot( dx_area_lk.T, np.linalg.solve( cov, dx_area_lk ) ) #np.dot( dx_area_lk.T, np.dot( inv_cov, dx_area_lk ) )
+        term1 = -0.5 * np.sum( term1_all.diagonal() )
+    except np.linalg.linalg.LinAlgError:
+        term1 = -np.inf
     term2 = -0.5 * np.log( det_cov )
-#    print 'term1, term2', term1, term2
 
     prior_wn_rel_amp = np.log( wn_rel_amp / ( 1. + np.exp( wn_rel_amp_seed ) )**2 )
 

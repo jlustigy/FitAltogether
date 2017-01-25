@@ -45,7 +45,7 @@ def estimate_burnin1(samples):
     # Now return the index of the last walker to cross its median
     return np.amax(first_median_crossing)
 
-def plot_trace(samples, directory="", names=None, which=None):
+def plot_trace(samples, directory="", names=None, which=None, alpha=0.2):
 
     print "Plotting Trace..."
 
@@ -74,7 +74,7 @@ def plot_trace(samples, directory="", names=None, which=None):
         fig = plt.figure(figsize=(13,5))
         gs = gridspec.GridSpec(1,1)
         ax0 = plt.subplot(gs[0])
-        ax0.plot(samples[:,:,i].T, lw=0.5, alpha=0.5)
+        ax0.plot(samples[:,:,i].T, lw=0.5, alpha=alpha)
         ax0.set_xlabel("Iteration")
         ax0.set_ylabel(pname+" Value")
         """# Add histogram on right
