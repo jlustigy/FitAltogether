@@ -3,6 +3,7 @@ import math
 import sys
 from scipy.optimize import minimize
 
+
 ALPHA_INI = 1.e-4
 DIFF_LIM  = 1e-1
 
@@ -125,26 +126,14 @@ def do_shrinkwrap ( U_in, n_PC, output=True, run_dir='' ) :
         while ( diff > DIFF_LIM ) : 
 
             alpha = alpha / 10.
-            f.write( '# ------------------------------------\n' )
-            f.write( '# best fit with alpha='+str(alpha)+'\n' )
             params = ( UU_qi , n_PC, alpha )
             A_nm_bestfit_flat = minimize( func_to_minimize, A_nm_ini_flat, args=params, method='L-BFGS-B' )['x']
             A_nm_bestfit      = A_nm_bestfit_flat.reshape( [ n_PC , n_PC+1 ] )
 
-            for mm in xrange( len( A_nm_bestfit.T ) ):
-                for nn in xrange( len( A_nm_bestfit ) ):
-                    f.write( str( A_nm_bestfit[nn][mm] )+'\t' ) 
-                f.write( '\n' )
-            for nn in xrange( len( A_nm_bestfit ) ):
-                f.write( str( A_nm_bestfit[nn][0] )+'\t' ) 
-            f.write( '\n' )
             vol  = get_volume ( A_nm_bestfit, n_PC )
             diff = ( vol_old - vol ) / vol_old # fractional volume change
-            f.write( '# vol_old, vol, diff\t' + str(vol_old) + '\t' + str(vol) + '\t' + str(diff) + '\n\n\n' )
             vol_old = vol
             A_nm_ini_flat = A_nm_bestfit_flat
-
-        f.write( '#------------------------------------\n' )
 
 
     AA_qm_bestfit = np.c_[ A_nm_bestfit.T, np.ones( n_PC + 1 ) ].T

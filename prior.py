@@ -129,7 +129,7 @@ def regularize_area_GP( x_area_lk, regparam ):
 
 
 #---------------------------------------------------
-def get_cov( sigma, wn_rel_amp, lambda_angular, l_dim, periodic=True):
+def get_cov( sigma, wn_rel_amp, lambda_angular, l_dim, type='squared-exponential', periodic=True):
 
 #    kappa0 = np.log(output["x"][-1]) - np.log(360.0 - output["x"][-1])
     Sigma_ll = np.zeros([l_dim, l_dim])
@@ -140,7 +140,13 @@ def get_cov( sigma, wn_rel_amp, lambda_angular, l_dim, periodic=True):
     else :
         dif_lon_ll = abs( dif_lon_ll )
 
-    Sigma_ll = np.exp( - 0.5 * dif_lon_ll**2 / ( lambda_angular**2 ) )
+    if type=='squared-exponential' :
+        Sigma_ll = np.exp( - 0.5 * dif_lon_ll**2 / ( lambda_angular**2 ) )
+    elif type=='exponential' :
+        Sigma_ll = np.exp( - dif_lon_ll / lambda_angular )
+    else :
+        print 'unknown kernel type'
+        sys.exit()
 #    Sigma_ll = np.exp( - dif_lon_ll / ( lambda_angular**2 ) )
 
     cov = Sigma_ll * ( 1 - wn_rel_amp )
