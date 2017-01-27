@@ -143,7 +143,6 @@ class Output(object):
         f = self.hfile
         samples = self.hfile["mcmc/samples"]
         n_type = f.attrs["ntype"]
-        n_slice = f.attrs["nslice"]
         nwalkers = samples.shape[0]
         nsteps = samples.shape[1]
         nparam = samples.shape[2]
@@ -154,7 +153,7 @@ class Output(object):
 
         # Set n_slice based on forward model
         if f.attrs["fmodel"] == "map":
-            n_slice = self.nslice
+            n_slice = f.attrs["nslice"]
         elif f.attrs["fmodel"] == "lightcurve":
             n_slice = len(Obs_ij)
         else:
