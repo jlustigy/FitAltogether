@@ -57,10 +57,18 @@ class Output(object):
         try:
             # Open the file stream
             f = h5py.File(self.hpath, 'r+')
+            # Set n_slice based on forward model
+            if f.attrs["fmodel"] == "map":
+                nslice = f.attrs["nslice"]
+            elif f.attrs["fmodel"] == "lightcurve":
+                nslice = len(f["data/Obs_ij"])
+            else:
+                print("Error: %s is an unrecognized forward model" %f.attrs["fmodel"])
+                return None
             # Put all the n's in a dictionary for easy access
             N = {
                 "ntype" : f.attrs["ntype"],
-                "nslice" : f.attrs["nslice"],
+                "nslice" : nslice,
                 "nwalkers" : f["mcmc/samples"].shape[0],
                 "nsteps" : f["mcmc/samples"].shape[1],
                 "nparam" : f["mcmc/samples"].shape[2],
@@ -135,7 +143,6 @@ class Output(object):
         f = self.hfile
         samples = self.hfile["mcmc/samples"]
         n_type = f.attrs["ntype"]
-        n_slice = f.attrs["nslice"]
         nwalkers = samples.shape[0]
         nsteps = samples.shape[1]
         nparam = samples.shape[2]
@@ -143,6 +150,15 @@ class Output(object):
         n_times = len(Obs_ij)
         n_band = len(Obs_ij[0])
         n_regparam = f.attrs["nregparam"]
+
+        # Set n_slice based on forward model
+        if f.attrs["fmodel"] == "map":
+            n_slice = f.attrs["nslice"]
+        elif f.attrs["fmodel"] == "lightcurve":
+            n_slice = len(Obs_ij)
+        else:
+            print("Error: %s is an unrecognized forward model" %f.attrs["fmodel"])
+            return None
 
         # Throw assertion error if burn-in index exceeds number of steps
         assert iburn < samples.shape[1]
@@ -165,7 +181,10 @@ class Output(object):
         if newname not in f["mcmc/"].keys() or rerun:
 
             # Determine shape of new dataset
-            nxparam = len(reparameterize.transform_Y2X(samples[0,0,:], n_type, n_band, n_slice, flatten=True))
+            if (n_regparam > 0):
+                nxparam = len(reparameterize.transform_Y2X(samples[0,0,:-1*n_regparam], n_type, n_band, n_slice, flatten=True))
+            else:
+                nxparam = len(reparameterize.transform_Y2X(samples[0,0,:], n_type, n_band, n_slice, flatten=True))
             new_shape = (nwalkers*(nsteps-iburn), nxparam)
 
             # Construct attrs dictionary
@@ -609,7 +628,8 @@ class Mapper(object):
         # Return new class instance
         return cls(output=Output(hpath=path), data=Data(**ddic), **sdic)
 
-    def run_mcmc(self, savedir="mcmc_output", tag=None, verbose=True):
+    def run_mcmc(self, savedir="mcmc_output", tag=None, verbose=True,
+                 resume=False):
         """
         Run Mapper object simulation
 
@@ -621,45 +641,38 @@ class Mapper(object):
             Specify saving tag for output (default is the time)
         verbose : bool, optional
             Set to print status updates
+        resume : bool, optional
+            Set to resume MCMC from last saved state
         """
 
-        # Get start time
-        now = datetime.datetime.now()
-        if verbose: print(now.strftime("%Y-%m-%d %H:%M:%S"))
+        if not resume:
 
-        # Create directory for this run
-        if tag is None:
-            startstr = now.strftime("%Y-%m-%d--%H-%M")
+            # Get start time
+            now = datetime.datetime.now()
+            if verbose: print(now.strftime("%Y-%m-%d %H:%M:%S"))
+
+            # Create directory for this run
+            if tag is None:
+                startstr = now.strftime("%Y-%m-%d--%H-%M")
+            else:
+                startstr = tag
+
+            # Create savedir directory, if necessary
+            if savedir is not None:
+                run_dir = os.path.join(savedir, startstr)
+                try:
+                    os.mkdir(savedir)
+                    if verbose: print("Created directory:", savedir)
+                except OSError:
+                    if verbose: print(savedir, "already exists.")
+            else:
+                run_dir = os.path.join("", startstr)
+            # Create unique run_dir directory
+            os.mkdir(run_dir)
+            if verbose: print("Created directory:", run_dir)
         else:
-            startstr = tag
-
-        # Create savedir directory, if necessary
-        if savedir is not None:
-            run_dir = os.path.join(savedir, startstr)
-            try:
-                os.mkdir(savedir)
-                if verbose: print("Created directory:", savedir)
-            except OSError:
-                if verbose: print(savedir, "already exists.")
-        else:
-            run_dir = os.path.join("", startstr)
-
-        # Create unique run_dir directory
-        os.mkdir(run_dir)
-        if verbose: print("Created directory:", run_dir)
-
-        # Maybe pickle object instead?
-        """
-        # Save THIS file and the param file for reproducibility!
-        thisfile = os.path.basename(__file__)
-        paramfile = "map_EPOXI_params.py"
-        newfile = os.path.join(run_dir, thisfile)
-        commandString1 = "cp " + thisfile + " " + newfile
-        commandString2 = "cp "+paramfile+" " + os.path.join(run_dir,paramfile)
-        os.system(commandString1)
-        os.system(commandString2)
-        if verbose: print("Saved :", thisfile, " &", paramfile)
-        """
+            # Set run_dir by previous run
+            run_dir = os.path.split(self.output.hpath)[0]
 
         # Unpack class variables
         fmodel = self.fmodel
@@ -700,6 +713,7 @@ class Mapper(object):
             print("Error: %s is an unrecognized forward model" %fmodel)
             return None
 
+
         # Initialize the fitting parameters
         X0_albd_kj = 0.3+np.zeros([ntype, nband])
         X0_area_lk = 0.2+np.zeros([nslice, ntype])
@@ -719,79 +733,87 @@ class Mapper(object):
         # Create list of strings for Y & X parameter names
         Y_names, X_names = generate_tex_names(ntype, nband, nslice)
 
-        ############ run minimization ############
+        if not resume:
 
-        # minimize
-        if verbose: print("finding best-fit values...")
-        data = (Obs_ij, Obsnoise_ij, Kernel_il, regularization, nregparam, True, False, ntype, nslice)
-        output = minimize(lnprob, Y0_array, args=data, method="Nelder-Mead")
-    #    output = minimize(lnprob, Y0_array, args=data, method="L-BFGS-B" )
-        best_fit = output["x"]
-        if verbose: print("best-fit", best_fit)
+            ############ run minimization ############
 
-        # more information about the best-fit parameters
-        data = (Obs_ij, Obsnoise_ij, Kernel_il, regularization, nregparam, True, False, ntype, nslice)
-        lnprob_bestfit = lnprob( output['x'], *data )
+            # minimize
+            if verbose: print("finding best-fit values...")
+            data = (Obs_ij, Obsnoise_ij, Kernel_il, regularization, nregparam, True, False, ntype, nslice)
+            output = minimize(lnprob, Y0_array, args=data, method="Nelder-Mead")
+        #    output = minimize(lnprob, Y0_array, args=data, method="L-BFGS-B" )
+            best_fit = output["x"]
+            if verbose: print("best-fit", best_fit)
 
-        # compute BIC
-        BIC = 2.0 * lnprob_bestfit + len( output['x'] ) * np.log( len(Obs_ij.flatten()) )
-        if verbose: print('BIC: ', BIC)
+            # more information about the best-fit parameters
+            data = (Obs_ij, Obsnoise_ij, Kernel_il, regularization, nregparam, True, False, ntype, nslice)
+            lnprob_bestfit = lnprob( output['x'], *data )
 
-        # best-fit values for physical parameters
-        if nregparam > 0:
-            X_albd_kj, X_area_lk =  reparameterize.transform_Y2X(output["x"][:-1*nregparam], ntype, nband, nslice)
-        else :
-            X_albd_kj, X_area_lk =  reparameterize.transform_Y2X(output["x"], ntype, nband, nslice)
+            # compute BIC
+            BIC = 2.0 * lnprob_bestfit + len( output['x'] ) * np.log( len(Obs_ij.flatten()) )
+            if verbose: print('BIC: ', BIC)
 
-        X_albd_kj_T = X_albd_kj.T
+            # best-fit values for physical parameters
+            if nregparam > 0:
+                X_albd_kj, X_area_lk =  reparameterize.transform_Y2X(output["x"][:-1*nregparam], ntype, nband, nslice)
+            else :
+                X_albd_kj, X_area_lk =  reparameterize.transform_Y2X(output["x"], ntype, nband, nslice)
 
-        # best-fit values for regularizing parameters
-        if regularization is not None:
-            if regularization == 'Tikhonov' :
-                if verbose: print('sigma', best_fit[-1])
-            elif regularization == 'GP' :
-                if verbose: print('overall_amp', best_fit[-3])
-                if verbose: print('wn_rel_amp', np.exp( best_fit[-2] ) / ( 1. + np.exp( best_fit[-2] ) ))
-                if verbose: print('lambda _angular', best_fit[-1] * ( 180. / np.pi ))
-            elif regularization == 'GP2' :
-                if verbose: print('overall_amp', best_fit[-2])
-                if verbose: print('lambda _angular', best_fit[-1]* ( 180. / np.pi ))
+            X_albd_kj_T = X_albd_kj.T
 
-        # Flatten best-fitting physical parameters
-        bestfit = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
+            # best-fit values for regularizing parameters
+            if regularization is not None:
+                if regularization == 'Tikhonov' :
+                    if verbose: print('sigma', best_fit[-1])
+                elif regularization == 'GP' :
+                    if verbose: print('overall_amp', best_fit[-3])
+                    if verbose: print('wn_rel_amp', np.exp( best_fit[-2] ) / ( 1. + np.exp( best_fit[-2] ) ))
+                    if verbose: print('lambda _angular', best_fit[-1] * ( 180. / np.pi ))
+                elif regularization == 'GP2' :
+                    if verbose: print('overall_amp', best_fit[-2])
+                    if verbose: print('lambda _angular', best_fit[-1]* ( 180. / np.pi ))
 
-        # Create dictionaries of initial results to convert to hdf5
-        # datasets and attributes
-        init_dict_datasets = {
-            "best_fity" : best_fit,
-            "X_area_lk" : X_area_lk,
-            "X_albd_kj_T" : X_albd_kj_T,
-            "best_fitx" : bestfit
-        }
-        init_dict_attrs = {
-            "best_lnprob" : lnprob_bestfit,
-            "best_BIC" : BIC
-        }
+            # Flatten best-fitting physical parameters
+            bestfit = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
+
+            # Create dictionaries of initial results to convert to hdf5
+            # datasets and attributes
+            init_dict_datasets = {
+                "best_fity" : best_fit,
+                "X_area_lk" : X_area_lk,
+                "X_albd_kj_T" : X_albd_kj_T,
+                "best_fitx" : bestfit
+            }
+            init_dict_attrs = {
+                "best_lnprob" : lnprob_bestfit,
+                "best_BIC" : BIC
+            }
 
         ############ run inverse model ############
 
+        # Define MCMC parameters
+        n_dim = len(Y0_array)
+        n_walkers = calculate_walkers(n_dim)
+
+        # Define data tuple for emcee
+        data = (Obs_ij, Obsnoise_ij, Kernel_il, regularization, nregparam, False, False, ntype, nslice)
+
+        if resume:
+            # Initialize chain/walker positions from previous state
+            self.output.open()
+            p0 = self.output.hfile["mcmc/samples"][:,-1,:]
+            self.output.close()
+        else:
+            # Initialize chain/walker state from Gaussian ball
+            p0 = seed_amp * np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + best_fit
+
         if imodel == "emcee":
-
-            # Define MCMC parameters
-            n_dim = len(Y0_array)
-            n_walkers = calculate_walkers(n_dim)
-
-            # Define data tuple for emcee
-            data = (Obs_ij, Obsnoise_ij, Kernel_il, regularization, nregparam, False, False, ntype, nslice)
 
             # Initialize emcee EnsembleSampler
             sampler = emcee.EnsembleSampler(n_walkers, n_dim, lnprob, args=data, threads=ncpu)
 
-            # Guess starting position vector
-            p0 = seed_amp * np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + best_fit
-
             # Do Burn-in run? No
-            if verbose: print("Running emcee from initial optimization...")
+            if verbose: print("Running emcee...")
 
             # Run MCMC
             sampler.run_mcmc( p0, num_mcmc )
@@ -813,16 +835,6 @@ class Mapper(object):
 
         elif imodel == "emcee3":
 
-            # Define MCMC parameters
-            n_dim = len(Y0_array)
-            n_walkers = calculate_walkers(n_dim)
-
-            # Define data tuple for emcee
-            data = (Obs_ij, Obsnoise_ij, Kernel_il, regularization, nregparam, False, False, ntype, nslice)
-
-            # Guess starting position vector
-            p0 = seed_amp * np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + best_fit
-
             # Initialize simple model
             model = emcee3.SimpleModel(lnlike, lnprior, args=data)
 
@@ -838,7 +850,7 @@ class Mapper(object):
             ])
 
             # Do Burn-in run? No
-            if verbose: print("Running emcee3 from initial optimization...")
+            if verbose: print("Running emcee3...")
 
             # Run MCMC
             ensemble = sampler.run(ensemble, num_mcmc, progress=verbose)
@@ -868,112 +880,101 @@ class Mapper(object):
         grp_data_name = "data"
         compression = hdf5_compression
 
-        # Get object attributes for saving to HDF5
-        hfile_attrs = self.get_dict()
-        tmp_dict = self.data.get_dict()
-        data_dict_datasets = {}
-        data_dict_attrs = {}
-        data_dict_datasets["Kernel_il"] = Kernel_il # Add Kernel dict
-        # Partition data values into attributes and datasets
-        for key, value in tmp_dict.iteritems():
-            if hasattr(value, "__len__"):
-                data_dict_datasets[key] = value
-            else:
-                data_dict_attrs[key] = value
+        if resume:
+            # Open existing output hdf5
+            self.output.open()
+            f = self.output.hfile
+            # Add new chains and starting point to hdf5 file
+            for key, value in mcmc_dict_datasets.iteritems():
+                # Delete previous mcmc output group
+                f.__delitem__(os.path.join(grp_mcmc_name, key))
+                if value is None:
+                    f[grp_mcmc_name].create_dataset(key, data=(), compression=compression)
+                else:
+                    f[grp_mcmc_name].create_dataset(key, data=value, compression=compression)
+            # Close existing output hdf5
+            self.output.close()
+        else:
 
-        # print
-        if verbose: print("Saving:", hfile)
+            # Get object attributes for saving to HDF5
+            hfile_attrs = self.get_dict()
+            tmp_dict = self.data.get_dict()
+            data_dict_datasets = {}
+            data_dict_attrs = {}
+            data_dict_datasets["Kernel_il"] = Kernel_il # Add Kernel dict
+            # Partition data values into attributes and datasets
+            for key, value in tmp_dict.iteritems():
+                if hasattr(value, "__len__"):
+                    data_dict_datasets[key] = value
+                else:
+                    data_dict_attrs[key] = value
 
-        # dictionary for global run metadata
-        """
-        hfile_attrs = {
-            "N_TYPE" : ntype,
-            "N_SLICE" : nslice,
-            "N_REGPARAM" : nregparam,
-            "fmodel" : fmodel,
-            "imodel" : imodel
-        }
-        """
+            # print
+            if verbose: print("Saving:", hfile)
 
-        mcmc_dict_attrs = {
-            "Y_names" : Y_names,
-            "X_names" : X_names,
-        }
+            mcmc_dict_attrs = {
+                "Y_names" : Y_names,
+                "X_names" : X_names,
+            }
 
-        # Create dictionaries for observation data and metadata
-        """
-        data_dict_datasets = {
-            "Obs_ij" : Obs_ij,
-            "Obsnoise_ij" : Obsnoise_ij,
-            "Kernel_il" : Kernel_il,
-            "lam_j" : waveband_centers,
-            "dlam_j" : waveband_widths,
-            "Time_i" : Time_i
-        }
-        data_dict_attrs = {
-            "LON_S" : lon_s,
-            "LAT_S" : lat_s,
-            "LON_O" : lon_o,
-            "LAT_O" : lat_o
-        }
-        """
+            # Create hdf5 file
+            f = h5py.File(hfile, 'w')
 
-        # Create hdf5 file
-        f = h5py.File(hfile, 'w')
+            # Add global metadata
+            for key, value in hfile_attrs.iteritems():
+                if value is None:
+                    f.attrs[key] = ()
+                else:
+                    f.attrs[key] = value
 
-        # Add global metadata
-        for key, value in hfile_attrs.iteritems():
-            if value is None:
-                f.attrs[key] = ()
-            else:
-                f.attrs[key] = value
+            # Create hdf5 groups (like a directory structure)
+            grp_init = f.create_group(grp_init_name)    # f["initial_optimization/"]
+            grp_data = f.create_group(grp_data_name)    # f["data/"]
+            grp_mcmc = f.create_group(grp_mcmc_name)    # f[mcmc/]
 
-        # Create hdf5 groups (like a directory structure)
-        grp_init = f.create_group(grp_init_name)    # f["initial_optimization/"]
-        grp_data = f.create_group(grp_data_name)    # f["data/"]
-        grp_mcmc = f.create_group(grp_mcmc_name)    # f[mcmc/]
+            # Save initial run datasets
+            for key, value in init_dict_datasets.iteritems():
+                if value is None:
+                    grp_init.create_dataset(key, data=(), compression=compression)
+                else:
+                    grp_init.create_dataset(key, data=value, compression=compression)
+            # Save initial run metadata
+            for key, value in init_dict_attrs.iteritems():
+                if value is None:
+                    grp_init.attrs[key] = ()
+                else:
+                    grp_init.attrs[key] = value
 
-        # Save initial run datasets
-        for key, value in init_dict_datasets.iteritems():
-            if value is None:
-                grp_init.create_dataset(key, data=(), compression=compression)
-            else:
-                grp_init.create_dataset(key, data=value, compression=compression)
-        # Save initial run metadata
-        for key, value in init_dict_attrs.iteritems():
-            if value is None:
-                grp_init.attrs[key] = ()
-            else:
-                grp_init.attrs[key] = value
+            # Save data datasets
+            for key, value in data_dict_datasets.iteritems():
+                if value is None:
+                    grp_data.create_dataset(key, data=(), compression=compression)
+                else:
+                    grp_data.create_dataset(key, data=value, compression=compression)
+            # Save data metadata
+            for key, value in data_dict_attrs.iteritems():
+                if value is None:
+                    grp_data.attrs[key] = ()
+                else:
+                    grp_data.attrs[key] = value
 
-        # Save data datasets
-        for key, value in data_dict_datasets.iteritems():
-            if value is None:
-                grp_data.create_dataset(key, data=(), compression=compression)
-            else:
-                grp_data.create_dataset(key, data=value, compression=compression)
-        # Save data metadata
-        for key, value in data_dict_attrs.iteritems():
-            if value is None:
-                grp_data.attrs[key] = ()
-            else:
-                grp_data.attrs[key] = value
+            # Save mcmc run datasets
+            for key, value in mcmc_dict_datasets.iteritems():
+                if value is None:
+                    grp_mcmc.create_dataset(key, data=(), compression=compression)
+                else:
+                    grp_mcmc.create_dataset(key, data=value, compression=compression)
+            # Save mcmc run metadata
+            for key, value in mcmc_dict_attrs.iteritems():
+                if value is None:
+                    grp_mcmc.attrs[key] = ()
+                else:
+                    grp_mcmc.attrs[key] = value
 
-        # Save mcmc run datasets
-        for key, value in mcmc_dict_datasets.iteritems():
-            if value is None:
-                grp_mcmc.create_dataset(key, data=(), compression=compression)
-            else:
-                grp_mcmc.create_dataset(key, data=value, compression=compression)
-        # Save mcmc run metadata
-        for key, value in mcmc_dict_attrs.iteritems():
-            if value is None:
-                grp_mcmc.attrs[key] = ()
-            else:
-                grp_mcmc.attrs[key] = value
+            # Close hdf5 file stream
+            f.close()
 
-        # Close hdf5 file stream
-        f.close()
+            # Save path to HDF5 file in output object
+            self.output = Output(hpath=hfile)
 
-        # Save path to HDF5 file in output object
-        self.output = Output(hpath=hfile)
+        # End if

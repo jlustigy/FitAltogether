@@ -548,15 +548,6 @@ def run_physical_mcmc_analysis(run, directory=DIR, run_sample=False, run_median=
         np.savetxt(os.path.join(MCMC_DIR, "area_median.txt"), np.vstack([med_area.T, std_area.T]).T)
         print "Saved:", "median_results.txt"
 
-    if run_corner:
-
-        print "Making Physical Corner Plot..."
-
-        # Make corner plot
-        fig = corner.corner(xs.value, plot_datapoints=False, plot_contours=True, plot_density=False,
-            labels=X_names, show_titles=True)
-        fig.savefig(os.path.join(MCMC_DIR, "xcorner.png"))
-
     if run_posterior:
 
         # Create directory for trace plots
@@ -611,6 +602,15 @@ def run_physical_mcmc_analysis(run, directory=DIR, run_sample=False, run_median=
 
         plot_model_data(model_ij, Obs_ij, Obsnoise_ij, n_all, iburn=iburn,
                         directory=plot_dir)
+
+    if run_corner:
+
+        print "Making Physical Corner Plot..."
+
+        # Make corner plot
+        fig = corner.corner(xs.value, plot_datapoints=False, plot_contours=True, plot_density=False,
+            labels=X_names, show_titles=True)
+        fig.savefig(os.path.join(MCMC_DIR, "xcorner.png"))
 
     # Close HDF5 file stream
     f.close()

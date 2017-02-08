@@ -4,7 +4,7 @@ import numpy as np
 # Parameters
 #--------------------------------------------------------------------
 
-NUM_MCMC = 10000
+NUM_MCMC = 20000
 NUM_MCMC_BURNIN = 0
 SEED_AMP = 0.5
 
@@ -28,12 +28,16 @@ N_SIDE   = 128
 
 #INFILE = "data/raddata_12_norm"
 ##INFILE = "data/raddata_2_norm"
+INFILE = "data/raddata_1_norm"
 #INFILE = "mockdata/mock_simple_1_data"
 #INFILE = "mockdata/mock_simple_3types_1_data"
 # INFILE = 'mockdata/mock_simple_1_scattered0.01_data_with_noise'
-INFILE = 'mockdata/simpleIGBP_quadrature_lc'
-WAVEBAND_CENTERS = np.array([550., 650., 750., 850.])
-WAVEBAND_WIDTHS = np.array([100., 100., 100., 100.])
+#INFILE = 'mockdata/simpleIGBP_quadrature_lc'
+
+#WAVEBAND_CENTERS = np.array([550., 650., 750., 850.])
+#WAVEBAND_WIDTHS = np.array([100., 100., 100., 100.])
+WAVEBAND_CENTERS = np.array([350., 450., 550., 650., 750., 850., 950.])
+WAVEBAND_WIDTHS = np.array([100., 100., 100., 100., 100., 100., 100.])
 
 HDF5_COMPRESSION = 'lzf'
 
