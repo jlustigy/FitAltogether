@@ -829,7 +829,8 @@ class Mapper(object):
             # Initialize ensemble sampler
             ensemble = emcee3.Ensemble(model, p0)
 
-            # Initialize sampler with Moves
+            # Initialize sampler with Moves: Linear combo of samplers -- essential
+            # for multi-modal posteriors
             sampler = emcee3.Sampler([
                 (emcee3.moves.DEMove(0.01), 0.5),
                 (emcee3.moves.DESnookerMove(), 0.1),
