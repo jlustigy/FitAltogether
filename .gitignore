@@ -2,3 +2,4 @@
 *.DS_STORE
 mcmc_output/*/
 *.pyc
+PCplane/*

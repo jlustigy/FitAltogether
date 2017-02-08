@@ -27,10 +27,10 @@ def do_PCA ( Dij, E_cutoff=5e-2, output=True, run_dir='' ):
     print "   # of PCs: ", N_PCs
 
     if output :
-        np.savetxt( run_dir+'PCA_V_jn', V.T, header='Principal Components ( dimension: band x index )' ) 
-        np.savetxt( run_dir+'PCA_E_n', E, header='Contribution factor ( dimension: index )' ) 
-        np.savetxt( run_dir+'PCA_U_in', U, header='Conefficient ( dimension: time x index )' ) 
-        np.savetxt( run_dir+'AVE_j', M, header='Time Average ( dimension: band )' ) 
+        np.savetxt( run_dir+'PCA_V_jn', V.T, header='Principal Components ( dimension: band x index )' )
+        np.savetxt( run_dir+'PCA_E_n', E, header='Contribution factor ( dimension: index )' )
+        np.savetxt( run_dir+'PCA_U_in', U, header='Conefficient ( dimension: time x index )' )
+        np.savetxt( run_dir+'AVE_j', M, header='Time Average ( dimension: band )' )
         # projection of 'answer' onto PC plane
         albd_kj  = np.loadtxt( ALBDFILE ).T
         dalbd_kj = albd_kj - M
@@ -39,4 +39,3 @@ def do_PCA ( Dij, E_cutoff=5e-2, output=True, run_dir='' ):
         np.savetxt( run_dir+'PCA_answer_projected', coeff_kn )
 
     return N_PCs, V[:N_PCs][:], U[:,:N_PCs], M
-

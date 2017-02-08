@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
     # PCA
     print 'Performing PCA...'
-    n_pc, V_nj, U_in, M_j = PCA.do_PCA( Obs_ij, E_cutoff=1e-2, output=True )
+    n_pc, V_nj, U_in, M_j = PCA.do_PCA( Obs_ij, E_cutoff=1e-2, output=True, run_dir=OUTFILE_DIR )
     V_nj[0] = -1. * V_nj[0]
     U_in.T[0] = -1. * U_in.T[0]
     V_nj[1] = -1. * V_nj[1]
@@ -261,7 +261,7 @@ if __name__ == "__main__":
 
     #--------------------------------------------------------------------------
     # set up for a figure
-    fig = plt.figure(figsize=(3,3)) 
+    fig = plt.figure(figsize=(3,3))
     ax1 = plt.subplot(adjustable='box', aspect=1.0)
     ax1.set_xlim([-0.4,0.2])
     ax1.set_ylim([-0.2,0.4])
@@ -340,7 +340,7 @@ if __name__ == "__main__":
     # best
 
     points_kn_best = points_kn_array[ np.argmin( colorterm ) ][:-1,:]
-    
+
     print 'points_kn_best', points_kn_best
     # reconstruct albedo
     X_albd_kj_best = np.dot( points_kn_best, V_nj ) + M_j
@@ -350,5 +350,3 @@ if __name__ == "__main__":
 
     np.savetxt( OUTFILE_DIR+INFILE+'_l' + str(LAMBDA_CORR_DEG[0]) + 'deg_ratio_' + str(SEED_in) + '_X_albd_jk_best', X_albd_kj_best.T )
     np.savetxt( OUTFILE_DIR+INFILE+'_l' + str(LAMBDA_CORR_DEG[0]) + 'deg_ratio_' + str(SEED_in) + '_X_area_ik_best', X_area_ik_best )
-
-
