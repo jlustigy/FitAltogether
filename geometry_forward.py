@@ -2,6 +2,7 @@ import numpy as np
 import healpy as hp
 import pdb
 
+
 deg2rad = (np.pi/180.)
 
 #---------------------------------------------------
@@ -21,23 +22,10 @@ def weight(time, n_side, param_geometry):
     EO_vec = latlon2cart(lat_o, lon_o-omega*time/deg2rad)
     ES_vec = latlon2cart(lat_s, lon_s-omega*time/deg2rad)
     ER_vec_array = np.array(hp.pix2vec(n_side, np.arange(hp.nside2npix(n_side))))
-    cosTH0_array = np.dot(ES_vec, ER_vec_array)
-    cosTH1_array = np.dot(EO_vec, ER_vec_array)
-    return np.clip(cosTH0_array, 0., 1.)*np.clip(cosTH1_array, 0., 1.)
-
-
-#---------------------------------------------------
-def weight_2(time, n_side, param_geometry):
-    """
-    Weight of pixel at (lat_r, lon_r) assuming Lambertian surface
-    """
-    lat_o, lon_o, lat_s, lon_s, omega = param_geometry
-    EO_vec = latlon2cart(lat_o, lon_o-omega*time/deg2rad)[0]
-    ES_vec = latlon2cart(lat_s, lon_s-omega*time/deg2rad)[0]
-    ER_vec_array = np.array(hp.pix2vec(n_side, np.arange(hp.nside2npix(n_side))))
-    cosTH0_array = np.dot(ES_vec, ER_vec_array)
-    cosTH1_array = np.dot(EO_vec, ER_vec_array)
-    return np.clip(cosTH0_array, 0., 1.)*np.clip(cosTH1_array, 0., 1.)
+    cosTH0_array = np.dot(ES_vec, ER_vec_array)[0]
+    cosTH1_array = np.dot(EO_vec, ER_vec_array)[0]
+    rslt = np.clip(cosTH0_array, 0., 1.)*np.clip(cosTH1_array, 0., 1.)
+    return rslt
 
 
 #---------------------------------------------------
@@ -61,7 +49,6 @@ def kernel(Time_i, n_slice, n_side, param_geometry):
     """
 
     Weight_in = weight( Time_i, n_side, param_geometry )
-
     n_pix = hp.nside2npix( n_side )
     theta_n, phi_n   = hp.pixelfunc.pix2ang( n_side, np.arange(n_pix) )
     phi_n[ phi_n < np.pi ]  = phi_n[ phi_n < np.pi ] + 2. * np.pi
@@ -71,7 +58,6 @@ def kernel(Time_i, n_slice, n_side, param_geometry):
     LN_nl[ np.arange(n_pix), assignedL_n ] = 1
     Kernel_il = np.dot( Weight_in, LN_nl ) 
     Kernel_il = Kernel_il / np.tile( np.sum( Kernel_il, axis=1 ), [ n_slice, 1 ] ).T
-
     return Kernel_il
 
 
