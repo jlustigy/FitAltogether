@@ -1,5 +1,5 @@
 set term postscript eps enhanced color 28
-set output 'mockdata_90deg_time7_lc.eps'
+set output 'mockdata_90deg_time23_lc.eps'
 
 set style line 1 lw 3 pt 5  ps 1.5 linecolor rgbcolor "#8000C0" # purple
 set style line 2 lw 3 pt 7  ps 1.5 linecolor rgbcolor "#0080FF" # blue
@@ -15,8 +15,8 @@ set xrange [0:1]
 set xtics 0.2
 
 plot \
-'mockdata_90deg_time7_lc' us ($0/7):1 w lp ls 1 ti 'band 1', \
-'mockdata_90deg_time7_lc' us ($0/7):2 w lp ls 2 ti '2', \
-'mockdata_90deg_time7_lc' us ($0/7):3 w lp ls 3 ti '3', \
-'mockdata_90deg_time7_lc' us ($0/7):4 w lp ls 4 ti '4', \
+'mockdata_90deg_time23_lc' us ($0/23):1 w lp ls 1 ti 'band 1', \
+'mockdata_90deg_time23_lc' us ($0/23):2 w lp ls 2 ti '2', \
+'mockdata_90deg_time23_lc' us ($0/23):3 w lp ls 3 ti '3', \
+'mockdata_90deg_time23_lc' us ($0/23):4 w lp ls 4 ti '4', \
 

@@ -19,8 +19,11 @@ target_indx_list = [[ 17 ], # ocean
 
 # MODE = 'March'
 # MODE = 'June'
+N_TIME=48
 MODE= 'specify'
-TAG='90deg_time23'
+TAG='90deg_time'+str(N_TIME)
+
+
 # vegetation
 # target_indx = [1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 14]
  #target_indx = [1, 2, 3, 4, 5, 6, 10, 14]
@@ -94,7 +97,7 @@ elif ( MODE == 'specify' ):
 #    LAT_S = 21.6159766
     cldfile_frac = "data/cldfrac_EPOXI_June_6.dat"
     cldfile_optd = "data/clddpth_EPOXI_June_6.dat"
-    Time_i = np.arange(23)/23.
+    Time_i = np.arange(N_TIME)/(N_TIME*1.)
 else:
     print 'ERROR: Invalid MODE'
     sys.exit()
@@ -192,7 +195,7 @@ band_sp[0] = band_ave( wl_ocean, sp_ocean )
 band_sp[1] = band_ave( wl_soil,  sp_soil  )
 band_sp[2] = band_ave( wl_vege,  sp_vege  )
 
-np.savetxt( 'mockdata.'+str(MODE)+'_band_sp', band_sp.T )
+np.savetxt( 'mockdata/mockdata_'+str(MODE)+'_band_sp', band_sp.T )
 
 #--------------------------------------------------------------------
 # loop in time
@@ -229,5 +232,5 @@ for ii in xrange( len(Time_i) ) :
 #    print 'contribution_factor', contribution_factor
 sp = np.dot( contribution_factor, band_sp )
 
-np.savetxt( 'mockdata_'+TAG+'_factor', contribution_factor )
-np.savetxt( 'mockdata_'+TAG+'_lc', sp )
+np.savetxt( 'mockdata/mockdata_'+TAG+'_factor', contribution_factor )
+np.savetxt( 'mockdata/mockdata_'+TAG+'_lc', sp )
