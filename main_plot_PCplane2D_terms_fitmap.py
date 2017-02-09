@@ -201,7 +201,6 @@ if __name__ == "__main__":
 
     # Load input data
     Obs_ij = np.loadtxt( INFILE_DIR + INFILE )
-    Obsnoise_ij = ( NOISELEVEL * Obs_ij )
     Time_i  = np.arange( len( Obs_ij ) ) / ( 1.0 * len( Obs_ij ) )
     n_band = len( Obs_ij.T )
 
