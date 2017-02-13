@@ -217,7 +217,10 @@ The problem throughout this paper is, from this kind of multi-band diurnal light
 \label{s:frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-In this section, we discuss the general framework to analyze the diurnal light curves, and present some demonstrations using the mock data created in Section \ref{s:mockdata}. 
+In this section, we discuss the general framework to analyze the diurnal light curves, and present some demonstrations using the mock data created in the previous section. 
+Sections \ref{ss:model} and \ref{ss:PCplane} are essentially the recapitulation of the previous papers, in particular \citet{Cowan2013} \citep[but see also][]{Cowan2009,Cowan2011,Fujii2010,Fujii2011}.  
+We, however, choose to include these discussions as a baseline to establish the later arguments. 
+\memoYF{Too many overlaps??}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Algebraic Formulation}
@@ -329,14 +332,62 @@ Now, the relevant problem is, given $d$, estimate $\{f, s\}$ subject to the cons
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Principal Component (Hyper-)Plane\\and Graphical Conception}
+\label{ss:PCplane}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%A question is whether the above formulation leads us to a unique solution of either $\{ {\bf \fast},\,{\bf s} \}$ or $\{ {\bf f},\,{\bf s}\}$, given the data matrix, ${\bf d}$. 
+
+Equation (\ref{eq:tilde_d_f_ast_s}) coupled with the conditions (\ref{eq:tilde_f_range}) and (\ref{eq:tilde_f_sum}) indicates the geometrical relationship among ${\bf d}$, ${\bf \fast }$, and ${\bf s}$ in the $J$-th dimensional space, where $\{{\bf d}_i\}$ correspond to the points that are located on the hyperplane defined by $K$ ($<J$) number of points, $\{{\bf s}_k\} $ and are enclosed by $\{{\bf s}_k \}$. \memoYF{How is it called in one word in mathematics?}\ 
+We show this graphically using the mock datasets shown in Section \ref{s:mockdata}. 
+
+The original data, however, have 4 photometric bands (i.e., $J=4$), and $J$-th dimensional space is inconvenient for visualization. 
+We thus reduce the dimensionality using principal component analysis (PCA). 
+Unsurprisingly we extract two dominant principal components (PCs) through PCA (other components have vertually zero contribution), which are presented in Figure \ref{fig:PCs}. 
+
+We subtract the 4-band light curves by the time averages of the respective bands, and its trajectory in the PC plane is shown in Figure \ref{fig:trajectory}. 
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[tbh!]
+    \begin{center}
+\includegraphics[width=\hsize]{PCA_V_jn.pdf}
+    \end{center}
+    \caption{Principal components.}
+\label{fig:PCs}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[t]
+    \begin{center}
+\includegraphics[width=\hsize]{mockdata_135deg_3types_t12_lc_noreg.png}
+    \end{center}
+    \caption{Trajectory on the principal component plane.}
+    \label{fig:trajectory}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[t]
+    \begin{center}
+\includegraphics[width=\hsize]{mockdata_135deg_3types_t12_lc_noreg.png}
+    \end{center}
+    \caption{Trajectory on the principal component plane.}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Degeneracy}
 \label{ss:degeneracy}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-A question is whether the above formulation leads us to a unique solution of either $\{ {\bf \fast},\,{\bf s} \}$ or $\{ {\bf f},\,{\bf s}\}$, given the data matrix, ${\bf d}$. 
-
-
-Equation (\ref{eq:tilde_d_f_ast_s}) coupled with the conditions (\ref{eq:tilde_f_range}) and (\ref{eq:tilde_f_sum}) indicates the geometrical relationship among ${\bf d}$, ${\bf \fast }$, and ${\bf s}$ in the $J-$th dimensional space, where $\{{\bf d}_i\}$ correspond to the points that are located on the hyperplane defined by $K$ ($<J$) number of points, $\{{\bf s}_k\} $ and are enclosed by $\{{\bf s}_k \}$. \memoYF{How is it called in one word in mathematics?}\ 
 Conversely, {\it any} set of $\{ {\bf s}_k \}$ that enclose the data points $\{{\bf d}_i\}$ in the hyperplane can be a solution of Equation (\ref{eq:tilde_d_f_ast_s}) subjected to the conditions (\ref{eq:tilde_f_range}) and (\ref{eq:tilde_f_sum}), and the associated matrix, $\fast _{ik}$, can always be found. 
 Additional constraint comes from the condition (\ref{eq:tilde_s_range}). This limits the range where $\{ {\bf s}_k \}$ can exist, but in general this is not sufficient to result in a unique solution. 
 Therefore, predicting ${\bf \fast }$ and ${\bf s}$ from ${\bf d}$ is clearly a ill-posed problem. 
