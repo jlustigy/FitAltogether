@@ -157,7 +157,7 @@ Section \ref{s:frame} revisits the problem, ....
     \begin{center}
 	\includegraphics[width=\hsize]{mockdata_3types_map.pdf}
     \includegraphics[width=\hsize]{mockdata_3types_albd.pdf}
-	\includegraphics[width=\hsize]{mockdata_90deg_3types_t360_lc.pdf}
+	\includegraphics[width=\hsize]{mockdata_3types_t360_lc.pdf}
     \end{center}
     \caption{Top: our mock data based on IGBP classification map of the Earth, with 3 surface types (ocean: blue, soil: red, vegetation: green). }
 \label{fig:mockdata}
@@ -389,17 +389,24 @@ In order to see this more quantitatively, we made a grid on the PC plane  with a
 Then, we assumed that all of the combinations that enclose the trajectory (in the case of $\alpha = 1356{\circ }$) are equally likely to be a solution, and found the marginalized probability of having a surface type at each location of the PC plane, as shown in Figure \ref{fig:gridsearch}. 
 %
 As expected, we find a relatively definite peak near the point of ocean. 
-On the other hand, the peak that corresponds to soil is a blur. 
+On the other hand, the peak that corresponds to soil is a blur, and it is almost not constrained. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure}[tbh!]
     \begin{center}
 \includegraphics[width=\hsize]{mockdata_90deg_3types_t12_lc_noreg.pdf}
+\includegraphics[width=\hsize]{mockdata_90deg_3types_t12_lc_reg.pdf}
     \end{center}
-    \caption{}
+    \caption{correlation length $30^{\circ }$. }
 \label{fig:noreg}
 \end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Additional Constraints}
+\label{ss:regularization}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
