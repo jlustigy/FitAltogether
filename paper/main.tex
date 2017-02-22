@@ -380,6 +380,31 @@ But again, we can have different sets of $\{ {\bf s}_k \}$ that enclose the aver
 \label{ss:constraining}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[bth!]
+    \begin{center}
+\includegraphics[width=\hsize]{mockdata_90deg_3types_t12_lc_noreg.pdf}
+    \end{center}
+    \caption{Probability of surface albedo spectra estimated from colors of longitudinal slices, without regularization term (``flat'' prior?). }
+\label{fig:noreg}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[tbh!]
+    \begin{center}
+%\includegraphics[width=\hsize]{mockdata_90deg_3types_t12_lc_noreg.pdf}
+\includegraphics[width=\hsize]{mockdata_90deg_3types_t12_lc_reg_l30deg.pdf}
+\includegraphics[width=\hsize]{mockdata_90deg_3types_t12_lc_reg_l40deg.pdf}
+    \end{center}
+    \caption{Upper panel: on the assumption of gaussian process with correlation length $30^{\circ }$. Lower panel: correlation length $40^{\circ }$. }
+\label{fig:noreg}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 Given that any combinations that enclose the trajectory/-ies can be a solution, the choice of the solution critically depends on the prior probability distribution. 
 % Thus, we need to be careful about the implicit assumptions that are made  
 With no assumptions or information on the spectral albedo of the surface types, it may be reasonable to assume that any points in the PC plane except for the inhibited regions are equally likely to correspond to a surface type. 
@@ -393,16 +418,7 @@ Then, we assumed that all of the combinations that enclose the trajectory (in th
 As expected, we find a relatively definite peak near the point of ocean. 
 On the other hand, the peak that corresponds to soil is a blur, and it is almost not constrained. 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{figure}[tbh!]
-    \begin{center}
-\includegraphics[width=\hsize]{mockdata_90deg_3types_t12_lc_noreg.pdf}
-\includegraphics[width=\hsize]{mockdata_90deg_3types_t12_lc_reg.pdf}
-    \end{center}
-    \caption{correlation length $30^{\circ }$. }
-\label{fig:noreg}
-\end{figure}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -416,7 +432,6 @@ On the other hand, the peak that corresponds to soil is a blur, and it is almost
 %\label{ss:constraining}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\subsection{Prior: Gaussian Processes}
@@ -466,6 +481,18 @@ where $t_i$ is the time of $i$-th observation and $(\Delta t_0)$ is characterist
 where $\phi_l$ is the longitude of $l$-th slice, and $\phi_0$ is the characteristic longitudes over which $f$ is correlated.  
 
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[tbh!]
+    \begin{center}
+%\includegraphics[width=\hsize]{mockdata_90deg_3types_t12_lc_noreg.pdf}
+\includegraphics[width=\hsize]{IGBP_lon_noreg.pdf}
+\includegraphics[width=\hsize]{IGBP_lon_reg_l30deg.pdf}
+    \end{center}
+    \caption{Probability of surface albedo spectra estimated from colors of longitudinal slices, without (upper) and with (lower) regularization term. The regularization term for the lower panel assumes correlation length $30^{\circ }$. }
+\label{fig:noreg}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \bibliography{ref}
