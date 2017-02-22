@@ -1,7 +1,8 @@
 \documentclass[iop,numberedappendix,apj,]{emulateapj}
 
 \usepackage{epsfig}
-\usepackage{amsmath}
+%\usepackage{amsmath}
+\usepackage{amsmath,amsthm,amssymb,cases}
 \usepackage{rotating}
 \usepackage{natbib}
 \usepackage{enumerate}
@@ -109,9 +110,7 @@ yuka.fujii.ebihara@gmail.com
 
 \end{abstract}
 
-\keywords{planets and satellites: Jupiter --- Sun: evolution ---
-  planetary systems --- stars: evolution ---
-  stars: AGB and post-AGB --- radio continuum: planetary systems}
+\keywords{planets and satellites: surfaces --- planets and satellites: terrestrial planets}
   
 %]%%% End front material
 
@@ -151,32 +150,95 @@ Specifically, the updates include:
 The organization of this paper is as follows. 
 Section \ref{s:frame} revisits the problem, ....
 
-\newpage
+%\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[t]
+    \begin{center}
+	\includegraphics[width=\hsize]{mockdata_3types_map.pdf}
+    \includegraphics[width=\hsize]{mockdata_3types_albd.pdf}
+	\includegraphics[width=\hsize]{mockdata_3types_t360_lc.pdf}
+    \end{center}
+    \caption{Top: our mock data based on IGBP classification map of the Earth, with 3 surface types (ocean: blue, soil: red, vegetation: green). }
+\label{fig:mockdata}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Framing the problem}
+\section{Preparing Mock Datasets}
+\label{s:mockdata}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The aim of this paper is to present how to constrain the albedo spectra of representative surface types from multi-band light curves. 
+In order to facilitate the discussions about the procedures in the following sections, in this section we shall introduce a dataset to be used for demonstrations. 
+
+We consider diurnal light curves of a toy model of the Earth, in 4 photometric bands. 
+We use a simplified surface map as shown in the upper left panel of Figure \ref{fig:mockdata}. 
+This map is based on the land classification by the International Geosphere-Biosphere Programme (IGBP)\footnote{\url{https://climatedataguide.ucar.edu/climate-data/ceres-igbp-land-classification}}. 
+Although the original classification assumes 16 land surface types plus ocean, in this paper we assume 3 surface types for simplicity regarding ``Open Shrubs'', ``Urban'', ``Snow/Ice'', and ``Barren/Desert'' as ``soil'' (red in the upper left panel of Figure \ref{fig:mockdata}) and other land surface types as ``vegetation'' (green), while keeping the ``ocean'' regions. 
+
+
+The assumed albedo spectra of these surface types in 4 photometric bands are shown in the upper right panel of Figure \ref{fig:mockdata}. 
+These 4 photometric bands actually correspond to the 0.4-0.5 $\mu $m, 0.5-0.6 $\mu $m, 0.6-0.7 $\mu $m, and 0.7-0.8 $\mu $m, respectively, but they will be simply called by the band indices unless otherwise needed. 
+The albedo spectra for ocean are based on \citet{Mclinden1997}, 
+and the data for soil and vegetation are taken from ASTER spectral library\footnote{\url{https://speclib.jpl.nasa.gov/}. 
+Specifically, we adopt  ``Brown to dark brown sand'' for ``soil'', and ``Grass'' for the ``vegetation''}. 
+The scattering phase function by the surface is assumed to obey the Lambert law, i.e., the radiance is (incident flux)$\times $(albedo)/$\pi$, independent of the direction of the scattering. 
+
+The light curves are synthesized given the relative configuration of the star, planet, and the observer.  
+For the sake of simplicity in explaining the geometry, we consider a planet with zero obliquity in an edge-on orbit, and change the phase angle (the planet-centric angle between the star and the observer) denoted by $\alpha $. 
+However, the discussion in the following is generic and does not depend on these assumptions. 
+
+The bottom panels of Figure \ref{fig:mockdata} displays the examples of diurnal light curves in 4 photometric bands, represented in terms of {\it apparent albedo}. 
+Apparent albedo is the planetary intensity normalized by that of a loss-less Lambert sphere with the same radius and at the same phase \citep{Qiu2003, Seager2010}; in this paper we will use apparent albedo unless otherwise noted. 
+The apparent albedo is straightforwardly obtained from the observed planetary intensity, if and only if the planetary radius and the observational geometry are completely known: latitude/longitude of the sub-stellar/sub-observer points, and the distance between the star and the planet. 
+(We will discuss the effect of this assumptions later in Section ??.)
+
+The problem throughout this paper is, from this kind of multi-band diurnal light curves, how and how well we can retrieve the albedo spectra of different surface types as well as the longitudinal distribution of these surface types. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Inverse problem}
 \label{s:frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+In this section, we discuss the general framework to analyze the diurnal light curves, and present some demonstrations using the mock data created in the previous section. 
+Sections \ref{ss:model} and \ref{ss:PCplane} are essentially the recapitulation of the previous papers, in particular \citet{Cowan2013} \citep[but see also][]{Cowan2009,Cowan2011,Fujii2010,Fujii2011}.  
+We, however, choose to include these discussions as a baseline to establish the later arguments. 
+\memoYF{Too many overlaps??}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Algebraic Formulation}
 \label{ss:model}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Assuming that the planetary surface is Lambertian scatterer everywhere, with a certain number $K$ of spectrally distinct surface types, 
-the disk-integrated scattered light can be written as a weighted summation of the reflectance spectra of different surface types. 
 
-For the moment, let us suppose that the planetary radius and the observational geometry are completely known: latitude/longitude of the sub-stellar/sub-observer points, and the distance between the star and the planet (This will be relaxed in \S\ref{s:discussion}.) 
-In this case, we can straightforwardly translate the observed planetary intensity to apparent albedo. 
-{\it Apparent albedo} is the planetary intensity normalized by that of a loss-less Lambert sphere with the same radius and at the same phase \citep{Qiu2003, Seager2010}; in this paper we will use apparent albedo unless otherwise noted. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}[b]
+\caption{Indexes}
+\begin{center}
+\begin{tabular}{lcc} \hline \hline
+Name & Symbol & Maximum \\ \hline
+Observation Time & $i$ & I \\
+Band & $j$ & J  \\
+Surface Type & $k$ & K  \\
+Longitudinal Slice  & $l$ & L \\ \hline
+\end{tabular}
+\end{center}
+\label{tab:index}
+\end{table}%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The observed apparent albedo, $d_{ij}$ (``$d$'' for data), can be written using the zenith angle of the insolation, $\theta _0$, and the zenith angle of the observer $\theta _1$, (both defined at each surface point) as follows \citep[see][]{Fujii2010}: 
+
+On the assumption that the planetary surface is Lambertian scatterer everywhere, and that it is composed of a certain number $K$ of spectrally distinct surface types, the disk-integrated scattered light is a weighted summation of the reflectance spectra of different surface types. 
+Using the local surface albedo $s_{\vec \Omega }$, the zenith angle of the insolation, $\theta _0$, and the zenith angle of the observer $\theta _1$ (both defined at each surface point),
+the apparent albedo of the planet, $d_{ij}$ (``$d$'' for data) is written as follows \citep[see][]{Fujii2010}: 
 %%%
 \begin{eqnarray}
 d_{i} (\lambda_j) &=& \displaystyle \frac{ \int_{{\rm IV}_i} s_{\vec \Omega }(\lambda_j) \cdot \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega } \\
-&=& \sum _{k} s_k (\lambda_j) \; \displaystyle \frac{ \int_{{\rm IV}_{i}} f_k (\vec \Omega ) \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega } \\
-&=& \sum _{i,k} \fast_{ik} \, s_{kj} \label{eq:d_f_ast_s}
+&=& \sum _{k} s_k (\lambda_j) \; \displaystyle \frac{ \int_{{\rm IV}_{i}} f_k (\vec \Omega ) \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega }{ \int_{{\rm IV}_i}  \cos \theta_0 ({\vec \Omega}) \cdot \cos \theta_1 ({\vec \Omega}) \cdot d\vec \Omega } \notag \\
+&=& \sum _{i,k} \fast_{ik} \, s_{kj} \label{eq:tilde_d_f_ast_s}
 \end{eqnarray}
 %%%
 where
@@ -193,31 +255,26 @@ The maximum number of $i$, $j$ and $k$ will be denoted by $I$, $J$, and $K$, bel
 
 By definition, the area fraction $\fast $ and reflectance spectra $s$ are subject to the following conditions:
 %%%
-\begin{eqnarray}
-\begin{cases}
-\;\; 0 \leq s_{kj} \leq 1 \;\;\; & \mbox{for any $k$, $j$} \\
-\;\; 0 \leq \fast_{lk} \leq 1 \;\;\; & \mbox{for any $l$, $k$} \label{eq:cond_f_ast}\\
-\;\; \sum_k \fast_{lk} = 1 & \mbox{for any $l$} 
-\end{cases}
-\end{eqnarray}
+\begin{subnumcases}
+{}
+0 \leq \fast_{lk} \leq 1 \;\;\; & \mbox{for any $l$, $k$} \label{eq:tilde_f_range} \\
+\sum_k \fast_{lk} = 1 & \mbox{for any $l$} \label{eq:tilde_f_sum} \\
+0 \leq s_{kj} \leq 1 \;\;\; & \mbox{for any $k$, $j$} \label{eq:tilde_s_range} 
+\end{subnumcases}
 %%%
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{table}[tbh]
-\caption{Indexes}
-\begin{center}
-\begin{tabular}{ccc} \hline \hline
-Name & Symbol & Maximum \\ \hline
-Observation Time & $i$ & I \\
-Band & $j$ & J  \\
-Surface Type & $k$ & K  \\
-Longitudinal Slice  & $l$ & L \\ \hline
-\end{tabular}
-\end{center}
-\label{tab:index}
-\end{table}%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%
+%\begin{eqnarray}
+%\begin{cases}
+%\;\; 0 \leq s_{kj} \leq 1 \;\;\; & \mbox{for any $k$, $j$} \\
+%\;\; 0 \leq \fast_{lk} \leq 1 \;\;\; & \mbox{for any $l$, $k$} \label{eq:cond_f_ast}\\
+%\;\; \sum_k \fast_{lk} = 1 & \mbox{for any $l$} 
+%\end{cases}
+%\end{eqnarray}
+%%%
+
+%\subsection{Estimating the Composition\\of Longitudinal Slices}
 
 The time variability of the apparent covering fraction $\fast $ due to spin rotation is related to the surface inhomogeneity along the equator. Approximately, $\fast _{ik}$ may be written as the weighted summation of the area fraction of $k$-th surface type in each of (the finite number $L$ of) longitudinal slices, i.e.,
 %%%
@@ -237,29 +294,216 @@ As a result,
 d_{ij} = \sum _{l,k} W_{il} \, f_{lk} \, s_{kj} \label{eq:d_f_s}
 \end{equation}
 %%%
-with the following condition similar to equation (\ref{eq:cond_f_ast}):
+with the following condition similar to Equations (\ref{eq:tilde_s_range})-(\ref{eq:tilde_f_sum}):
 %%%
-\begin{eqnarray}
-\begin{cases}
-\;\; 0 \leq s_{kj} \leq 1 \;\;\; & \mbox{for any $k$, $j$} \\
-\;\; 0 \leq f_{lk} \leq 1 \;\;\; & \mbox{for any $l$, $k$} \label{eq:cond_f} \\
-\;\; \sum_k f_{lk} = 1 & \mbox{for any $l$} 
-\end{cases}
-\label{eq:constraints}
-\end{eqnarray}
+\begin{subnumcases}
+{}
+0 \leq f_{lk} \leq 1 \;\;\; & \mbox{for any $l$, $k$} \label{eq:f_range} \\
+\sum_k f_{lk} = 1 & \mbox{for any $l$} \label{eq:f_sum} \\
+0 \leq s_{kj} \leq 1 \;\;\; & \mbox{for any $k$, $j$} \label{eq:s_range}
+\end{subnumcases}
 %%%
-Now, the relevant problem is, given $d$, estimate $\{f, s\}$ subject to the constraints of equation (\ref{eq:constraints})---this is where \citet{Cowan2013} stood. 
+Now, the relevant problem is, given $d$, estimate $\{f, s\}$ subject to the constraints of Equations (\ref{eq:s_range})-(\ref{eq:f_sum})---this is where \citet{Cowan2013} stood. 
 
 
-\citet{Cowan2013} proposed the specific procedure to find the solution for $\{f, s\}$. 
-Namely, 
-(1) perform PCA on the data to reduce the dimensionality as needed, 
-(2) perform simplex shrink-wrapping analysis to find the first guess for $s$, 
-and 
-(3) find the maximum posterior values for $\{f, s\}$ using MCMC algorithm  and setting the first guess for $s$ as the initial condition. 
-(The initial value for $f$ is fixed at 1/(\# of surface types).)
+%\citet{Cowan2013} proposed the specific procedure to find the solution for $\{f, s\}$. 
+%Namely, 
+%(1) perform PCA on the data to reduce the dimensionality as needed, 
+%(2) perform simplex shrink-wrapping analysis to find the first guess for $s$, 
+%and 
+%(3) find the maximum posterior values for $\{f, s\}$ using MCMC algorithm  and setting the first guess for $s$ as the initial condition. 
+%(The initial value for $f$ is fixed at 1/(\# of surface types).)
+
+%\newpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Graphical Conception on PC (Hyper-)Plane\\and Formal Degeneracy}
+\label{ss:PCplane}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%A question is whether the above formulation leads us to a unique solution of either $\{ {\bf \fast},\,{\bf s} \}$ or $\{ {\bf f},\,{\bf s}\}$, given the data matrix, ${\bf d}$. 
+
+Equation (\ref{eq:tilde_d_f_ast_s}) coupled with the conditions (\ref{eq:tilde_f_range}) and (\ref{eq:tilde_f_sum}) indicates the geometrical relationship among ${\bf d}$, ${\bf \fast }$, and ${\bf s}$ in the $J$-th dimensional space, where $\{{\bf d}_i\}$ correspond to the points that are located on the hyperplane defined by $K$ ($<J$) number of points, $\{{\bf s}_k\} $ and are enclosed by $\{{\bf s}_k \}$. \memoYF{How is it called in one word in mathematics?}\ 
+We show this graphically below, using the mock datasets shown in Section \ref{s:mockdata}. 
+
+The original data, however, have 4 photometric bands (i.e., $J=4$), and $J$-the dimensional space is inconvenient for visualization. 
+We thus reduce the dimensionality using principal component analysis (PCA). 
+As mentioned in \citet{Cowan2011}, the number of the spectrally distinct major surface types is number of dominant PCs plus 1 in theory. 
+Reasonably, we extract two dominant principal components (PCs) through PCA (other components have virtually zero contribution) from the mock light curves prepared in Section \ref{s:mockdata}. 
+The PCs extracted from the light curves at $\alpha = 90^{\circ }$ (olive lines in Figure \ref{fig:mockdata}) are presented in Figure \ref{fig:PCs}. 
+Although the PCs from other light curves are not necessarily same as the one shown in Figure \ref{fig:PCs}, the plane they make should be the same plane (under the noiseless condition). Thus, in the following, we adopt these two PCs as the axes of the PC plane. 
+
+Figure \ref{fig:trajectory} shows the trajectories of the mock light curves with varying phase angle on the plane defined by PC 1 and PC 2. 
+The excursion of the trajectory is larger for the light curve at a larger phase angle, i.e., at crescent phase, and shrinks as the phase angle decreases because a larger surface area are averaged. 
+The points in the figure indicate the input albedo spectra of the three surface types. 
+Because the apparent albedo at any time of the observations is a linear combination of input surface colors (Equation \ref{eq:tilde_d_f_ast_s}) under the conditions (\ref{eq:tilde_f_range}) and (\ref{eq:tilde_f_sum}), the trajectories should always be inside the triangle defined by these points.  
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[tbh!]
+    \begin{center}
+\includegraphics[width=\hsize]{PCA_V_jn.pdf}
+    \end{center}
+    \caption{Principal components of the light curves shown in the bottom of Figure \ref{fig:mockdata}. }
+\label{fig:PCs}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[t]
+    \begin{center}
+\includegraphics[width=\hsize]{mockdata_3types_t360_lc_PCplane.pdf}
+    \end{center}
+    \caption{Lines: trajectory of the 4-band light curves projected on the PC plane, in the case of $\alpha = 135^{\circ }$ (thick indigo), $\alpha = 90^{\circ }$ (olive), and $\alpha = 45^{\circ }$ (gold). Points: The input albedo spectra of ocean (blue circle), soil (red square), and vegetation (green triangle), projected on the PC plane. The surface albedo spectra cannot be located in the ray region, because it violates the condition (\ref{eq:tilde_s_range}). }
+    \label{fig:trajectory}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\subsection{Degeneracy}
+%\label{ss:degeneracy}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+On the other hand, when it comes to the point where we must estimate the points given the trajectory/-ies, however, {\it any} set of $\{ {\bf s}_k \}$ that enclose the data points $\{{\bf d}_i\}$ in the hyperplane can be a solution of Equation (\ref{eq:tilde_d_f_ast_s}) subjected to the conditions (\ref{eq:tilde_f_range}) and (\ref{eq:tilde_f_sum}). 
+Note that the associated matrix, $\fast _{ik}$, can always be found. 
+Additional constraint comes from the condition (\ref{eq:tilde_s_range}). This limits the region where $\{ {\bf s}_k \}$ can exist. 
+However, in general this is not sufficient to result in a unique solution. 
+Therefore, predicting ${\bf \fast }$ and ${\bf s}$ from ${\bf d}$ is clearly a ill-posed problem. 
+
+A formally equivalent degeneracy is found in Equation (\ref{eq:d_f_s}) coupled with the conditions (\ref{eq:f_range})-(\ref{eq:s_range}). 
+Essentially, the term $\sum _k f_{lk} s_{kj}$ represents the average albedo spectra of $l$-th slice and $W_{il}$ is the matrix that convolve them into the light curves. 
+But again, we can have different sets of $\{ {\bf s}_k \}$ that enclose the averaged albedo spectra of longitudinal slices {\it and} are located in the range of condition (\ref{eq:s_range}), any of which can make up the given averaged albedo spectra with the associated $f_{lk}$. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Constraining the Surface Types}
+\label{ss:constraining}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[bth!]
+    \begin{center}
+\includegraphics[width=\hsize]{mockdata_90deg_3types_t12_lc_noreg.pdf}
+    \end{center}
+    \caption{Probability of surface albedo spectra estimated from colors of longitudinal slices, without regularization term (``flat'' prior?). }
+\label{fig:noreg}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[tbh!]
+    \begin{center}
+%\includegraphics[width=\hsize]{mockdata_90deg_3types_t12_lc_noreg.pdf}
+\includegraphics[width=\hsize]{mockdata_90deg_3types_t12_lc_reg_l30deg.pdf}
+\includegraphics[width=\hsize]{mockdata_90deg_3types_t12_lc_reg_l40deg.pdf}
+    \end{center}
+    \caption{Upper panel: on the assumption of gaussian process with correlation length $30^{\circ }$. Lower panel: correlation length $40^{\circ }$. }
+\label{fig:noreg}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Given that any combinations that enclose the trajectory/-ies can be a solution, the choice of the solution critically depends on the prior probability distribution. 
+% Thus, we need to be careful about the implicit assumptions that are made  
+With no assumptions or information on the spectral albedo of the surface types, it may be reasonable to assume that any points in the PC plane except for the inhibited regions are equally likely to correspond to a surface type. 
+While such an assumption does not seem to work at all to choose the surface types, it does put some constrains. 
+This is because of the relative configuration of the trajectory and the permitted region. 
+For example, in Figure \ref{fig:trajectory}, in order to enclose the trajectory with three surface types within the permitted region, we must have at least one point near the left bottom corner of the permitted region (white triangle); this is consistent with the fact that one of the input albedo spectra (ocean) resides there. 
+
+In order to see this more quantitatively, we made a grid on the PC plane  with an interval of 0.2 and considered all combinations of three grid points. 
+Then, we assumed that all of the combinations that enclose the trajectory (in the case of $\alpha =90^{\circ }$) are equally likely to be a solution, and found the marginalized probability of having a surface type at each location of the PC plane, as shown in Figure \ref{fig:gridsearch}. 
+%
+As expected, we find a relatively definite peak near the point of ocean. 
+On the other hand, the peak that corresponds to soil is a blur, and it is almost not constrained. 
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Additional Constraints}
+\label{ss:regularization}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\section{Constraining the Surface Types}
+%\label{ss:constraining}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\subsection{Prior: Gaussian Processes}
+%\label{ss:gp}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\memoYF{This is just a quick draft and will need to be updated significantly.}
+
+A more constraining condition we might impose is the correlation length of the light curves. 
+
+%%%
+\begin{eqnarray}
+&&Posterior 
+\\ &&= \prod\limits_{i,j}\left[  \frac{1}{\sqrt{2\pi }\sigma_{ij}} \exp \left\{ - \frac{(d_{ij} - \sum _{lk} W_{il} f_{lk} s_{kj})^2}{2 \sigma _{ij}^2} \right\} \right] \notag \\
+&& \;\;\;\;\;\;\;\;\;\; \times \; \mathcal{P} (\{f_{lk}\}) \cdot \mathcal{P}(\{s_{kj}\}) 
+\end{eqnarray}
+%%%
+where $\mathcal{P} (X) $ is a prior for $X$. 
+
+The assumption of the smoothness of the time variation of covering area fraction may be imposed using the concept of Gaussian Process \citep{Rasmussen2005}. 
+We assume that the variation of the covering fraction follows Gaussian Process, which means the any finite number of the covering fractions have a joint Gaussian distribution. 
+Such assumption can be represented by the prior of 
+%%%
+\begin{equation}
+\mathcal{P}_{\fast} = \frac{1}{\sqrt{ 2 \pi }^{L(K-1)} \sqrt{| \tilde \Sigma |} } \exp( - \fast^{T} \tilde \Sigma ^{-1} \fast ) 
+\end{equation}
+%%%
+or
+%%%
+\begin{equation}
+\mathcal{P}_f = \frac{1}{\sqrt{ 2 \pi }^{L(K-1)} \sqrt{| \Sigma  |}} \exp( - f^{T} \Sigma ^{-1} f ) 
+\end{equation}
+%%%
+where $\Sigma $ is the kernel representing the property of the gaussian processes assumed for $f$.
+In this paper, we assume squared exponential covariance function, i.e., 
+%%%
+\begin{equation}
+\tilde \Sigma _{ii'} = \lambda \exp \left( - \frac{|t_i- t_i'|^2}{2 (\Delta t_0) ^2} \right)
+\end{equation}
+%%%
+where $t_i$ is the time of $i$-th observation and $(\Delta t_0)$ is characteristic time scale over which $\fast $ is supposedly correlated, or 
+%%%
+\begin{equation}
+\Sigma _{ll'} = \lambda \exp \left( - \frac{|\phi_l- \phi_{l'}|^2}{2 \phi_0^2} \right)
+\end{equation}
+%%%
+where $\phi_l$ is the longitude of $l$-th slice, and $\phi_0$ is the characteristic longitudes over which $f$ is correlated.  
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[tbh!]
+    \begin{center}
+%\includegraphics[width=\hsize]{mockdata_90deg_3types_t12_lc_noreg.pdf}
+\includegraphics[width=\hsize]{IGBP_lon_noreg.pdf}
+\includegraphics[width=\hsize]{IGBP_lon_reg_l30deg.pdf}
+    \end{center}
+    \caption{Probability of surface albedo spectra estimated from colors of longitudinal slices, without (upper) and with (lower) regularization term. The regularization term for the lower panel assumes correlation length $30^{\circ }$. }
+\label{fig:noreg}
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\bibliography{ref}
+
+
+\end{document}
+
+
+
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Fit data with $\fast $ or with $f$ ?}
@@ -790,6 +1034,8 @@ Then, the regularization term would be $\mathcal{F}^{\ast } (\Delta_{\phi }; f) 
 \label{fig:regterm}
 \end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliography{ref}
 
 
 \end{document}
