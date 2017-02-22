@@ -407,6 +407,56 @@ On the other hand, the peak that corresponds to soil is a blur.
 %\label{ss:constraining}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\subsection{Prior: Gaussian Processes}
+%\label{ss:gp}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\memoYF{This is just a quick draft and will need to be updated significantly.}
+
+A more constraining condition we might impose is the correlation length of the light curves. 
+
+%%%
+\begin{eqnarray}
+&&Posterior 
+\\ &&= \prod\limits_{i,j}\left[  \frac{1}{\sqrt{2\pi }\sigma_{ij}} \exp \left\{ - \frac{(d_{ij} - \sum _{lk} W_{il} f_{lk} s_{kj})^2}{2 \sigma _{ij}^2} \right\} \right] \notag \\
+&& \;\;\;\;\;\;\;\;\;\; \times \; \mathcal{P} (\{f_{lk}\}) \cdot \mathcal{P}(\{s_{kj}\}) 
+\end{eqnarray}
+%%%
+where $\mathcal{P} (X) $ is a prior for $X$. 
+
+The assumption of the smoothness of the time variation of covering area fraction may be imposed using the concept of Gaussian Process \citep{Rasmussen2005}. 
+We assume that the variation of the covering fraction follows Gaussian Process, which means the any finite number of the covering fractions have a joint Gaussian distribution. 
+Such assumption can be represented by the prior of 
+%%%
+\begin{equation}
+\mathcal{P}_{\fast} = \frac{1}{\sqrt{ 2 \pi }^{L(K-1)} \sqrt{| \tilde \Sigma |} } \exp( - \fast^{T} \tilde \Sigma ^{-1} \fast ) 
+\end{equation}
+%%%
+or
+%%%
+\begin{equation}
+\mathcal{P}_f = \frac{1}{\sqrt{ 2 \pi }^{L(K-1)} \sqrt{| \Sigma  |}} \exp( - f^{T} \Sigma ^{-1} f ) 
+\end{equation}
+%%%
+where $\Sigma $ is the kernel representing the property of the gaussian processes assumed for $f$.
+In this paper, we assume squared exponential covariance function, i.e., 
+%%%
+\begin{equation}
+\tilde \Sigma _{ii'} = \lambda \exp \left( - \frac{|t_i- t_i'|^2}{2 (\Delta t_0) ^2} \right)
+\end{equation}
+%%%
+where $t_i$ is the time of $i$-th observation and $(\Delta t_0)$ is characteristic time scale over which $\fast $ is supposedly correlated, or 
+%%%
+\begin{equation}
+\Sigma _{ll'} = \lambda \exp \left( - \frac{|\phi_l- \phi_{l'}|^2}{2 \phi_0^2} \right)
+\end{equation}
+%%%
+where $\phi_l$ is the longitude of $l$-th slice, and $\phi_0$ is the characteristic longitudes over which $f$ is correlated.  
+
+
 
 
 \bibliography{ref}
