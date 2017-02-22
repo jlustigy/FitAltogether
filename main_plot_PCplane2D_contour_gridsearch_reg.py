@@ -34,6 +34,7 @@ SEED_in  = 2015
 
 deg2rad = np.pi/180.
 
+# LAMBDA_CORR_DEG = 40.
 LAMBDA_CORR_DEG = 30.
 LAMBDA_CORR = LAMBDA_CORR_DEG * deg2rad
 
@@ -44,7 +45,7 @@ LAMBDA_CORR = LAMBDA_CORR_DEG * deg2rad
 
 N_SIDE   = 32
 INFILE_DIR = 'mockdata/'
-# INFILE = 'mockdata_45deg_time23_l`xreplc'
+# INFILE = 'mockdata_135deg_3types_t12_lc'
 INFILE = 'mockdata_90deg_3types_t12_lc'
 OUTFILE_DIR = 'PCplane/'
 
@@ -99,8 +100,15 @@ def function( points_kn, params ):
             term = 0.
             
         else :
+
+            x_area_ave = np.average( x_area_ik, axis=0 )        
+            x_area_std = np.std( x_area_ik, axis=0 )
+            dx_area_ik = ( x_area_ik - x_area_ave )/x_area_std
+            term1 = -0.5 * np.sum( np.diag( np.dot( np.dot( dx_area_ik.T, inv_cov ), dx_area_ik ) ) )
+            term2 = -0.5 * np.log( det_cov )
+            term  = np.exp( term1 + term2 )
             
-            term = 1.
+#            term = 1.
 
     return term
 
@@ -159,6 +167,9 @@ def call_multicore( list_index, args ):
 if __name__ == "__main__":
 
 
+
+
+
     # Load input data
     Obs_ij = np.loadtxt( INFILE_DIR + INFILE )
     Time_i  = np.arange( len( Obs_ij ) ) / ( 1.0 * len( Obs_ij ) )
@@ -172,13 +183,14 @@ if __name__ == "__main__":
         print 'ERROR: This code is only applicable for 3 surface types!'
         sys.exit()
 
+
     # flipping
     V_nj[0] = -1. * V_nj[0]
     U_in.T[0] = -1. * U_in.T[0]
 #    V_nj[1] = -1. * V_nj[1]
 #    U_in.T[1] = -1. * U_in.T[1]
 
-    # longitudinal slices
+
     #--------------------------------------------------------------------------
     # longitudinal colors
     albd_answer_kj  = np.loadtxt( ALBDFILE ).T
@@ -186,9 +198,11 @@ if __name__ == "__main__":
     type_lk        = type_kl.T
     color_lj       = np.dot( type_lk, albd_answer_kj )
     U_in           = np.dot( ( color_lj - M_j ), V_nj.T )
+
     # picking up
     U_in = U_in[::15,:]
-
+    print 'U_in'
+    print U_in
 
     U_iq = np.c_[ U_in, np.ones( len( U_in ) ) ]
 
@@ -251,6 +265,7 @@ if __name__ == "__main__":
     ax.set_ylabel( 'PC 2' )
     ax.set_ylim([Y_MIN, Y_MAX])
 
+
 #    #--------------------------------------------------------------------------
 #    # longitudinal colors
 #    type_kl        = np.loadtxt( 'IGBP_lon.txt' ).T[1:]
@@ -259,12 +274,14 @@ if __name__ == "__main__":
 #    U_ln           = np.dot( ( color_lj - M_j ), V_nj.T )
 #    ax.plot( U_ln.T[0], U_ln.T[1], color='k'  )
 
+
     #--------------------------------------------------------------------------
     # contour
     colormap = ax.pcolor( x_ticks_mesh, y_ticks_mesh, z_mesh, cmap=cm.spectral )
     divider  = make_axes_locatable(ax)
     cax  = divider.append_axes("right", size="5%", pad=0.05)
     cbar = fig.colorbar( colormap, cax=cax )
+
 
     #--------------------------------------------------------------------------
     # lightcurves
@@ -277,14 +294,9 @@ if __name__ == "__main__":
     dalbd_answer_kj = albd_answer_kj - M_j
     coeff_kn        = np.dot( dalbd_answer_kj, V_nj.T )
     answer_x, answer_y = coeff_kn[:,0:2].T
-
     ax.scatter( answer_x[0], answer_y[0], marker='o', c='white', s=40  )
     ax.scatter( answer_x[1], answer_y[1], marker='s', c='white', s=30  )
     ax.scatter( answer_x[2], answer_y[2], marker='^', c='white', s=40  )
-
-    # ax.scatter( answer_x[0], answer_y[0], marker='o', c='blue'  )
-    # ax.scatter( answer_x[1], answer_y[1], marker='s', c='red'   )
-    # ax.scatter( answer_x[2], answer_y[2], marker='^', c='green' )
 
 
     #--------------------------------------------------------------------------
@@ -302,5 +314,5 @@ if __name__ == "__main__":
         ax.fill_between( x_ticks, upper_boundary,  10., color='gray', facecolor='gray' )
 
 
-#    plt.savefig( INFILE + '_noreg.pdf', bbox_inches='tight' )
-    plt.savefig( 'IGBP_lon_noreg.pdf', bbox_inches='tight' )
+#    plt.savefig( INFILE + '_reg_l' + str(LAMBDA_CORR_DEG) + 'deg.pdf', bbox_inches='tight' )
+    plt.savefig( 'IGBP_lon_reg_l' + str(LAMBDA_CORR_DEG) + 'deg.pdf', bbox_inches='tight' )
