@@ -3,6 +3,7 @@ import sys
 import corner
 import datetime
 import os
+import pdb
 
 import emcee
 
@@ -26,6 +27,8 @@ import geometry
 import multiprocessing
 import functools
 
+from numba import jit
+
 LOOP_MAX  = 10000
 COUNT_MAX = 100
 
@@ -43,8 +46,8 @@ LAMBDA_CORR = LAMBDA_CORR_DEG * deg2rad
 
 N_SIDE   = 32
 INFILE_DIR = 'mockdata/'
-# INFILE = 'mockdata_45deg_time23_l`xreplc'
-INFILE = 'mockdata_90deg_3types_t12_lc'
+#INFILE = 'mockdata_90deg_3types_t12_lc'
+INFILE = "lc_test1.txt"
 OUTFILE_DIR = 'PCplane/'
 
 ALBDFILE = 'mockdata/mockdata_90deg_3types_t12_band_sp'
@@ -56,13 +59,13 @@ N_TYPE = 3
 N_CPU  = 3
 N_MCMC = 100
 
-X_MIN = -0.2
-X_MAX = 0.4
+X_MIN = -0.3
+X_MAX = 1.5
 # X_NUM = 30 + 1
-X_NUM = 18 + 1
-Y_MIN = -0.2
-Y_MAX = 0.8
-Y_NUM = 30 + 1
+X_NUM = 50#18 + 1
+Y_MIN = -1.0
+Y_MAX = 0.5
+Y_NUM = 50#30 + 1
 # Y_NUM = 50 + 1
 
 #===================================================
@@ -73,6 +76,7 @@ np.random.seed(SEED_in)
 
 
 #---------------------------------------------------
+#@jit
 def function( points_kn, params ):
 
 #    print 'working on ', indx
@@ -81,7 +85,6 @@ def function( points_kn, params ):
     # construct area fraction
     points_kq = np.c_[ points_kn, np.ones( len( points_kn ) ) ]
 
-
     # if the points do not form a triangle
     if np.linalg.det( points_kq ) == 0. :
 
@@ -89,7 +92,9 @@ def function( points_kn, params ):
 
     else :
 
+        #print U_iq.shape, points_kq.shape
         x_area_ik  = np.dot( U_iq, np.linalg.inv( points_kq ) )
+        #x_area_ik  = np.linalg.solve(points_kq.T, U_iq.T).T
 
         if ( np.any( x_area_ik < 0. ) ) :
 
@@ -106,9 +111,10 @@ def function( points_kn, params ):
 
 
 #---------------------------------------------------
+@jit
 def multicore_function( indx, params ):
 
-    print 'indx', indx
+    print('indx', indx)
 #    print 'working on ', indx
     points_valid_pn, inv_cov, det_cov, M_j, U_iq = params
 
@@ -152,6 +158,14 @@ def call_multicore( list_index, args ):
     result = p.map( functools.partial( multicore_function, params=args ), list_index )
     return result
 
+@jit
+def call_looper( list_index, args ):
+
+    results = np.zeros(len(list_index))
+    for i in range(len(list_index)):
+        results[i] = multicore_function(list_index[i], args)
+
+    return results
 
 
 #===================================================
@@ -227,6 +241,9 @@ if __name__ == "__main__":
     params = ( points_valid_pn, inv_cov, det_cov, M_j, U_iq )
     list_index = np.arange( len( points_valid_pn ) )
     list_term_p = call_multicore( list_index, params )
+    #list_term_p = multicore_function( list_index[0], params )
+    #import pdb; pdb.set_trace()
+    #list_term_p = call_looper( list_index, params )
     terms_p     = np.array( list_term_p )
 
     print terms_p
@@ -246,7 +263,7 @@ if __name__ == "__main__":
     ax = fig.add_subplot( 111, aspect='equal' )
     ax.set_xlabel( 'PC 1' )
     ax.set_xlim([X_MIN, X_MAX])
-    ax.set_xticks([ -0.2, 0.0, 0.2, 0.4 ])
+    #ax.set_xticks([ -0.2, 0.0, 0.2, 0.4 ])
     ax.set_ylabel( 'PC 2' )
     ax.set_ylim([Y_MIN, Y_MAX])
 
