@@ -56,7 +56,7 @@ AREAFILE = 'mockdata/mockdata_90deg_3types_t12_factor'
 VARAMP = 0.01
 
 N_TYPE = 3
-N_CPU  = 3
+N_CPU  = 6
 N_MCMC = 100
 
 X_MIN = -0.3
