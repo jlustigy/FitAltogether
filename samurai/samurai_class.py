@@ -695,7 +695,8 @@ class Mapper(object):
 
         # Input data
         Obs_ij = self.data.Obs_ij
-        Obsnoise_ij = ( self.noiselevel * self.data.Obs_ij )
+        if self.data.Obsnoise_ij is None:
+            Obsnoise_ij = ( self.noiselevel * self.data.Obs_ij )
         nband = len(Obs_ij[0])
 
         # Calculate n_side
