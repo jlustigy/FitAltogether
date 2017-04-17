@@ -276,7 +276,8 @@ class Output(object):
             return
         # Plot and save
         quantiles = plot_area_alb(xs, self.N, directory=mdir, savetxt=True,
-                                  intvls=intvls, epoxi=epoxi, eyecolors=False)
+                                  intvls=intvls, epoxi=epoxi, eyecolors=False,
+                                  lam=f["data/wlc_i"].value)
         # Delete save, if already exists
         if "quantiles" in f["mcmc/"].keys():
             del f["mcmc/quantiles"]
@@ -697,6 +698,9 @@ class Mapper(object):
         Obs_ij = self.data.Obs_ij
         if self.data.Obsnoise_ij is None:
             Obsnoise_ij = ( self.noiselevel * self.data.Obs_ij )
+        else:
+            Obsnoise_ij = self.data.Obsnoise_ij
+
         nband = len(Obs_ij[0])
 
         # Calculate n_side
@@ -742,7 +746,7 @@ class Mapper(object):
             if verbose: print("finding best-fit values...")
             data = (Obs_ij, Obsnoise_ij, Kernel_il, regularization, nregparam, True, False, ntype, nslice)
             output = minimize(lnprob, Y0_array, args=data, method="Nelder-Mead")
-        #    output = minimize(lnprob, Y0_array, args=data, method="L-BFGS-B" )
+            #output = minimize(lnprob, Y0_array, args=data, method="L-BFGS-B" )
             best_fit = output["x"]
             if verbose: print("best-fit", best_fit)
 

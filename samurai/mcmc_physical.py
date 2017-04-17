@@ -74,7 +74,7 @@ def decomposeX(x,n_band,n_slice,n_type):
     return alb, area
 
 def plot_median(med_alb, std_alb, med_area, std_area, n_all, directory="",
-                epoxi=DEFAULT_EPOXI, eyecolors=False):
+                epoxi=DEFAULT_EPOXI, eyecolors=False, lam=None):
 
     print "Plotting Median, Std..."
 
@@ -98,7 +98,10 @@ def plot_median(med_alb, std_alb, med_area, std_area, n_all, directory="",
         ax0.set_xlim([-185, 185])
         ax0.set_xticks([-180, -90, 0, 90, 180])
 
-    if epoxi:
+    if lam is not None:
+        xalb = lam
+        ax1.set_xlabel("Wavelength [nm]")
+    elif epoxi:
         epoxi_bands = np.loadtxt("data/EPOXI_band")
         wl = epoxi_bands[:,1]
         xalb = wl
@@ -130,7 +133,7 @@ def plot_median(med_alb, std_alb, med_area, std_area, n_all, directory="",
     fig.savefig(os.path.join(directory,"xmed_std.pdf"), bbox_inches="tight")
 
 def plot_area_alb(samples, n_all, directory="", savetxt=True, intvls=[0.16, 0.5, 0.84],
-                  epoxi=DEFAULT_EPOXI, eyecolors=False):
+                  epoxi=DEFAULT_EPOXI, eyecolors=False, lam=None):
 
     print "Plotting Area & Albedo..."
 
@@ -168,7 +171,10 @@ def plot_area_alb(samples, n_all, directory="", savetxt=True, intvls=[0.16, 0.5,
         ax0.set_xlim([-185, 185])
         ax0.set_xticks([-180, -90, 0, 90, 180])
 
-    if epoxi:
+    if lam is not None:
+        xalb = lam
+        ax1.set_xlabel("Wavelength [nm]")
+    elif epoxi:
         epoxi_bands = np.loadtxt("data/EPOXI_band")
         wl = epoxi_bands[:,1]
         xalb = wl
