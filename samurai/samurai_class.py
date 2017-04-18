@@ -629,6 +629,250 @@ class Mapper(object):
         # Return new class instance
         return cls(output=Output(hpath=path), data=Data(**ddic), **sdic)
 
+    def run_oe(self, savedir="mcmc_output", tag=None, verbose=False, N=1):
+        """
+        Run Mapper object simulation using Optimal Estimation (OE)
+
+        Parameters
+        ----------
+        """
+
+        # Get start time
+        now = datetime.datetime.now()
+        if verbose: print(now.strftime("%Y-%m-%d %H:%M:%S"))
+
+        # Create directory for this run
+        if tag is None:
+            startstr = now.strftime("%Y-%m-%d--%H-%M")
+        else:
+            startstr = tag
+
+        # Create savedir directory, if necessary
+        if savedir is not None:
+            run_dir = os.path.join(savedir, startstr)
+            try:
+                os.mkdir(savedir)
+                if verbose: print("Created directory:", savedir)
+            except OSError:
+                if verbose: print(savedir, "already exists.")
+        else:
+            run_dir = os.path.join("", startstr)
+        # Create unique run_dir directory
+        os.mkdir(run_dir)
+        if verbose: print("Created directory:", run_dir)
+
+        # Unpack class variables
+        fmodel = self.fmodel
+        imodel = self.imodel
+        Time_i = self.data.Time_i
+        ntype = self.ntype
+        nregparam = self.nregparam
+        regularization = self.regularization
+        lat_o = self.data.lat_o
+        lon_o = self.data.lon_o
+        lat_s = self.data.lat_s
+        lon_s = self.data.lon_s
+        omega = self.data.omega
+        ncpu = self.ncpu
+        num_mcmc = self.Nmcmc
+        seed_amp  = self.mcmc_seedamp
+        hdf5_compression = self.hdf5_compression
+        waveband_centers = self.data.wlc_i
+        waveband_widths = self.data.wlw_i
+
+        # Input data
+        Obs_ij = self.data.Obs_ij
+        if self.data.Obsnoise_ij is None:
+            Obsnoise_ij = ( self.noiselevel * self.data.Obs_ij )
+        else:
+            Obsnoise_ij = self.data.Obsnoise_ij
+
+        nband = len(Obs_ij[0])
+
+        # Calculate n_side
+        nside = 2*2**self.nsideseed
+
+        # Set geometric kernel depending on model
+        if fmodel == "map":
+            nslice = self.nslice
+            param_geometry = ( lat_o, lon_o, lat_s, lon_s, omega )
+            Kernel_il = geometry.kernel( Time_i, nslice, nside, param_geometry )
+        elif fmodel == "lightcurve":
+            nslice = len(Obs_ij)
+            Kernel_il = np.identity( nslice )
+        else:
+            print("Error: %s is an unrecognized forward model" %fmodel)
+            return None
+
+        # Create list of strings for Y & X parameter names
+        Y_names, X_names = generate_tex_names(ntype, nband, nslice)
+
+        # Specify hdf5 save file and group names
+        hfile = os.path.join(run_dir, "samurai_out.hdf5")
+        grp_init_name = "oe"
+        grp_mcmc_name = "mcmc"
+        grp_data_name = "data"
+        compression = hdf5_compression
+
+        # Get object attributes for saving to HDF5
+        hfile_attrs = self.get_dict()
+        tmp_dict = self.data.get_dict()
+        data_dict_datasets = {}
+        data_dict_attrs = {}
+        data_dict_datasets["Kernel_il"] = Kernel_il # Add Kernel dict
+        # Partition data values into attributes and datasets
+        for key, value in tmp_dict.iteritems():
+            if hasattr(value, "__len__"):
+                data_dict_datasets[key] = value
+            else:
+                data_dict_attrs[key] = value
+
+        # print
+        if verbose: print("Saving:", hfile)
+
+        mcmc_dict_attrs = {
+            "Y_names" : Y_names,
+            "X_names" : X_names,
+        }
+
+        # Create hdf5 file
+        f = h5py.File(hfile, 'w')
+
+        # Add global metadata
+        for key, value in hfile_attrs.iteritems():
+            if value is None:
+                f.attrs[key] = ()
+            else:
+                f.attrs[key] = value
+
+        # Create hdf5 groups (like a directory structure)
+        grp_init = f.create_group(grp_init_name)    # f["initial_optimization/"]
+        grp_data = f.create_group(grp_data_name)    # f["data/"]
+
+        # Save data datasets
+        for key, value in data_dict_datasets.iteritems():
+            if value is None:
+                grp_data.create_dataset(key, data=(), compression=compression)
+            else:
+                grp_data.create_dataset(key, data=value, compression=compression)
+        # Save data metadata
+        for key, value in data_dict_attrs.iteritems():
+            if value is None:
+                grp_data.attrs[key] = ()
+            else:
+                grp_data.attrs[key] = value
+
+
+        for i in range(N):
+
+            # Initialize the fitting parameters
+            #X0_albd_kj = 0.3+np.zeros([ntype, nband])
+            #X0_area_lk = 0.2+np.zeros([nslice, ntype])
+
+            # Randomize inital fitting parameters
+            X0_albd_kj = np.random.rand(ntype, nband)
+            X0_area_lk = np.zeros([nslice, ntype]) # intialize array
+            for il in range(nslice):
+                tmp = np.random.rand(ntype-1)
+                while np.sum(tmp) > 1.0:
+                    tmp = np.random.rand(ntype-1)
+                last = 1. - np.sum(tmp)
+                X0_area_lk[il,:] = np.hstack([tmp,last])
+
+            Y0_array = reparameterize.transform_X2Y(X0_albd_kj, X0_area_lk)
+            if ( nregparam > 0 ) :
+                Y0_array = np.append(Y0_array, np.array([10.]*nregparam) )
+            n_dim = len(Y0_array)
+            if verbose:
+                print('Y0_array', Y0_array)
+                print('# of parameters', n_dim)
+                print('N_REGPARAM', nregparam)
+            if (nregparam > 0):
+                X_albd_kj, X_area_lk =  reparameterize.transform_Y2X(Y0_array[:-1*nregparam], ntype, nband, nslice)
+            else:
+                X_albd_kj, X_area_lk =  reparameterize.transform_Y2X(Y0_array, ntype, nband, nslice)
+
+            ############ run minimization ############
+
+            # minimize
+            if verbose: print("finding best-fit values...")
+            data = (Obs_ij, Obsnoise_ij, Kernel_il, regularization, nregparam, True, False, ntype, nslice)
+            #output = minimize(lnprob, Y0_array, args=data, method="Nelder-Mead")
+            output = minimize(lnprob, Y0_array, args=data, method="L-BFGS-B" )
+            best_fit = output["x"]
+            if verbose: print("best-fit", best_fit)
+
+            # more information about the best-fit parameters
+            data = (Obs_ij, Obsnoise_ij, Kernel_il, regularization, nregparam, True, False, ntype, nslice)
+            lnprob_bestfit = lnprob( output['x'], *data )
+
+            # compute BIC
+            BIC = 2.0 * lnprob_bestfit + len( output['x'] ) * np.log( len(Obs_ij.flatten()) )
+            if verbose: print('BIC: ', BIC)
+
+            # best-fit values for physical parameters
+            if nregparam > 0:
+                X_albd_kj, X_area_lk =  reparameterize.transform_Y2X(output["x"][:-1*nregparam], ntype, nband, nslice)
+            else :
+                X_albd_kj, X_area_lk =  reparameterize.transform_Y2X(output["x"], ntype, nband, nslice)
+
+            X_albd_kj_T = X_albd_kj.T
+
+            # best-fit values for regularizing parameters
+            if regularization is not None:
+                if regularization == 'Tikhonov' :
+                    if verbose: print('sigma', best_fit[-1])
+                elif regularization == 'GP' :
+                    if verbose: print('overall_amp', best_fit[-3])
+                    if verbose: print('wn_rel_amp', np.exp( best_fit[-2] ) / ( 1. + np.exp( best_fit[-2] ) ))
+                    if verbose: print('lambda _angular', best_fit[-1] * ( 180. / np.pi ))
+                elif regularization == 'GP2' :
+                    if verbose: print('overall_amp', best_fit[-2])
+                    if verbose: print('lambda _angular', best_fit[-1]* ( 180. / np.pi ))
+
+            # Flatten best-fitting physical parameters
+            bestfit = np.r_[ X_albd_kj.flatten(), X_area_lk.T.flatten() ]
+
+            # Create dictionaries of initial results to convert to hdf5
+            # datasets and attributes
+            init_dict_datasets = {
+                "X0_albd_kj" : X0_albd_kj,
+                "X0_area_lk" : X0_area_lk,
+                "best_fity" : best_fit,
+                "X_area_lk" : X_area_lk,
+                "X_albd_kj_T" : X_albd_kj_T,
+                "best_fitx" : bestfit
+            }
+            init_dict_attrs = {
+                "best_lnprob" : lnprob_bestfit,
+                "best_BIC" : BIC
+            }
+
+            grp_index = grp_init.create_group(str(i))
+
+            # Save initial run datasets
+            for key, value in init_dict_datasets.iteritems():
+                if value is None:
+                    grp_index.create_dataset(key, data=(), compression=compression)
+                else:
+                    grp_index.create_dataset(key, data=value, compression=compression)
+            # Save initial run metadata
+            for key, value in init_dict_attrs.iteritems():
+                if value is None:
+                    grp_index.attrs[key] = ()
+                else:
+                    grp_index.attrs[key] = value
+
+        # Close hdf5 file stream
+        f.close()
+
+        # Save path to HDF5 file in output object
+        self.output = Output(hpath=hfile)
+
+
+
+
+
     def run_mcmc(self, savedir="mcmc_output", tag=None, verbose=True,
                  resume=False):
         """
