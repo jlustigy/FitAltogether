@@ -869,12 +869,8 @@ class Mapper(object):
         # Save path to HDF5 file in output object
         self.output = Output(hpath=hfile)
 
-
-
-
-
     def run_mcmc(self, savedir="mcmc_output", tag=None, verbose=True,
-                 resume=False):
+                 resume=False, initial_guess=None):
         """
         Run Mapper object simulation
 
@@ -888,6 +884,8 @@ class Mapper(object):
             Set to print status updates
         resume : bool, optional
             Set to resume MCMC from last saved state
+        initial_guess : array-like, optional
+            Initial guess around which mcmc chains will be initialized
         """
 
         if not resume:
@@ -1052,9 +1050,12 @@ class Mapper(object):
             self.output.open()
             p0 = self.output.hfile["mcmc/samples"][:,-1,:]
             self.output.close()
+        elif initial_guess is not None:
+            # Initialize chain/walker state from Gaussian ball
+            p0 = initial_guess + seed_amp * np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim))
         else:
             # Initialize chain/walker state from Gaussian ball
-            p0 = seed_amp * np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim)) + best_fit
+            p0 = best_fit + seed_amp * np.random.rand(n_dim * n_walkers).reshape((n_walkers, n_dim))
 
         if imodel == "emcee":
 
