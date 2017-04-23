@@ -1,7 +1,12 @@
-import numpy as np
 import matplotlib as mpl
+import platform
+if platform.system() == "Linux":
+    mpl.use('Agg')
+import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from matplotlib import rc
+
+import numpy as np
 import pdb
 mpl.rc('font', family='Times New Roman')
 mpl.rcParams['font.size'] = 25.0
@@ -12,12 +17,6 @@ import datetime
 import multiprocessing
 import os
 import h5py
-
-import platform
-if platform.system() == "Linux":
-    mpl.use('Agg')
-import matplotlib.pyplot as plt
-
 
 # Specify directory of run to analyze
 MCMC_DIR = ""
