@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from matplotlib import rc
 import pdb
@@ -13,6 +12,11 @@ import datetime
 import multiprocessing
 import os
 import h5py
+
+import platform
+if platform.system() == "Linux":
+    mpl.use('Agg')
+import matplotlib.pyplot as plt
 
 
 # Specify directory of run to analyze

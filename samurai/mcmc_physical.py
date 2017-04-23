@@ -8,7 +8,6 @@ import datetime
 import multiprocessing
 import os
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from matplotlib import rc
 import h5py
@@ -20,6 +19,12 @@ from colorpy import colormodels, ciexyz
 
 from reparameterize import transform_Y2X
 from map_utils import save2hdf5
+
+import platform
+if platform.system() == "Linux":
+    mpl.use('Agg')
+import matplotlib.pyplot as plt
+
 
 mpl.rc('font', family='Times New Roman')
 mpl.rcParams['font.size'] = 25.0
