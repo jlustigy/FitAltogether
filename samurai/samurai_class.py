@@ -1071,6 +1071,11 @@ class Mapper(object):
             # Extract chain from sampler
             original_samples = sampler.chain
 
+            #import pdb; pdb.set_trace()
+            # Get the integrated autocorrelation time for each dimension
+            #acors = sampler.get_autocorr_time()
+            #acor_max = int(np.floor(np.min(acors)))
+
             # Get model evaluations
             blobs = sampler.blobs
             shape = (len(blobs), len(blobs[0]), len(blobs[0][0]), len(blobs[0][0][0]))
@@ -1107,6 +1112,11 @@ class Mapper(object):
 
             # Extract chains, reshape so emcee compatible
             original_samples = sampler.get_coords().reshape([n_walkers, num_mcmc, n_dim])
+
+            #import pdb; pdb.set_trace()
+            # Get the integrated autocorrelation time for each dimension
+            #acors = sampler.get_integrated_autocorr_time()
+            #acor_max = int(np.floor(np.min(acors)))
 
             #model_ij = None
 

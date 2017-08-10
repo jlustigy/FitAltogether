@@ -48,6 +48,30 @@ def estimate_burnin1(samples):
     # Now return the index of the last walker to cross its median
     return np.amax(first_median_crossing)
 
+def median_crossing_burnin(samples):
+    """
+    Calculate the median crossing time for estimating the MCMC burn-in
+    """
+
+    # Unpack samples dimensions
+    nwalk, niter, nparam = samples.shape
+
+    for ip in range(nparam):
+        for iw in range(nwalk):
+            # Calculate chain medians
+            med = np.median(samples[iw,:,ip])
+            ii = 0
+            # Subtract off the median
+            diff = samples[iw,ii,ip] - med
+            #isign =
+            #while
+            # Determine where the sign changes occur
+            asign = np.sign(diff)
+            signchange = ((np.roll(asign, 1) - asign) != 0).astype(int)
+
+        # For each walker determine index where the first sign change occurs
+        first_median_crossing = np.argmax(signchange>0, axis=1)
+
 def plot_trace(samples, directory="", names=None, which=None, alpha=0.2):
 
     print "Plotting Trace..."
